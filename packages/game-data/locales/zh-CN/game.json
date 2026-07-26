@@ -1,0 +1,6 @@
+{
+  "game.turn.start": "回合开始",
+  "game.turn.end": "回合结束",
+  "game.action.waiting": "等待玩家行动",
+  "game.result.victory": "使命完成，获得胜利"
+}

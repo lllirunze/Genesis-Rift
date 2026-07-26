@@ -1,0 +1,20 @@
+{
+  "name": "@genesis-rift/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@genesis-rift/game-core": "*",
+    "@genesis-rift/game-data": "*",
+    "@genesis-rift/shared": "*",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0"
+  }
+}

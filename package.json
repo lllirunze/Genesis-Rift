@@ -1,0 +1,28 @@
+{
+  "name": "genesis-rift",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace @genesis-rift/web",
+    "dev:server": "npm run dev --workspace @genesis-rift/server",
+    "build": "npm run typecheck && npm run build --workspace @genesis-rift/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run --passWithNoTests",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
