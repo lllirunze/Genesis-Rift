@@ -1,3 +1,4 @@
+export * from "./attributes/derived-attribute-configs.ts";
 export * from "./attributes/primary-attributes.ts";
 export * from "./catalog/game-data-catalog.ts";
 export * from "./identities/identity-config.ts";

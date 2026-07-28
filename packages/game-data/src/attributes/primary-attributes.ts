@@ -1,14 +1,11 @@
-export const PRIMARY_ATTRIBUTE_KEYS = [
-  "strength",
-  "constitution",
-  "spirit",
-  "agility",
-  "insight",
-] as const;
+import { PRIMARY_ATTRIBUTE_KEYS, type PrimaryAttributes } from "@genesis-rift/shared";
 
-export type PrimaryAttribute = (typeof PRIMARY_ATTRIBUTE_KEYS)[number];
-
-export type PrimaryAttributes = Readonly<Record<PrimaryAttribute, number>>;
+export {
+  PRIMARY_ATTRIBUTE_KEYS,
+  type PrimaryAttribute,
+  type PrimaryAttributes,
+  type PrimaryAttributeOffset,
+} from "@genesis-rift/shared";
 
 export const INITIAL_PRIMARY_ATTRIBUTE_TOTAL = 25;
 
