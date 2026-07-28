@@ -1,5 +1,9 @@
 import type { SystemScaffold } from "../system-scaffold.ts";
 
+export * from "./weather/weather-card.ts";
+export * from "./weather/weather-deck.ts";
+export * from "./weather/weather-schedule.ts";
+
 export const environmentSystem: SystemScaffold<"environment"> = {
   name: "environment",
   status: "scaffold",
