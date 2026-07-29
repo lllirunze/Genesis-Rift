@@ -3,6 +3,7 @@ import type { PrimaryAttributes } from "@genesis-rift/shared";
 
 import type { CharacterState } from "../character/character-state.ts";
 import { aggregateAttributeModifiers } from "./aggregate-attribute-modifiers.ts";
+import type { AttributeModifier } from "./attribute-modifier.ts";
 import { calculateDerivedAttributes } from "./calculate-derived-attributes.ts";
 
 export interface CharacterAttributeSnapshot<DerivedAttribute extends string> {
@@ -16,8 +17,12 @@ export interface CharacterAttributeSnapshot<DerivedAttribute extends string> {
 export function createCharacterAttributeSnapshot<DerivedAttribute extends string>(
   character: CharacterState,
   configs: Readonly<Record<DerivedAttribute, DerivedAttributeFormulaConfig>>,
+  additionalModifiers: readonly AttributeModifier[] = [],
 ): CharacterAttributeSnapshot<DerivedAttribute> {
-  const aggregatedModifiers = aggregateAttributeModifiers(character.attributeModifiers);
+  const aggregatedModifiers = aggregateAttributeModifiers([
+    ...character.attributeModifiers,
+    ...additionalModifiers,
+  ]);
   const derivedDynamicOffset = validateDerivedOffsets(
     aggregatedModifiers.derivedDynamicOffset,
     configs,

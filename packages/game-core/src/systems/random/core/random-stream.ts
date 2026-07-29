@@ -4,7 +4,7 @@ import { createRandomStreamSeed } from "./random-seed.ts";
 import type { RandomStreamType } from "./random-stream-type.ts";
 import { isRandomStreamType } from "./random-stream-type.ts";
 
-const UINT32_RANGE = 0x1_0000_0000;
+export const MAX_RANDOM_INTEGER_RANGE = 0x1_0000_0000;
 const UINT64_MASK = 0xffff_ffff_ffff_ffffn;
 const SPLITMIX_INCREMENT = 0x9e37_79b9_7f4a_7c15n;
 const SPLITMIX_MULTIPLIER_ONE = 0xbf58_476d_1ce4_e5b9n;
@@ -59,7 +59,7 @@ export class RandomStream {
     validateIntegerRange(minInclusive, maxExclusive);
 
     const range = maxExclusive - minInclusive;
-    const rejectionLimit = Math.floor(UINT32_RANGE / range) * range;
+    const rejectionLimit = Math.floor(MAX_RANDOM_INTEGER_RANGE / range) * range;
     let sample: number;
 
     do {
@@ -118,8 +118,8 @@ function validateIntegerRange(minInclusive: number, maxExclusive: number): void 
     throw new RangeError("maxExclusive must be greater than minInclusive");
   }
 
-  if (range > UINT32_RANGE) {
-    throw new RangeError(`integer random range must not exceed ${UINT32_RANGE}`);
+  if (range > MAX_RANDOM_INTEGER_RANGE) {
+    throw new RangeError(`integer random range must not exceed ${MAX_RANDOM_INTEGER_RANGE}`);
   }
 }
 

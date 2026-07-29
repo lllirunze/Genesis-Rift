@@ -12,10 +12,18 @@ export const HEX_MAP_CENTER: CubeCoordinate = Object.freeze({
 });
 
 export function createCubeCoordinate(x: number, y: number, z: number): CubeCoordinate {
-  const coordinate = { x, y, z };
+  const coordinate = {
+    x: normalizeCoordinateAxis(x),
+    y: normalizeCoordinateAxis(y),
+    z: normalizeCoordinateAxis(z),
+  };
 
   validateCubeCoordinate(coordinate);
   return coordinate;
+}
+
+function normalizeCoordinateAxis(value: number): number {
+  return Object.is(value, -0) ? 0 : value;
 }
 
 export function validateCubeCoordinate(coordinate: CubeCoordinate): void {

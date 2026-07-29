@@ -18,6 +18,10 @@ describe("cube coordinates", () => {
     expect(getCubeCoordinateRing(HEX_MAP_CENTER)).toBe(0);
   });
 
+  it("normalizes negative zero in created coordinates", () => {
+    expect(createCubeCoordinate(-0, 0, -0)).toEqual({ x: 0, y: 0, z: 0 });
+  });
+
   it("creates valid integer coordinates and derives their ring", () => {
     const coordinate = createCubeCoordinate(-4, 1, 3);
 
