@@ -30,7 +30,7 @@ const OTHER_PLAYER_ID = "player-2" as PlayerId;
 const DEFINITIONS = {
   "item.coin": {
     definitionId: "item.coin",
-    name: "Yuanbao",
+    name: "Coin",
     category: "currency",
     quality: "common",
     width: 1,

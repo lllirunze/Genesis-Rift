@@ -1,30 +1,18 @@
-import { isQuality, type Quality } from "@genesis-rift/shared";
+import {
+  ITEM_CATEGORIES,
+  isQuality,
+  type ItemDefinition,
+  type ItemDefinitionCatalog,
+} from "@genesis-rift/shared";
 
 import { BACKPACK_GRID_HEIGHT, BACKPACK_GRID_WIDTH } from "./backpack-config.ts";
 
-export const ITEM_CATEGORIES = [
-  "currency",
-  "material",
-  "consumable",
-  "equipment",
-  "blueprint",
-  "quest",
-  "special",
-] as const;
-
-export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
-
-export interface ItemDefinition {
-  readonly definitionId: string;
-  readonly name: string;
-  readonly category: ItemCategory;
-  readonly quality: Quality;
-  readonly width: number;
-  readonly height: number;
-  readonly maximumStack: number;
-}
-
-export type ItemDefinitionCatalog = Readonly<Record<string, ItemDefinition>>;
+export {
+  ITEM_CATEGORIES,
+  type ItemCategory,
+  type ItemDefinition,
+  type ItemDefinitionCatalog,
+} from "@genesis-rift/shared";
 
 export function validateItemDefinition(definition: ItemDefinition): void {
   assertNonEmptyString(definition.definitionId, "definitionId");

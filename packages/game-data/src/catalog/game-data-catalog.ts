@@ -6,6 +6,7 @@ export interface GameDataEntry {
 }
 
 export interface GameDataCatalog {
+  readonly items: readonly GameDataEntry[];
   readonly races: readonly GameDataEntry[];
   readonly identities: readonly GameDataEntry[];
   readonly equipment: readonly GameDataEntry[];
