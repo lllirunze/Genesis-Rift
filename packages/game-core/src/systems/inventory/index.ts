@@ -5,4 +5,8 @@ export * from "./backpack-stacking.ts";
 export * from "./backpack-state.ts";
 export * from "./item-definition.ts";
 export * from "./item-instance.ts";
+export * from "./player-inventory-state.ts";
+export * from "./receive-item.ts";
+export * from "./temporary-pickup.ts";
 export * from "./validate-backpack-state.ts";
+export * from "./validate-player-inventory-state.ts";
