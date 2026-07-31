@@ -5,6 +5,7 @@ import {
 } from "@genesis-rift/shared";
 
 import type { CharacterState } from "./character-state.ts";
+import type { LevelProgressionState } from "../level/level-progression-state.ts";
 
 export interface CharacterIdentitySource {
   readonly id: string;
@@ -20,6 +21,7 @@ export interface CreateCharacterInput {
   readonly playerId: PlayerId;
   readonly identity: CharacterIdentitySource;
   readonly race: CharacterRaceSource;
+  readonly levelProgression?: LevelProgressionState;
 }
 
 export function createCharacter(input: CreateCharacterInput): CharacterState {
@@ -47,6 +49,10 @@ export function createCharacter(input: CreateCharacterInput): CharacterState {
     raceId: input.race.id,
     currentPrimaryAttributes,
     attributeModifiers: [],
+    levelProgression: input.levelProgression ?? {
+      currentLevel: 1,
+      currentExperience: 0,
+    },
   };
 }
 

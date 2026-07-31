@@ -106,6 +106,10 @@ describe("equipment attribute modifiers", () => {
         insight: 5,
       },
       attributeModifiers: [],
+      levelProgression: {
+        currentLevel: 1,
+        currentExperience: 0,
+      },
     };
     const movementRangeConfig: DerivedAttributeFormulaConfig = {
       coefficients: { ...ZERO_PRIMARY_ATTRIBUTES, agility: 0.5 },

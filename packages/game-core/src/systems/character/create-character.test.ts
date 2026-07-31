@@ -49,6 +49,10 @@ describe("createCharacter", () => {
         insight: 4,
       },
       attributeModifiers: [],
+      levelProgression: {
+        currentLevel: 1,
+        currentExperience: 0,
+      },
     });
   });
 
