@@ -1,10 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { isQuality, QUALITY_COLORS, QUALITY_LEVELS } from "./quality.ts";
+import {
+  isQuality,
+  isReservedQuality,
+  isStandardQuality,
+  QUALITY_COLORS,
+  QUALITY_LEVELS,
+  RESERVED_QUALITY_LEVELS,
+  STANDARD_QUALITY_LEVELS,
+} from "./quality.ts";
 
 describe("quality", () => {
-  it("defines the shared five quality levels in ascending order", () => {
-    expect(QUALITY_LEVELS).toEqual(["common", "excellent", "rare", "epic", "legendary"]);
+  it("separates the five active quality levels from reserved future levels", () => {
+    expect(STANDARD_QUALITY_LEVELS).toEqual(["common", "excellent", "rare", "epic", "legendary"]);
+    expect(RESERVED_QUALITY_LEVELS).toEqual(["mythic"]);
+    expect(QUALITY_LEVELS).toEqual(["common", "excellent", "rare", "epic", "legendary", "mythic"]);
   });
 
   it("provides one display color for every quality", () => {
@@ -17,9 +27,11 @@ describe("quality", () => {
     });
   });
 
-  it("recognizes only supported shared qualities", () => {
+  it("recognizes mythic as reserved but not currently usable", () => {
     expect(isQuality("rare")).toBe(true);
-    expect(isQuality("mythic")).toBe(false);
+    expect(isQuality("mythic")).toBe(true);
+    expect(isStandardQuality("mythic")).toBe(false);
+    expect(isReservedQuality("mythic")).toBe(true);
     expect(isQuality(null)).toBe(false);
   });
 });

@@ -1,4 +1,8 @@
-import { isQuality, type PrimaryAttribute, type Quality } from "@genesis-rift/shared";
+import {
+  isStandardQuality,
+  type PrimaryAttribute,
+  type StandardQuality,
+} from "@genesis-rift/shared";
 
 export const EQUIPMENT_TYPES = ["weapon", "armor", "shoes", "accessory", "special"] as const;
 
@@ -26,7 +30,7 @@ export interface EquipmentDefinition {
   readonly definitionId: string;
   readonly name: string;
   readonly type: EquipmentType;
-  readonly quality: Quality;
+  readonly quality: StandardQuality;
   readonly corePosition: string;
   readonly allowDuplicateEquipping: boolean;
   readonly attributeEffects: readonly EquipmentAttributeEffect[];
@@ -41,7 +45,7 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
     throw new RangeError(`Unsupported equipment type: ${definition.type}`);
   }
 
-  if (!isQuality(definition.quality)) {
+  if (!isStandardQuality(definition.quality)) {
     throw new RangeError(`Unsupported equipment quality: ${definition.quality}`);
   }
 
