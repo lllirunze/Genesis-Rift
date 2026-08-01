@@ -10,7 +10,7 @@ export interface GameDataCatalog {
   readonly races: readonly GameDataEntry[];
   readonly identities: readonly GameDataEntry[];
   readonly equipment: readonly GameDataEntry[];
-  readonly strategyCards: readonly GameDataEntry[];
+  readonly handCards: readonly GameDataEntry[];
   readonly events: readonly GameDataEntry[];
   readonly missions: readonly GameDataEntry[];
   readonly maps: readonly GameDataEntry[];
