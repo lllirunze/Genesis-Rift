@@ -9,4 +9,5 @@ export const LOG_CONFIG = Object.freeze({
   levelWidth: 5,
   targetWidth: 7,
   actionWidth: 8,
+  maxPendingEntries: 10_000,
 } as const);
