@@ -1,5 +1,6 @@
 import type { SystemScaffold } from "../system-scaffold.ts";
 
+export * from "./map-config.ts";
 export * from "./geometry/cube-coordinate.ts";
 export * from "./geometry/cube-coordinate-key.ts";
 export * from "./geometry/hex-direction.ts";

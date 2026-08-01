@@ -1,15 +1,6 @@
 import type { CubeCoordinate } from "@genesis-rift/shared";
 
-export const BASE_MAP_MAX_RING = 10;
-export const BOUNDARY_COORDINATE_OFFSET = 1;
-export const MAX_CUBE_COORDINATE = BASE_MAP_MAX_RING + BOUNDARY_COORDINATE_OFFSET;
-export const MIN_CUBE_COORDINATE = -MAX_CUBE_COORDINATE;
-
-export const HEX_MAP_CENTER: CubeCoordinate = Object.freeze({
-  x: 0,
-  y: 0,
-  z: 0,
-});
+import { MAX_CUBE_COORDINATE, MIN_CUBE_COORDINATE } from "../map-config.ts";
 
 export function createCubeCoordinate(x: number, y: number, z: number): CubeCoordinate {
   const coordinate = {

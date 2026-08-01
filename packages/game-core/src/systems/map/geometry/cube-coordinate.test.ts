@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import {
   BASE_MAP_MAX_RING,
+  HEX_MAP_CENTER,
+  MAX_CUBE_COORDINATE,
+  MIN_CUBE_COORDINATE,
+} from "../map-config.ts";
+import {
   createCubeCoordinate,
   getCubeCoordinateDistance,
   getCubeCoordinateRing,
-  HEX_MAP_CENTER,
   isHexMapCenter,
-  MAX_CUBE_COORDINATE,
-  MIN_CUBE_COORDINATE,
 } from "./cube-coordinate.ts";
 
 describe("cube coordinates", () => {

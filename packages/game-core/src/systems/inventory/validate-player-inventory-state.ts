@@ -1,10 +1,8 @@
 import { getItemDefinition } from "./backpack-geometry.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import { validateItemInstance } from "./item-instance.ts";
-import {
-  TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS,
-  type PlayerInventoryState,
-} from "./player-inventory-state.ts";
+import { TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS } from "./inventory-config.ts";
+import type { PlayerInventoryState } from "./player-inventory-state.ts";
 import { validateBackpackState } from "./validate-backpack-state.ts";
 
 export function validatePlayerInventoryState(

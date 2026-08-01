@@ -2,11 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { PlayerId } from "@genesis-rift/shared";
 
-import {
-  BACKPACK_GRID_HEIGHT,
-  BACKPACK_GRID_WIDTH,
-  getBackpackUsableArea,
-} from "./backpack-config.ts";
+import { BACKPACK_GRID_HEIGHT, BACKPACK_GRID_WIDTH } from "./backpack-config.ts";
+import { getBackpackUsableArea } from "./backpack-definition.ts";
 import {
   createBackpackGrid,
   findFirstAvailableBackpackPosition,

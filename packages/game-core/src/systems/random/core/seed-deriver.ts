@@ -1,8 +1,7 @@
 import type { MasterSeed, RandomStreamSeed } from "./random-seed.ts";
 import { createRandomStreamSeed } from "./random-seed.ts";
+import { RANDOM_ALGORITHM_ID } from "./random-config.ts";
 import type { RandomStreamType } from "./random-stream-type.ts";
-
-export const RANDOM_ALGORITHM_ID = "splitmix64-v1" as const;
 
 const UINT64_MASK = 0xffff_ffff_ffff_ffffn;
 const FNV_OFFSET_BASIS_64 = 0xcbf2_9ce4_8422_2325n;

@@ -1,5 +1,6 @@
 import type { SystemScaffold } from "../system-scaffold.ts";
 
+export * from "./weather/weather-config.ts";
 export * from "./weather/weather-card.ts";
 export * from "./weather/weather-deck.ts";
 export * from "./weather/weather-schedule.ts";

@@ -1,10 +1,6 @@
-interface ArchitectureLayer {
-  name: string;
-  path: string;
-  description: string;
-}
+import type { ArchitectureLayer } from "./architecture-layer.ts";
 
-export const architectureLayers: readonly ArchitectureLayer[] = [
+export const ARCHITECTURE_LAYERS = [
   {
     name: "网页客户端",
     path: "apps/web",
@@ -30,4 +26,4 @@ export const architectureLayers: readonly ArchitectureLayer[] = [
     path: "packages/shared",
     description: "维护客户端与服务端共同使用的 ID、坐标和通信事件类型。",
   },
-];
+] as const satisfies readonly ArchitectureLayer[];

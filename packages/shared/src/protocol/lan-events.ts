@@ -1,5 +1,3 @@
-export const PROTOCOL_VERSION = 1;
-
 export interface ServerReadyPayload {
   protocolVersion: number;
 }

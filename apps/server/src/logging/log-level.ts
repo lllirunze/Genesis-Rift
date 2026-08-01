@@ -1,4 +1,4 @@
-export const LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"] as const;
+import { LOG_LEVELS } from "./log-config.ts";
 
 export type LogLevel = (typeof LOG_LEVELS)[number];
 

@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  isQuality,
-  isReservedQuality,
-  isStandardQuality,
   QUALITY_COLORS,
   QUALITY_LEVELS,
   RESERVED_QUALITY_LEVELS,
   STANDARD_QUALITY_LEVELS,
-} from "./quality.ts";
+} from "../config/quality-config.ts";
+import { isQuality, isReservedQuality, isStandardQuality } from "./quality.ts";
 
 describe("quality", () => {
   it("separates the five active quality levels from reserved future levels", () => {

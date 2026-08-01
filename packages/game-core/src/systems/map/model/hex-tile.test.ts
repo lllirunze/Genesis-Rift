@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { TileId } from "@genesis-rift/shared";
 
-import { MAX_TILE_ELEVATION, MIN_TILE_ELEVATION, createHexTile } from "./hex-tile.ts";
+import { MAX_TILE_ELEVATION, MIN_TILE_ELEVATION } from "../map-config.ts";
+import { createHexTile } from "./hex-tile.ts";
 
 const CENTER_TILE_ID = "tile.center" as TileId;
 

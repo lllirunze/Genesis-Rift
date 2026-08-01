@@ -1,12 +1,7 @@
 import type { CubeCoordinate } from "@genesis-rift/shared";
 
-import {
-  BASE_MAP_MAX_RING,
-  createCubeCoordinate,
-  getCubeCoordinateRing,
-} from "../geometry/cube-coordinate.ts";
-
-export const BASE_MAP_TILE_COUNT = getCompleteHexMapTileCount(BASE_MAP_MAX_RING);
+import { createCubeCoordinate, getCubeCoordinateRing } from "../geometry/cube-coordinate.ts";
+import { BASE_MAP_MAX_RING, BASE_MAP_TILE_COUNT } from "../map-config.ts";
 
 export function getCompleteHexMapTileCount(maxRing: number): number {
   if (!Number.isSafeInteger(maxRing) || maxRing < 0) {

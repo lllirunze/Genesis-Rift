@@ -1,13 +1,5 @@
 import type { PrimaryAttribute, PrimaryAttributes } from "../attributes/primary-attributes.ts";
-
-export const IDENTITY_NAMES = [
-  "mage",
-  "assassin",
-  "thief",
-  "ranger",
-  "demon",
-  "matriarch",
-] as const;
+import { IDENTITY_NAMES } from "./identity-name-config.ts";
 
 export type IdentityName = (typeof IDENTITY_NAMES)[number];
 export type IdentityConfigId = `identity.${IdentityName}`;

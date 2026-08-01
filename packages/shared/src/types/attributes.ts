@@ -1,10 +1,4 @@
-export const PRIMARY_ATTRIBUTE_KEYS = [
-  "strength",
-  "constitution",
-  "spirit",
-  "agility",
-  "insight",
-] as const;
+import { PRIMARY_ATTRIBUTE_KEYS } from "../config/attribute-config.ts";
 
 export type PrimaryAttribute = (typeof PRIMARY_ATTRIBUTE_KEYS)[number];
 export type PrimaryAttributes = Readonly<Record<PrimaryAttribute, number>>;

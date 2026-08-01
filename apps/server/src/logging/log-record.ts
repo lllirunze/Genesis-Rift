@@ -15,8 +15,6 @@ export interface PlayerLogTarget {
 
 export type LogTarget = SystemLogTarget | PlayerLogTarget;
 
-export const SYSTEM_LOG_TARGET: SystemLogTarget = Object.freeze({ kind: "system" });
-
 export interface CreateLogRecordInput {
   readonly level: LogLevel;
   readonly target: LogTarget;

@@ -6,84 +6,75 @@ import {
   drawHandCardFromDeck,
   validateHandCardDeckState,
 } from "./hand-card-deck-state.ts";
-import type { HandCardDefinition, HandCardDefinitionCatalog } from "./hand-card-definition.ts";
-import { createHandCardInstance } from "./hand-card-instance.ts";
+import type { HandCardCatalog, HandCardDefinition } from "./hand-card-definition.ts";
 
-const CARD: HandCardDefinition = {
-  definitionId: "hand-card.sprint",
-  name: "Sprint",
+const SPRINT_CARD: HandCardDefinition = {
+  cardId: 1,
+  name: "sprint",
   description: "Improves one movement action.",
   quality: "common",
   type: "action",
   usage: {
     timing: "active",
     responseTypes: [],
-    conditionIds: ["player.can-move"],
-    targetTypes: ["self"],
+    conditionIds: ["player.canMove", "target.isSelf"],
+    targetTypes: ["player"],
   },
-  effectIds: ["effect.movement.bonus"],
-  keywords: ["movement"],
+  effects: [{ effectId: "movement.modify", parameters: { amount: 1 } }],
   destinationAfterResolution: "discard",
 };
 
-const DEFINITIONS = {
-  [CARD.definitionId]: CARD,
-} as const satisfies HandCardDefinitionCatalog;
+const SECOND_SPRINT_CARD: HandCardDefinition = {
+  ...SPRINT_CARD,
+  cardId: 2,
+};
 
-function createCard(index: number) {
-  return createHandCardInstance({
-    instanceId: `hand-card-instance-${index}`,
-    definition: CARD,
-  });
-}
+const CATALOG = {
+  1: SPRINT_CARD,
+  2: SECOND_SPRINT_CARD,
+} as const satisfies HandCardCatalog;
 
 describe("shared hand card deck state", () => {
-  it("allows multiple physical cards to use the same definition", () => {
-    const firstCard = createCard(1);
-    const secondCard = createCard(2);
-    const deck = createHandCardDeckState("deck.shared", [firstCard, secondCard], DEFINITIONS);
+  it("allows identical cards when their global card ids differ", () => {
+    const deck = createHandCardDeckState("deck.shared", [1, 2], CATALOG);
 
-    expect(deck.drawPile).toEqual([firstCard, secondCard]);
+    expect(deck.drawPile).toEqual([1, 2]);
     expect(deck.discardPile).toEqual([]);
   });
 
-  it("draws the first physical card from the shared deck", () => {
-    const firstCard = createCard(1);
-    const secondCard = createCard(2);
-    const deck = createHandCardDeckState("deck.shared", [firstCard, secondCard], DEFINITIONS);
-    const result = drawHandCardFromDeck(deck, DEFINITIONS);
+  it("draws the first card id from the shared deck", () => {
+    const deck = createHandCardDeckState("deck.shared", [1, 2], CATALOG);
+    const result = drawHandCardFromDeck(deck, CATALOG);
 
-    expect(result.card).toEqual(firstCard);
-    expect(result.state.drawPile).toEqual([secondCard]);
+    expect(result.cardId).toBe(1);
+    expect(result.state.drawPile).toEqual([2]);
     expect(deck.drawPile).toHaveLength(2);
   });
 
-  it("stores discarded cards in the shared discard pile", () => {
-    const card = createCard(1);
-    const deck = createHandCardDeckState("deck.shared", [], DEFINITIONS);
-    const nextState = addHandCardToSharedDiscardPile(deck, card, DEFINITIONS);
+  it("stores discarded card ids in the shared discard pile", () => {
+    const deck = createHandCardDeckState("deck.shared", [], CATALOG);
+    const nextState = addHandCardToSharedDiscardPile(deck, 1, CATALOG);
 
     expect(nextState.drawPile).toEqual([]);
-    expect(nextState.discardPile).toEqual([card]);
+    expect(nextState.discardPile).toEqual([1]);
   });
 
-  it("returns no card when the draw pile is empty", () => {
-    const deck = createHandCardDeckState("deck.empty", [], DEFINITIONS);
-    const result = drawHandCardFromDeck(deck, DEFINITIONS);
+  it("returns no card id when the draw pile is empty", () => {
+    const deck = createHandCardDeckState("deck.empty", [], CATALOG);
+    const result = drawHandCardFromDeck(deck, CATALOG);
 
-    expect(result).toEqual({ state: deck, card: null });
+    expect(result).toEqual({ state: deck, cardId: null });
   });
 
-  it("rejects duplicate physical card ids across shared piles", () => {
-    const card = createCard(1);
+  it("rejects duplicate card ids across shared piles", () => {
     const state = {
       deckId: "deck.invalid",
-      drawPile: [card],
-      discardPile: [card],
+      drawPile: [1],
+      discardPile: [1],
     };
 
-    expect(() => validateHandCardDeckState(state, DEFINITIONS)).toThrow(
-      "Duplicate hand card instance id in shared piles",
+    expect(() => validateHandCardDeckState(state, CATALOG)).toThrow(
+      "Duplicate hand card id in shared piles",
     );
   });
 });

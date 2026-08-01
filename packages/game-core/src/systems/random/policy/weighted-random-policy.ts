@@ -1,4 +1,5 @@
-import { MAX_RANDOM_INTEGER_RANGE, type RandomStream } from "../core/random-stream.ts";
+import { MAX_RANDOM_INTEGER_RANGE } from "../core/random-config.ts";
+import type { RandomStream } from "../core/random-stream.ts";
 import type { WeightedItem } from "../model/weighted-item.ts";
 
 export function pickWeightedItem<Item>(

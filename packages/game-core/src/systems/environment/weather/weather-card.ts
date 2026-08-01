@@ -1,19 +1,8 @@
-export const WEATHER_CARD_SUITS = ["HEART", "DIAMOND", "CLUB", "SPADE"] as const;
-export const WEATHER_CARD_RANKS = [
-  "A",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "J",
-  "Q",
-  "K",
-] as const;
+import {
+  STANDARD_WEATHER_CARD_IDS,
+  WEATHER_CARD_RANKS,
+  WEATHER_CARD_SUITS,
+} from "./weather-config.ts";
 
 export type WeatherCardSuit = (typeof WEATHER_CARD_SUITS)[number];
 export type WeatherCardRank = (typeof WEATHER_CARD_RANKS)[number];
@@ -37,33 +26,6 @@ export interface JokerWeatherCard {
 
 export type WeatherCard = SuitedWeatherCard | JokerWeatherCard;
 export type WeatherCardTriggerType = "weather" | "specialWeather" | "majorDisaster";
-
-export const STANDARD_WEATHER_CARDS: readonly WeatherCard[] = [
-  ...WEATHER_CARD_SUITS.flatMap((suit) =>
-    WEATHER_CARD_RANKS.map((rank): SuitedWeatherCard => ({
-      cardId: `${suit}_${rank}`,
-      suit,
-      rank,
-      joker: null,
-    })),
-  ),
-  {
-    cardId: "JOKER_SMALL",
-    suit: null,
-    rank: "JOKER",
-    joker: "SMALL",
-  },
-  {
-    cardId: "JOKER_BIG",
-    suit: null,
-    rank: "JOKER",
-    joker: "BIG",
-  },
-];
-
-export const STANDARD_WEATHER_CARD_IDS: readonly WeatherCardId[] = STANDARD_WEATHER_CARDS.map(
-  (card) => card.cardId,
-);
 
 const STANDARD_WEATHER_CARD_ID_SET = new Set<WeatherCardId>(STANDARD_WEATHER_CARD_IDS);
 

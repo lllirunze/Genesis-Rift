@@ -1,11 +1,8 @@
 import type { CubeCoordinate, TileId } from "@genesis-rift/shared";
 
 import { type CubeCoordinateKey, getCubeCoordinateKey } from "../geometry/cube-coordinate-key.ts";
-import { BASE_MAP_MAX_RING } from "../geometry/cube-coordinate.ts";
-import {
-  BASE_MAP_TILE_COUNT,
-  generateBaseMapCoordinates,
-} from "../generation/generate-base-map-coordinates.ts";
+import { generateBaseMapCoordinates } from "../generation/generate-base-map-coordinates.ts";
+import { BASE_MAP_MAX_RING, BASE_MAP_TILE_COUNT } from "../map-config.ts";
 import { createHexTile, type HexTile } from "./hex-tile.ts";
 
 export class HexMap {

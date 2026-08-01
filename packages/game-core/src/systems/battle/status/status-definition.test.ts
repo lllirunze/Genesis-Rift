@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  PERMANENT_STATUS_DURATION_TURNS,
   validateStatusDefinition,
   validateStatusDefinitions,
   type StatusDefinition,
 } from "./status-definition.ts";
+import { PERMANENT_STATUS_DURATION_TURNS } from "./status-config.ts";
 
 const STATUS_DEFINITION: StatusDefinition = {
   definitionId: "status.wind-blessing",

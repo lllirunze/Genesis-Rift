@@ -1,6 +1,5 @@
 import type { PrimaryAttribute, PrimaryAttributes } from "../attributes/primary-attributes.ts";
-
-export const RACE_NAMES = ["human", "divine", "demon", "yokai"] as const;
+import { RACE_NAMES } from "./race-name-config.ts";
 
 export type RaceName = (typeof RACE_NAMES)[number];
 export type RaceConfigId = `race.${RaceName}`;

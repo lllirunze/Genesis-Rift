@@ -4,7 +4,7 @@ import {
   type StandardQuality,
 } from "@genesis-rift/shared";
 
-export const EQUIPMENT_TYPES = ["weapon", "armor", "shoes", "accessory", "special"] as const;
+import { EQUIPMENT_TYPES } from "./equipment-config.ts";
 
 export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
 

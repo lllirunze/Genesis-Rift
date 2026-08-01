@@ -1,17 +1,13 @@
 import type { PlayerId } from "@genesis-rift/shared";
 
-import type { HandCardDefinition, HandCardDefinitionCatalog } from "./hand-card-definition.ts";
+import { DEFAULT_HAND_SIZE_LIMIT } from "./hand-card-config.ts";
+import type { HandCardCatalog, HandCardDefinition, HandCardId } from "./hand-card-definition.ts";
 import { validateHandCardDefinition } from "./hand-card-definition.ts";
-import type { HandCardInstance } from "./hand-card-instance.ts";
-import { validateHandCardInstance } from "./hand-card-instance.ts";
-
-export const DEFAULT_HAND_SIZE_LIMIT = 6;
-export const DEFAULT_INITIAL_HAND_SIZE = 2;
 
 export interface PlayerHandState {
   readonly playerId: PlayerId;
   readonly sizeLimit: number;
-  readonly handCards: readonly HandCardInstance[];
+  readonly handCardIds: readonly HandCardId[];
 }
 
 export interface HandSizeStatus {
@@ -28,13 +24,13 @@ export interface AddHandCardToHandResult {
 
 export interface RemoveHandCardFromHandResult {
   readonly state: PlayerHandState;
-  readonly card: HandCardInstance;
+  readonly cardId: HandCardId;
   readonly sizeStatus: HandSizeStatus;
 }
 
 export interface ResolveHandCardResult {
   readonly state: PlayerHandState;
-  readonly card: HandCardInstance;
+  readonly cardId: HandCardId;
   readonly destination: "discard" | "hand";
   readonly sizeStatus: HandSizeStatus;
 }
@@ -48,33 +44,29 @@ export function createPlayerHandState(
   return {
     playerId,
     sizeLimit,
-    handCards: [],
+    handCardIds: [],
   };
 }
 
-export function validatePlayerHandState(
-  state: PlayerHandState,
-  definitions: HandCardDefinitionCatalog,
-): void {
+export function validatePlayerHandState(state: PlayerHandState, catalog: HandCardCatalog): void {
   assertNonNegativeSafeInteger(state.sizeLimit, "sizeLimit");
-  const instanceIds = new Set<string>();
+  const uniqueCardIds = new Set<HandCardId>();
 
-  for (const card of state.handCards) {
-    if (instanceIds.has(card.instanceId)) {
-      throw new Error(`Duplicate hand card instance id: ${card.instanceId}`);
+  for (const cardId of state.handCardIds) {
+    if (uniqueCardIds.has(cardId)) {
+      throw new Error(`Duplicate hand card id: ${cardId}`);
     }
 
-    const definition = getDefinition(definitions, card.definitionId);
-    validateHandCardInstance(card, definition);
-    instanceIds.add(card.instanceId);
+    getCard(catalog, cardId);
+    uniqueCardIds.add(cardId);
   }
 }
 
 export function getHandSizeStatus(state: PlayerHandState): HandSizeStatus {
-  const requiredDiscardCount = Math.max(0, state.handCards.length - state.sizeLimit);
+  const requiredDiscardCount = Math.max(0, state.handCardIds.length - state.sizeLimit);
 
   return {
-    cardCount: state.handCards.length,
+    cardCount: state.handCardIds.length,
     sizeLimit: state.sizeLimit,
     requiredDiscardCount,
     isOverLimit: requiredDiscardCount > 0,
@@ -83,10 +75,10 @@ export function getHandSizeStatus(state: PlayerHandState): HandSizeStatus {
 
 export function setHandSizeLimit(
   state: PlayerHandState,
-  definitions: HandCardDefinitionCatalog,
+  catalog: HandCardCatalog,
   sizeLimit: number,
 ): AddHandCardToHandResult {
-  validatePlayerHandState(state, definitions);
+  validatePlayerHandState(state, catalog);
   assertNonNegativeSafeInteger(sizeLimit, "sizeLimit");
   const nextState = { ...state, sizeLimit };
 
@@ -98,18 +90,17 @@ export function setHandSizeLimit(
 
 export function addHandCardToHand(
   state: PlayerHandState,
-  card: HandCardInstance,
-  definitions: HandCardDefinitionCatalog,
+  cardId: HandCardId,
+  catalog: HandCardCatalog,
 ): AddHandCardToHandResult {
-  validatePlayerHandState(state, definitions);
-  const definition = getDefinition(definitions, card.definitionId);
-  validateHandCardInstance(card, definition);
+  validatePlayerHandState(state, catalog);
+  getCard(catalog, cardId);
 
-  if (containsInstance(state, card.instanceId)) {
-    throw new Error(`Duplicate hand card instance id: ${card.instanceId}`);
+  if (state.handCardIds.includes(cardId)) {
+    throw new Error(`Duplicate hand card id: ${cardId}`);
   }
 
-  const nextState = { ...state, handCards: [...state.handCards, card] };
+  const nextState = { ...state, handCardIds: [...state.handCardIds, cardId] };
 
   return {
     state: nextState,
@@ -119,84 +110,77 @@ export function addHandCardToHand(
 
 export function discardHandCard(
   state: PlayerHandState,
-  instanceId: string,
-  definitions: HandCardDefinitionCatalog,
+  cardId: HandCardId,
+  catalog: HandCardCatalog,
 ): RemoveHandCardFromHandResult {
-  validatePlayerHandState(state, definitions);
-  const card = getCardFromHand(state, instanceId);
+  validatePlayerHandState(state, catalog);
+  getCardIdFromHand(state, cardId);
   const nextState = {
     ...state,
-    handCards: state.handCards.filter((candidate) => candidate.instanceId !== instanceId),
+    handCardIds: state.handCardIds.filter((candidate) => candidate !== cardId),
   };
 
   return {
     state: nextState,
-    card,
+    cardId,
     sizeStatus: getHandSizeStatus(nextState),
   };
 }
 
 export function resolveHandCardUse(
   state: PlayerHandState,
-  instanceId: string,
-  definitions: HandCardDefinitionCatalog,
+  cardId: HandCardId,
+  catalog: HandCardCatalog,
 ): ResolveHandCardResult {
-  validatePlayerHandState(state, definitions);
-  const card = getCardFromHand(state, instanceId);
-  const definition = getDefinition(definitions, card.definitionId);
+  validatePlayerHandState(state, catalog);
+  getCardIdFromHand(state, cardId);
+  const card = getCard(catalog, cardId);
 
-  if (definition.destinationAfterResolution === "hand") {
+  if (card.destinationAfterResolution === "hand") {
     return {
       state,
-      card,
+      cardId,
       destination: "hand",
       sizeStatus: getHandSizeStatus(state),
     };
   }
 
-  const result = discardHandCard(state, instanceId, definitions);
+  const result = discardHandCard(state, cardId, catalog);
 
   return {
     state: result.state,
-    card,
+    cardId,
     destination: "discard",
     sizeStatus: result.sizeStatus,
   };
 }
 
-export function getHandCardFromHand(
+export function getHandCardIdFromHand(
   state: PlayerHandState,
-  instanceId: string,
-): HandCardInstance | null {
-  return state.handCards.find((card) => card.instanceId === instanceId) ?? null;
+  cardId: HandCardId,
+): HandCardId | null {
+  return state.handCardIds.includes(cardId) ? cardId : null;
 }
 
-function getCardFromHand(state: PlayerHandState, instanceId: string): HandCardInstance {
-  const card = getHandCardFromHand(state, instanceId);
+function getCardIdFromHand(state: PlayerHandState, cardId: HandCardId): HandCardId {
+  const handCardId = getHandCardIdFromHand(state, cardId);
 
-  if (card === null) {
-    throw new Error(`Hand card is not in hand: ${instanceId}`);
+  if (handCardId === null) {
+    throw new Error(`Hand card is not in hand: ${cardId}`);
   }
 
+  return handCardId;
+}
+
+function getCard(catalog: HandCardCatalog, cardId: HandCardId): HandCardDefinition {
+  const card = catalog[cardId];
+
+  if (card === undefined) {
+    throw new Error(`Missing hand card in catalog: ${cardId}`);
+  }
+
+  validateHandCardDefinition(card);
   return card;
-}
-
-function containsInstance(state: PlayerHandState, instanceId: string): boolean {
-  return state.handCards.some((card) => card.instanceId === instanceId);
-}
-
-function getDefinition(
-  definitions: HandCardDefinitionCatalog,
-  definitionId: string,
-): HandCardDefinition {
-  const definition = definitions[definitionId];
-
-  if (definition === undefined) {
-    throw new Error(`Missing hand card definition: ${definitionId}`);
-  }
-
-  validateHandCardDefinition(definition);
-  return definition;
 }
 
 function assertNonNegativeSafeInteger(value: number, field: string): void {

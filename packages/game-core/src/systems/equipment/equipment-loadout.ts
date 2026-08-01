@@ -1,16 +1,8 @@
 import type { PlayerId } from "@genesis-rift/shared";
 
+import { EQUIPMENT_SLOTS } from "./equipment-config.ts";
 import type { EquipmentDefinition, EquipmentType } from "./equipment-definition.ts";
 import type { EquipmentInstance } from "./equipment-instance.ts";
-
-export const EQUIPMENT_SLOTS = [
-  "weapon",
-  "armor",
-  "shoes",
-  "accessory1",
-  "accessory2",
-  "special",
-] as const;
 
 export type EquipmentSlot = (typeof EQUIPMENT_SLOTS)[number];
 

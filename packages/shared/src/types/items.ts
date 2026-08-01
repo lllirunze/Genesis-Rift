@@ -1,14 +1,5 @@
 import type { Quality } from "./quality.ts";
-
-export const ITEM_CATEGORIES = [
-  "currency",
-  "material",
-  "consumable",
-  "equipment",
-  "blueprint",
-  "quest",
-  "special",
-] as const;
+import { ITEM_CATEGORIES } from "../config/item-config.ts";
 
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
@@ -23,5 +14,3 @@ export interface ItemDefinition {
 }
 
 export type ItemDefinitionCatalog = Readonly<Record<string, ItemDefinition>>;
-
-export const COIN_ITEM_DEFINITION_ID = "item.coin";

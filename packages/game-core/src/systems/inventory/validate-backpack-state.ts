@@ -1,4 +1,4 @@
-import { isBackpackLevel } from "./backpack-config.ts";
+import { isBackpackLevel } from "./backpack-definition.ts";
 import { getItemDefinition, isBackpackPositionAvailable } from "./backpack-geometry.ts";
 import type { BackpackEntry, BackpackState } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";

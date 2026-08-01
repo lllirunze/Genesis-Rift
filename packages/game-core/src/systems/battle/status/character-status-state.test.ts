@@ -13,11 +13,8 @@ import {
   validateCharacterStatusState,
   type CharacterStatusState,
 } from "./character-status-state.ts";
-import {
-  PERMANENT_STATUS_DURATION_TURNS,
-  type StatusDefinition,
-  type StatusDefinitionCatalog,
-} from "./status-definition.ts";
+import { type StatusDefinition, type StatusDefinitionCatalog } from "./status-definition.ts";
+import { PERMANENT_STATUS_DURATION_TURNS } from "./status-config.ts";
 
 const FOCUS: StatusDefinition = {
   definitionId: "status.focus",

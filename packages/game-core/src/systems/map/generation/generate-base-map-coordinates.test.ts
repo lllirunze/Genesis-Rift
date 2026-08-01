@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { getCubeCoordinateKey } from "../geometry/cube-coordinate-key.ts";
 import { getCubeCoordinateRing } from "../geometry/cube-coordinate.ts";
+import { BASE_MAP_TILE_COUNT } from "../map-config.ts";
 import {
-  BASE_MAP_TILE_COUNT,
   generateBaseMapCoordinates,
   getCompleteHexMapTileCount,
 } from "./generate-base-map-coordinates.ts";

@@ -1,0 +1,1 @@
+export const INITIAL_PRIMARY_ATTRIBUTE_TOTAL = 25;

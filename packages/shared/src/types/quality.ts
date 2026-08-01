@@ -1,28 +1,12 @@
-export const STANDARD_QUALITY_LEVELS = [
-  "common",
-  "excellent",
-  "rare",
-  "epic",
-  "legendary",
-] as const;
+import {
+  QUALITY_LEVELS,
+  RESERVED_QUALITY_LEVELS,
+  STANDARD_QUALITY_LEVELS,
+} from "../config/quality-config.ts";
 
 export type StandardQuality = (typeof STANDARD_QUALITY_LEVELS)[number];
-
-export const RESERVED_QUALITY_LEVELS = ["mythic"] as const;
-
 export type ReservedQuality = (typeof RESERVED_QUALITY_LEVELS)[number];
-
-export const QUALITY_LEVELS = [...STANDARD_QUALITY_LEVELS, ...RESERVED_QUALITY_LEVELS] as const;
-
-export type Quality = StandardQuality | ReservedQuality;
-
-export const QUALITY_COLORS = {
-  common: "#9CA3AF",
-  excellent: "#22C55E",
-  rare: "#3B82F6",
-  epic: "#A855F7",
-  legendary: "#F97316",
-} as const satisfies Readonly<Record<StandardQuality, string>>;
+export type Quality = (typeof QUALITY_LEVELS)[number];
 
 export function isQuality(value: unknown): value is Quality {
   return typeof value === "string" && QUALITY_LEVELS.some((quality) => quality === value);

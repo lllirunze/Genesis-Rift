@@ -1,10 +1,9 @@
-import { RANDOM_ALGORITHM_ID } from "./seed-deriver.ts";
+import { MAX_RANDOM_INTEGER_RANGE, RANDOM_ALGORITHM_ID } from "./random-config.ts";
 import type { RandomStreamSeed } from "./random-seed.ts";
 import { createRandomStreamSeed } from "./random-seed.ts";
 import type { RandomStreamType } from "./random-stream-type.ts";
 import { isRandomStreamType } from "./random-stream-type.ts";
 
-export const MAX_RANDOM_INTEGER_RANGE = 0x1_0000_0000;
 const UINT64_MASK = 0xffff_ffff_ffff_ffffn;
 const SPLITMIX_INCREMENT = 0x9e37_79b9_7f4a_7c15n;
 const SPLITMIX_MULTIPLIER_ONE = 0xbf58_476d_1ce4_e5b9n;

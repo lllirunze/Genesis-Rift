@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { applyStatus } from "./apply-status.ts";
 import { removeStatusStacks } from "./remove-status-stacks.ts";
-import { PERMANENT_STATUS_DURATION_TURNS, type StatusDefinition } from "./status-definition.ts";
+import { PERMANENT_STATUS_DURATION_TURNS } from "./status-config.ts";
+import type { StatusDefinition } from "./status-definition.ts";
 import { createStatusInstance } from "./status-instance.ts";
 
 const DEFINITION: StatusDefinition = {

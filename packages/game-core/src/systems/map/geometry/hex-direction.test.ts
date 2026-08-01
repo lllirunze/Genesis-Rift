@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { HEX_MAP_CENTER, createCubeCoordinate } from "./cube-coordinate.ts";
+import { HEX_DIRECTION_DEFINITIONS, HEX_DIRECTIONS, HEX_MAP_CENTER } from "../map-config.ts";
+import { createCubeCoordinate } from "./cube-coordinate.ts";
 import {
-  HEX_DIRECTION_DEFINITIONS,
-  HEX_DIRECTIONS,
   areCubeCoordinatesAdjacent,
   getAdjacentRingMovementRelation,
   getNeighborCoordinate,

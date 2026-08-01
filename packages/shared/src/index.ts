@@ -1,3 +1,7 @@
+export * from "./config/attribute-config.ts";
+export * from "./config/item-config.ts";
+export * from "./config/protocol-config.ts";
+export * from "./config/quality-config.ts";
 export * from "./protocol/lan-events.ts";
 export * from "./types/attributes.ts";
 export * from "./types/character-resources.ts";

@@ -1,8 +1,6 @@
 import type { PrimaryAttribute } from "@genesis-rift/shared";
 
-export const PERMANENT_STATUS_DURATION_TURNS = 999_999;
-
-export const STATUS_KINDS = ["buff", "debuff"] as const;
+import { STATUS_KINDS } from "./status-config.ts";
 
 export type StatusKind = (typeof STATUS_KINDS)[number];
 

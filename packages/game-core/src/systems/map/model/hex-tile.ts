@@ -1,13 +1,7 @@
 import type { CubeCoordinate, TileId } from "@genesis-rift/shared";
 
-import {
-  BASE_MAP_MAX_RING,
-  createCubeCoordinate,
-  getCubeCoordinateRing,
-} from "../geometry/cube-coordinate.ts";
-
-export const MIN_TILE_ELEVATION = -3;
-export const MAX_TILE_ELEVATION = 20;
+import { createCubeCoordinate, getCubeCoordinateRing } from "../geometry/cube-coordinate.ts";
+import { BASE_MAP_MAX_RING, MAX_TILE_ELEVATION, MIN_TILE_ELEVATION } from "../map-config.ts";
 
 export interface HexTile {
   readonly tileId: TileId;

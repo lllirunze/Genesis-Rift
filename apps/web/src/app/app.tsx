@@ -1,4 +1,4 @@
-import { architectureLayers } from "./architecture-layers.ts";
+import { ARCHITECTURE_LAYERS } from "./architecture-layer-config.ts";
 
 export function App() {
   return (
@@ -23,7 +23,7 @@ export function App() {
         </div>
 
         <div className="layer-grid">
-          {architectureLayers.map((layer, index) => (
+          {ARCHITECTURE_LAYERS.map((layer, index) => (
             <article className="layer-card" key={layer.name}>
               <span className="layer-index">0{index + 1}</span>
               <p className="layer-path">{layer.path}</p>

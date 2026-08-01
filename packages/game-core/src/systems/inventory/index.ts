@@ -1,4 +1,5 @@
 export * from "./backpack-config.ts";
+export * from "./backpack-definition.ts";
 export * from "./backpack-geometry.ts";
 export * from "./backpack-operations.ts";
 export * from "./backpack-stacking.ts";
@@ -6,6 +7,7 @@ export * from "./backpack-state.ts";
 export * from "./consume-backpack-item.ts";
 export * from "./item-definition.ts";
 export * from "./item-instance.ts";
+export * from "./inventory-config.ts";
 export * from "./player-inventory-state.ts";
 export * from "./receive-item.ts";
 export * from "./temporary-pickup.ts";

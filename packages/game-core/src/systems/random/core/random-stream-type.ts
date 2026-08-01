@@ -1,16 +1,4 @@
-export const RANDOM_STREAM_TYPES = [
-  "map",
-  "combat",
-  "loot",
-  "event",
-  "weather",
-  "npc",
-  "quest",
-  "mission",
-  "deck",
-  "reincarnation",
-  "contract",
-] as const;
+import { RANDOM_STREAM_TYPES } from "./random-config.ts";
 
 export type RandomStreamType = (typeof RANDOM_STREAM_TYPES)[number];
 

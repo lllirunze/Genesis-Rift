@@ -1,6 +1,7 @@
 import type { SystemScaffold } from "../system-scaffold.ts";
 
 export * from "./core/random-manager.ts";
+export * from "./core/random-config.ts";
 export * from "./core/random-seed.ts";
 export * from "./core/random-stream.ts";
 export * from "./core/random-stream-type.ts";

@@ -1,112 +1,101 @@
-import type { HandCardDefinition, HandCardDefinitionCatalog } from "./hand-card-definition.ts";
+import type { HandCardCatalog, HandCardDefinition, HandCardId } from "./hand-card-definition.ts";
 import { validateHandCardDefinition } from "./hand-card-definition.ts";
-import type { HandCardInstance } from "./hand-card-instance.ts";
-import { validateHandCardInstance } from "./hand-card-instance.ts";
 
 export interface HandCardDeckState {
   readonly deckId: string;
-  readonly drawPile: readonly HandCardInstance[];
-  readonly discardPile: readonly HandCardInstance[];
+  readonly drawPile: readonly HandCardId[];
+  readonly discardPile: readonly HandCardId[];
 }
 
 export interface DrawHandCardResult {
   readonly state: HandCardDeckState;
-  readonly card: HandCardInstance | null;
+  readonly cardId: HandCardId | null;
 }
 
 export function createHandCardDeckState(
   deckId: string,
-  cards: readonly HandCardInstance[],
-  definitions: HandCardDefinitionCatalog,
+  cardIds: readonly HandCardId[],
+  catalog: HandCardCatalog,
 ): HandCardDeckState {
   assertNonEmptyString(deckId, "deckId");
-  validateCardCollection(cards, definitions);
+  validateCardIds(cardIds, catalog);
 
   return {
     deckId,
-    drawPile: [...cards],
+    drawPile: [...cardIds],
     discardPile: [],
   };
 }
 
 export function validateHandCardDeckState(
   state: HandCardDeckState,
-  definitions: HandCardDefinitionCatalog,
+  catalog: HandCardCatalog,
 ): void {
   assertNonEmptyString(state.deckId, "deckId");
-  validateCardCollection([...state.drawPile, ...state.discardPile], definitions);
+  validateCardIds([...state.drawPile, ...state.discardPile], catalog);
 }
 
 export function drawHandCardFromDeck(
   state: HandCardDeckState,
-  definitions: HandCardDefinitionCatalog,
+  catalog: HandCardCatalog,
 ): DrawHandCardResult {
-  validateHandCardDeckState(state, definitions);
-  const [card, ...drawPile] = state.drawPile;
+  validateHandCardDeckState(state, catalog);
+  const [cardId, ...drawPile] = state.drawPile;
 
-  if (card === undefined) {
-    return { state, card: null };
+  if (cardId === undefined) {
+    return { state, cardId: null };
   }
 
   return {
     state: { ...state, drawPile },
-    card,
+    cardId,
   };
 }
 
 export function addHandCardToSharedDiscardPile(
   state: HandCardDeckState,
-  card: HandCardInstance,
-  definitions: HandCardDefinitionCatalog,
+  cardId: HandCardId,
+  catalog: HandCardCatalog,
 ): HandCardDeckState {
-  validateHandCardDeckState(state, definitions);
-  const definition = getDefinition(definitions, card.definitionId);
-  validateHandCardInstance(card, definition);
+  validateHandCardDeckState(state, catalog);
+  getCard(catalog, cardId);
 
-  if (containsInstance(state, card.instanceId)) {
-    throw new Error(`Duplicate hand card instance id in shared piles: ${card.instanceId}`);
+  if (containsCard(state, cardId)) {
+    throw new Error(`Duplicate hand card id in shared piles: ${cardId}`);
   }
 
   return {
     ...state,
-    discardPile: [...state.discardPile, card],
+    discardPile: [...state.discardPile, cardId],
   };
 }
 
-function validateCardCollection(
-  cards: readonly HandCardInstance[],
-  definitions: HandCardDefinitionCatalog,
-): void {
-  const instanceIds = new Set<string>();
+function validateCardIds(cardIds: readonly HandCardId[], catalog: HandCardCatalog): void {
+  const uniqueCardIds = new Set<HandCardId>();
 
-  for (const card of cards) {
-    if (instanceIds.has(card.instanceId)) {
-      throw new Error(`Duplicate hand card instance id in shared piles: ${card.instanceId}`);
+  for (const cardId of cardIds) {
+    if (uniqueCardIds.has(cardId)) {
+      throw new Error(`Duplicate hand card id in shared piles: ${cardId}`);
     }
 
-    const definition = getDefinition(definitions, card.definitionId);
-    validateHandCardInstance(card, definition);
-    instanceIds.add(card.instanceId);
+    getCard(catalog, cardId);
+    uniqueCardIds.add(cardId);
   }
 }
 
-function containsInstance(state: HandCardDeckState, instanceId: string): boolean {
-  return [...state.drawPile, ...state.discardPile].some((card) => card.instanceId === instanceId);
+function containsCard(state: HandCardDeckState, cardId: HandCardId): boolean {
+  return [...state.drawPile, ...state.discardPile].includes(cardId);
 }
 
-function getDefinition(
-  definitions: HandCardDefinitionCatalog,
-  definitionId: string,
-): HandCardDefinition {
-  assertNonEmptyString(definitionId, "definitionId");
-  const definition = definitions[definitionId];
+function getCard(catalog: HandCardCatalog, cardId: HandCardId): HandCardDefinition {
+  const card = catalog[cardId];
 
-  if (definition === undefined) {
-    throw new Error(`Missing hand card definition in deck: ${definitionId}`);
+  if (card === undefined) {
+    throw new Error(`Missing hand card in catalog: ${cardId}`);
   }
 
-  validateHandCardDefinition(definition);
-  return definition;
+  validateHandCardDefinition(card);
+  return card;
 }
 
 function assertNonEmptyString(value: string, field: string): void {

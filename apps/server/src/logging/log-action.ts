@@ -1,22 +1,4 @@
-export const LOG_ACTIONS = [
-  "System",
-  "Player",
-  "Battle",
-  "Move",
-  "Map",
-  "Item",
-  "Equip",
-  "Level",
-  "Quest",
-  "Weather",
-  "Hand",
-  "Npc",
-  "Shop",
-  "Random",
-  "Save",
-  "Load",
-  "Network",
-] as const;
+import { LOG_ACTIONS } from "./log-config.ts";
 
 export type LogAction = (typeof LOG_ACTIONS)[number];
 

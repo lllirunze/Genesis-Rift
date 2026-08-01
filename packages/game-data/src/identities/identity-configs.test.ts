@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { INITIAL_PRIMARY_ATTRIBUTE_TOTAL } from "../attributes/primary-attributes.ts";
+import { INITIAL_PRIMARY_ATTRIBUTE_TOTAL } from "../attributes/primary-attribute-config.ts";
 import { validateIdentityConfigs } from "../validation/validate-identity-configs.ts";
 import { IDENTITY_CONFIG_LIST, IDENTITY_CONFIGS } from "./identity-configs.ts";
 

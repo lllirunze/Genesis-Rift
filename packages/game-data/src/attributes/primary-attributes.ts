@@ -7,8 +7,6 @@ export {
   type PrimaryAttributeOffset,
 } from "@genesis-rift/shared";
 
-export const INITIAL_PRIMARY_ATTRIBUTE_TOTAL = 25;
-
 export function getPrimaryAttributeTotal(attributes: PrimaryAttributes): number {
   return PRIMARY_ATTRIBUTE_KEYS.reduce((total, key) => total + attributes[key], 0);
 }

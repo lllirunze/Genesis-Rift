@@ -4,7 +4,8 @@ import type { LogAction } from "./log-action.ts";
 import { LOG_CONFIG } from "./log-config.ts";
 import { formatLogRecord } from "./log-formatter.ts";
 import type { LogLevel } from "./log-level.ts";
-import { LogRecordFactory, SYSTEM_LOG_TARGET, type LogTarget } from "./log-record.ts";
+import { SYSTEM_LOG_TARGET } from "./log-config.ts";
+import { LogRecordFactory, type LogTarget } from "./log-record.ts";
 import type { LogWriter } from "./log-writer.ts";
 
 export interface LogEvent {

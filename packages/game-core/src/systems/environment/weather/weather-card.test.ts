@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  getWeatherCardTriggerType,
   STANDARD_WEATHER_CARDS,
   WEATHER_CARD_RANKS,
   WEATHER_CARD_SUITS,
-} from "./weather-card.ts";
+} from "./weather-config.ts";
+import { getWeatherCardTriggerType } from "./weather-card.ts";
 
 describe("standard weather cards", () => {
   it("contains every suited A-K card and exactly two jokers", () => {

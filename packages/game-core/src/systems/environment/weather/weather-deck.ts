@@ -1,15 +1,12 @@
 import type { RandomStream } from "../../random/core/random-stream.ts";
+import { STANDARD_WEATHER_CARD_IDS, WEATHER_DECK_VERSION } from "./weather-config.ts";
 import {
   getWeatherCardTriggerType,
   isJokerWeatherCard,
   isStandardWeatherCardId,
-  STANDARD_WEATHER_CARD_IDS,
   type WeatherCardId,
   type WeatherCardTriggerType,
 } from "./weather-card.ts";
-
-export const WEATHER_DECK_VERSION = "standard-54-v1" as const;
-export const WEATHER_DECK_SCOPE_ID = "weather-deck";
 
 export interface WeatherDeckState {
   readonly version: typeof WEATHER_DECK_VERSION;

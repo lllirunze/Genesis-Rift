@@ -1,6 +1,6 @@
 import type { PlayerId } from "@genesis-rift/shared";
 
-import type { BackpackLevel } from "./backpack-config.ts";
+import type { BackpackLevel } from "./backpack-definition.ts";
 import type { ItemInstance } from "./item-instance.ts";
 
 export interface BackpackPosition {

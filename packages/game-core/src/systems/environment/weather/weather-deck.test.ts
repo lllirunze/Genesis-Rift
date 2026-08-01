@@ -4,16 +4,15 @@ import { RandomManager } from "../../random/core/random-manager.ts";
 import { createMasterSeed } from "../../random/core/random-seed.ts";
 import type { RandomStream } from "../../random/core/random-stream.ts";
 import {
-  isJokerWeatherCard,
   STANDARD_WEATHER_CARD_IDS,
-  type WeatherCardId,
-} from "./weather-card.ts";
+  WEATHER_DECK_SCOPE_ID,
+  WEATHER_DECK_VERSION,
+} from "./weather-config.ts";
+import { isJokerWeatherCard, type WeatherCardId } from "./weather-card.ts";
 import {
   createWeatherDeck,
   drawRecoveryWeatherCard,
   drawWeatherCard,
-  WEATHER_DECK_SCOPE_ID,
-  WEATHER_DECK_VERSION,
   type WeatherDeckState,
 } from "./weather-deck.ts";
 

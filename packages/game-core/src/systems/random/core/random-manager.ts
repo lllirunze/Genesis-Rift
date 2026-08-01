@@ -1,8 +1,9 @@
 import { RandomStream, type RandomStreamState } from "./random-stream.ts";
 import type { MasterSeed } from "./random-seed.ts";
 import { createMasterSeed } from "./random-seed.ts";
+import { RANDOM_ALGORITHM_ID } from "./random-config.ts";
 import type { RandomStreamType } from "./random-stream-type.ts";
-import { deriveRandomStreamSeed, RANDOM_ALGORITHM_ID } from "./seed-deriver.ts";
+import { deriveRandomStreamSeed } from "./seed-deriver.ts";
 
 export interface RandomManagerState {
   readonly algorithmId: typeof RANDOM_ALGORITHM_ID;

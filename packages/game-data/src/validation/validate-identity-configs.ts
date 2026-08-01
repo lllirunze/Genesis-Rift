@@ -1,8 +1,8 @@
 import {
   getPrimaryAttributeTotal,
-  INITIAL_PRIMARY_ATTRIBUTE_TOTAL,
   PRIMARY_ATTRIBUTE_KEYS,
 } from "../attributes/primary-attributes.ts";
+import { INITIAL_PRIMARY_ATTRIBUTE_TOTAL } from "../attributes/primary-attribute-config.ts";
 import type { IdentityConfig } from "../identities/identity-config.ts";
 
 export function validateIdentityConfig(config: IdentityConfig): void {

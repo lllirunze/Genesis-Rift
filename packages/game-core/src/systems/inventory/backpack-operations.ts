@@ -1,4 +1,4 @@
-import { getBackpackUsableArea } from "./backpack-config.ts";
+import { getBackpackUsableArea } from "./backpack-definition.ts";
 import { getItemDefinition, isBackpackPositionAvailable } from "./backpack-geometry.ts";
 import { getBackpackEntry, type BackpackPosition, type BackpackState } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";

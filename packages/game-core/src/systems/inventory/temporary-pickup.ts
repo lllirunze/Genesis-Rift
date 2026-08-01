@@ -9,11 +9,8 @@ import type { BackpackPosition } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import type { ItemInstance } from "./item-instance.ts";
 import { validateItemInstance } from "./item-instance.ts";
-import {
-  TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS,
-  type PlayerInventoryState,
-  type TemporaryPickup,
-} from "./player-inventory-state.ts";
+import { TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS } from "./inventory-config.ts";
+import type { PlayerInventoryState, TemporaryPickup } from "./player-inventory-state.ts";
 
 export interface RemoveTemporaryPickupResult {
   readonly inventory: PlayerInventoryState;
