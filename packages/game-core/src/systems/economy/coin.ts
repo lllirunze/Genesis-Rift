@@ -17,13 +17,13 @@ export interface ReceiveCoinInput {
 }
 
 export interface SpendCoinInput {
-  readonly amount: number;
+  readonly coinQuantity: number;
   readonly reasonId: string;
 }
 
 export interface CoinPaymentRecord {
   readonly playerId: PlayerId;
-  readonly amount: number;
+  readonly coinQuantity: number;
   readonly reasonId: string;
   readonly consumedItemInstanceIds: readonly string[];
 }
@@ -52,9 +52,9 @@ export function getCoinBalance(inventory: PlayerInventoryState): number {
   return balance;
 }
 
-export function canAffordCoin(inventory: PlayerInventoryState, amount: number): boolean {
-  assertNonNegativeSafeInteger(amount, "amount");
-  return getCoinBalance(inventory) >= amount;
+export function canAffordCoin(inventory: PlayerInventoryState, coinQuantity: number): boolean {
+  assertNonNegativeSafeInteger(coinQuantity, "coinQuantity");
+  return getCoinBalance(inventory) >= coinQuantity;
 }
 
 export function receiveCoin(
@@ -80,21 +80,21 @@ export function receiveCoin(
 }
 
 export function spendCoin(inventory: PlayerInventoryState, input: SpendCoinInput): SpendCoinResult {
-  assertNonNegativeSafeInteger(input.amount, "amount");
+  assertNonNegativeSafeInteger(input.coinQuantity, "coinQuantity");
   assertNonEmptyString(input.reasonId, "reasonId");
 
   const currentBalance = getCoinBalance(inventory);
 
-  if (currentBalance < input.amount) {
+  if (currentBalance < input.coinQuantity) {
     throw new RangeError(
-      `Insufficient Coin: required ${input.amount}, available ${currentBalance}`,
+      `Insufficient Coin: required ${input.coinQuantity}, available ${currentBalance}`,
     );
   }
 
   const consumption = consumeBackpackItemQuantity(
     inventory.backpack,
     COIN_ITEM_DEFINITION_ID,
-    input.amount,
+    input.coinQuantity,
   );
 
   return {
@@ -105,7 +105,7 @@ export function spendCoin(inventory: PlayerInventoryState, input: SpendCoinInput
     remainingBalance: consumption.remainingDefinitionQuantity,
     payment: {
       playerId: inventory.backpack.playerId,
-      amount: input.amount,
+      coinQuantity: input.coinQuantity,
       reasonId: input.reasonId,
       consumedItemInstanceIds: consumption.consumedItemInstanceIds,
     },

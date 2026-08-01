@@ -36,6 +36,30 @@ const DEFINITIONS = {
 } as const satisfies ItemDefinitionCatalog;
 
 describe("Coin economy", () => {
+  it("treats each stored item quantity as exactly one Coin", () => {
+    const received = receiveCoin(
+      createPlayerInventory(PLAYER_ID),
+      {
+        quantity: 7,
+        sourceId: "rule.unit-value",
+        newItemInstanceIds: ["coin-1", "coin-2"],
+      },
+      DEFINITIONS,
+    ).inventory;
+
+    expect(received.backpack.entries.map((entry) => entry.item.quantity)).toEqual([5, 2]);
+    expect(getCoinBalance(received)).toBe(7);
+
+    const payment = spendCoin(received, {
+      coinQuantity: 3,
+      reasonId: "rule.unit-value-payment",
+    });
+
+    expect(payment.remainingBalance).toBe(4);
+    expect(getCoinBalance(payment.inventory)).toBe(4);
+    expect(payment.payment.coinQuantity).toBe(3);
+  });
+
   it("receives Coin through the standard item flow and derives balance from backpack stacks", () => {
     const result = receiveCoin(
       createPlayerInventory(PLAYER_ID),
@@ -67,14 +91,14 @@ describe("Coin economy", () => {
       DEFINITIONS,
     ).inventory;
     const result = spendCoin(received, {
-      amount: 7,
+      coinQuantity: 7,
       reasonId: "blacksmith.craft-fee",
     });
 
     expect(result.remainingBalance).toBe(5);
     expect(result.payment).toEqual({
       playerId: PLAYER_ID,
-      amount: 7,
+      coinQuantity: 7,
       reasonId: "blacksmith.craft-fee",
       consumedItemInstanceIds: ["coin-1", "coin-2"],
     });
@@ -98,7 +122,7 @@ describe("Coin economy", () => {
       DEFINITIONS,
     ).inventory;
 
-    expect(() => spendCoin(inventory, { amount: 5, reasonId: "shop.purchase" })).toThrow(
+    expect(() => spendCoin(inventory, { coinQuantity: 5, reasonId: "shop.purchase" })).toThrow(
       "Insufficient Coin",
     );
     expect(getCoinBalance(inventory)).toBe(4);
@@ -132,24 +156,24 @@ describe("Coin economy", () => {
     expect(inventory.temporaryPickup?.item.quantity).toBe(5);
     expect(getCoinBalance(inventory)).toBe(0);
     expect(canAffordCoin(inventory, 1)).toBe(false);
-    expect(() => spendCoin(inventory, { amount: 1, reasonId: "shop.purchase" })).toThrow(
+    expect(() => spendCoin(inventory, { coinQuantity: 1, reasonId: "shop.purchase" })).toThrow(
       "Insufficient Coin",
     );
   });
 
-  it("supports a zero-cost payment and rejects invalid amounts or reasons", () => {
+  it("supports a zero-cost payment and rejects invalid quantities or reasons", () => {
     const inventory = createPlayerInventory(PLAYER_ID);
     const freePayment = spendCoin(inventory, {
-      amount: 0,
+      coinQuantity: 0,
       reasonId: "service.free",
     });
 
     expect(freePayment.remainingBalance).toBe(0);
     expect(freePayment.payment.consumedItemInstanceIds).toEqual([]);
     expect(() => canAffordCoin(inventory, -1)).toThrow(TypeError);
-    expect(() => spendCoin(inventory, { amount: 0.5, reasonId: "service.invalid" })).toThrow(
+    expect(() => spendCoin(inventory, { coinQuantity: 0.5, reasonId: "service.invalid" })).toThrow(
       TypeError,
     );
-    expect(() => spendCoin(inventory, { amount: 0, reasonId: "" })).toThrow(TypeError);
+    expect(() => spendCoin(inventory, { coinQuantity: 0, reasonId: "" })).toThrow(TypeError);
   });
 });
