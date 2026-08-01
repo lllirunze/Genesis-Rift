@@ -8,6 +8,7 @@ export * from "./levels/level-config.ts";
 export * from "./races/race-config.ts";
 export * from "./races/race-configs.ts";
 export * from "./resources/character-resource-definitions.ts";
+export * from "./statuses/status-definitions.ts";
 export * from "./validation/validate-identity-configs.ts";
 export * from "./validation/validate-level-system-config.ts";
 export * from "./validation/validate-race-configs.ts";

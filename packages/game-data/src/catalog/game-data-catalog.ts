@@ -14,4 +14,5 @@ export interface GameDataCatalog {
   readonly events: readonly GameDataEntry[];
   readonly missions: readonly GameDataEntry[];
   readonly maps: readonly GameDataEntry[];
+  readonly statuses: readonly GameDataEntry[];
 }

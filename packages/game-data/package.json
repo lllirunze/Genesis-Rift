@@ -9,6 +9,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@genesis-rift/game-core": "*",
     "@genesis-rift/shared": "*"
   }
 }
