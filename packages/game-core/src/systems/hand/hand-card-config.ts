@@ -58,5 +58,17 @@ export const HAND_CARD_EFFECT_IDS = [
 
 export const HAND_CARD_DESTINATIONS = ["discard", "hand"] as const;
 
+export const HAND_CARD_DRAW_SOURCE_TYPES = [
+  "chest",
+  "event",
+  "destiny",
+  "npcReward",
+  "dungeon",
+  "boss",
+  "shop",
+  "specialLocation",
+  "specialEffect",
+] as const;
+
 export const DEFAULT_HAND_SIZE_LIMIT = 6;
 export const DEFAULT_INITIAL_HAND_SIZE = 2;
