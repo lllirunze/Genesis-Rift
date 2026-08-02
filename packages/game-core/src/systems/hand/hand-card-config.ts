@@ -56,6 +56,8 @@ export const HAND_CARD_EFFECT_IDS = [
   "handCard.draw",
 ] as const;
 
+export const HAND_CARD_EFFECT_EXECUTION_OUTCOMES = ["applied", "skipped"] as const;
+
 export const HAND_CARD_DESTINATIONS = ["discard", "hand"] as const;
 
 export const HAND_CARD_DRAW_SOURCE_TYPES = [
