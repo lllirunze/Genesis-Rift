@@ -6,6 +6,8 @@ export * from "./geometry/cube-coordinate.ts";
 export * from "./geometry/cube-coordinate-key.ts";
 export * from "./geometry/hex-direction.ts";
 export * from "./generation/generate-base-map-coordinates.ts";
+export * from "./movement/movement-config.ts";
+export * from "./movement/normal-movement.ts";
 export * from "./model/hex-map.ts";
 export * from "./model/hex-tile.ts";
 export * from "./model/map-content-definition-catalog.ts";
