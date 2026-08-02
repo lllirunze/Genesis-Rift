@@ -7,6 +7,7 @@ export * from "./identities/identity-configs.ts";
 export * from "./identities/identity-name-config.ts";
 export * from "./items/item-definitions.ts";
 export * from "./levels/level-config.ts";
+export * from "./maps/forced-displacement-definitions.ts";
 export * from "./maps/map-content-definitions.ts";
 export * from "./maps/region-definitions.ts";
 export * from "./maps/terrain-definitions.ts";
