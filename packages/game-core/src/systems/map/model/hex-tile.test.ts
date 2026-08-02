@@ -13,6 +13,7 @@ const MAP_CONTENT_DEFINITIONS = {
       definitionId: "terrain.plain",
       name: "Plain",
       tags: ["land"],
+      movementCostModifier: 0,
     },
   },
   regions: {

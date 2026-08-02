@@ -19,6 +19,7 @@ const MAP_CONTENT_DEFINITIONS = {
       definitionId: "terrain.plain",
       name: "Plain",
       tags: ["land"],
+      movementCostModifier: 0,
     },
   },
   regions: {
@@ -78,6 +79,40 @@ describe("normal movement", () => {
     expect(candidates.some((candidate) => candidate.direction === "NORTH")).toBe(false);
   });
 
+  it("allows elevation differences of three and rejects steeper ascent or descent", () => {
+    const allowedMap = createMap(
+      new Set(),
+      new Map([
+        ["0,1,-1", 3],
+        ["0,-1,1", -3],
+      ]),
+    );
+    const steepMap = createMap(
+      new Set(),
+      new Map([
+        ["0,0,0", 1],
+        ["0,1,-1", 5],
+        ["0,-1,1", -3],
+      ]),
+    );
+
+    expect(getNormalMovementCandidates(allowedMap, { x: 0, y: 0, z: 0 })).toHaveLength(6);
+    expect(evaluateNormalMovementDirections(steepMap, { x: 0, y: 0, z: 0 })).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          direction: "NORTH",
+          available: false,
+          reason: "ELEVATION_DIFFERENCE",
+        }),
+        expect.objectContaining({
+          direction: "SOUTH",
+          available: false,
+          reason: "ELEVATION_DIFFERENCE",
+        }),
+      ]),
+    );
+  });
+
   it("reports outer-ring directions as outside the map", () => {
     const map = createMap();
     const evaluations = evaluateNormalMovementDirections(map, { x: 10, y: -5, z: -5 });
@@ -112,16 +147,20 @@ describe("normal movement", () => {
  * 方法名：createMap
  * 作用：创建并校验该方法所负责的业务对象。
  * @param blockedCoordinateKeys 方法所需的 blockedCoordinateKeys 参数。
+ * @param elevations 按坐标覆盖默认地块高度的映射。
  * @returns 本次处理得到的结果。
  */
-function createMap(blockedCoordinateKeys: ReadonlySet<string> = new Set()): HexMap {
+function createMap(
+  blockedCoordinateKeys: ReadonlySet<string> = new Set(),
+  elevations: ReadonlyMap<string, number> = new Map(),
+): HexMap {
   return HexMap.create(
     generateBaseMapCoordinates().map((coordinate) =>
       createHexTile(
         {
           tileId: `tile.${getCubeCoordinateKey(coordinate)}` as TileId,
           coordinate,
-          elevation: 0,
+          elevation: elevations.get(getCubeCoordinateKey(coordinate)) ?? 0,
           terrainDefinitionId: "terrain.plain",
           regionDefinitionId: "region.wilderness",
           passability: blockedCoordinateKeys.has(getCubeCoordinateKey(coordinate))

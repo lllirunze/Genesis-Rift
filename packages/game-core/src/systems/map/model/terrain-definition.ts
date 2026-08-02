@@ -3,6 +3,8 @@ export interface TerrainDefinition {
   readonly definitionId: string;
   readonly name: string;
   readonly tags: readonly string[];
+  /** 进入该地形时附加的移动成本，只允许配置为 0、1 或 2。 */
+  readonly movementCostModifier: number;
 }
 
 /** 描述以标识索引业务定义的只读注册表。 */
@@ -19,6 +21,19 @@ export function validateTerrainDefinition(definition: TerrainDefinition): void {
   assertNonEmptyString(definition.definitionId, "definitionId");
   assertNonEmptyString(definition.name, "name");
   assertUniqueNonEmptyStrings(definition.tags, "tags");
+
+  if (!Number.isSafeInteger(definition.movementCostModifier)) {
+    throw new TypeError("movementCostModifier must be a safe integer");
+  }
+
+  if (
+    definition.movementCostModifier < MIN_TERRAIN_MOVEMENT_COST_MODIFIER ||
+    definition.movementCostModifier > MAX_TERRAIN_MOVEMENT_COST_MODIFIER
+  ) {
+    throw new RangeError(
+      `movementCostModifier must be between ${MIN_TERRAIN_MOVEMENT_COST_MODIFIER} and ${MAX_TERRAIN_MOVEMENT_COST_MODIFIER}`,
+    );
+  }
 }
 
 /**
@@ -95,3 +110,7 @@ function assertNonEmptyString(value: string, field: string): void {
     throw new TypeError(`${field} must not be empty`);
   }
 }
+import {
+  MAX_TERRAIN_MOVEMENT_COST_MODIFIER,
+  MIN_TERRAIN_MOVEMENT_COST_MODIFIER,
+} from "../map-content-config.ts";

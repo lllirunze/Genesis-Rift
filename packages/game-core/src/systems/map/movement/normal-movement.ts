@@ -11,6 +11,7 @@ import { HEX_DIRECTIONS } from "../map-config.ts";
 import type { HexMap } from "../model/hex-map.ts";
 import type { HexTile } from "../model/hex-tile.ts";
 import { NORMAL_MOVEMENT_UNAVAILABLE_REASONS } from "./movement-config.ts";
+import { MAX_NORMAL_MOVEMENT_ELEVATION_DIFFERENCE } from "./movement-config.ts";
 
 /** 描述当前模块对外公开的业务数据契约。 */
 export type NormalMovementUnavailableReason = (typeof NORMAL_MOVEMENT_UNAVAILABLE_REASONS)[number];
@@ -47,12 +48,10 @@ export function evaluateNormalMovementDirections(
   map: HexMap,
   originCoordinate: CubeCoordinate,
 ): readonly NormalMovementDirectionEvaluation[] {
-  requireOriginTile(map, originCoordinate);
+  const originTile = requireOriginTile(map, originCoordinate);
 
   return Object.freeze(
-    HEX_DIRECTIONS.map((direction) =>
-      evaluateNormalMovementDirection(map, originCoordinate, direction),
-    ),
+    HEX_DIRECTIONS.map((direction) => evaluateNormalMovementDirection(map, originTile, direction)),
   );
 }
 
@@ -60,7 +59,7 @@ export function evaluateNormalMovementDirections(
  * 方法名：getNormalMovementCandidates
  * 作用：读取并返回符合条件的业务数据，不修改输入状态。
  * @param map 方法所需的 map 参数。
- * @param originCoordinate 方法所需的 originCoordinate 参数。
+ * @param originTile 玩家当前所在的地图地块。
  * @returns 本次处理得到的结果。
  */
 export function getNormalMovementCandidates(
@@ -82,10 +81,10 @@ export function getNormalMovementCandidates(
  */
 function evaluateNormalMovementDirection(
   map: HexMap,
-  originCoordinate: CubeCoordinate,
+  originTile: HexTile,
   direction: HexDirection,
 ): NormalMovementDirectionEvaluation {
-  const targetCoordinate = getNeighborCoordinate(originCoordinate, direction);
+  const targetCoordinate = getNeighborCoordinate(originTile.coordinate, direction);
 
   if (!isNormalMapCoordinate(targetCoordinate)) {
     return Object.freeze({
@@ -113,12 +112,23 @@ function evaluateNormalMovementDirection(
     });
   }
 
+  if (
+    Math.abs(targetTile.elevation - originTile.elevation) > MAX_NORMAL_MOVEMENT_ELEVATION_DIFFERENCE
+  ) {
+    return Object.freeze({
+      available: false,
+      direction,
+      targetCoordinate,
+      reason: "ELEVATION_DIFFERENCE",
+    });
+  }
+
   return Object.freeze({
     available: true,
     direction,
     targetCoordinate,
     targetTile,
-    ringRelation: getAdjacentRingMovementRelation(originCoordinate, targetCoordinate),
+    ringRelation: getAdjacentRingMovementRelation(originTile.coordinate, targetCoordinate),
   });
 }
 
