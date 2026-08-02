@@ -5,6 +5,7 @@ import {
   type PrimaryAttributes,
 } from "@genesis-rift/shared";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CalculateDerivedAttributeInput {
   readonly currentPrimaryAttributes: PrimaryAttributes;
   readonly config: DerivedAttributeFormulaConfig;
@@ -12,6 +13,12 @@ export interface CalculateDerivedAttributeInput {
   readonly derivedDynamicOffset?: number;
 }
 
+/**
+ * 方法名：calculateDerivedAttribute
+ * 作用：根据输入执行确定性计算并返回结果。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function calculateDerivedAttribute(input: CalculateDerivedAttributeInput): number {
   const { currentPrimaryAttributes, config } = input;
   const primaryDynamicOffset = input.primaryDynamicOffset ?? {};
@@ -53,6 +60,13 @@ export function calculateDerivedAttribute(input: CalculateDerivedAttributeInput)
     : Math.min(minimumLimitedValue, config.maximum);
 }
 
+/**
+ * 方法名：validateFormulaConfig
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param config 待使用或校验的配置。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateFormulaConfig(config: DerivedAttributeFormulaConfig): void {
   assertFiniteNumber(config.derivedStaticOffset, "derivedStaticOffset");
   assertFiniteNumber(config.minimum, "minimum");
@@ -66,6 +80,13 @@ function validateFormulaConfig(config: DerivedAttributeFormulaConfig): void {
   }
 }
 
+/**
+ * 方法名：applyRounding
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param value 待处理的值。
+ * @param roundingMode 方法所需的 roundingMode 参数。
+ * @returns 本次处理得到的结果。
+ */
 function applyRounding(
   value: number,
   roundingMode: DerivedAttributeFormulaConfig["roundingMode"],
@@ -80,6 +101,14 @@ function applyRounding(
   }
 }
 
+/**
+ * 方法名：assertFiniteNumber
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertFiniteNumber(value: number, field: string): void {
   if (!Number.isFinite(value)) {
     throw new TypeError(`${field} must be a finite number`);

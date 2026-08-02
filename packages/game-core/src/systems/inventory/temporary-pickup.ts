@@ -10,16 +10,26 @@ import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import { TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS } from "./inventory-config.ts";
 import type { PlayerInventoryState, TemporaryPickup } from "./player-inventory-state.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface RemoveTemporaryPickupResult {
   readonly inventory: PlayerInventoryState;
   readonly removedPickup: TemporaryPickup;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface AdvanceTemporaryPickupResult {
   readonly inventory: PlayerInventoryState;
   readonly expiredPickup: TemporaryPickup | null;
 }
 
+/**
+ * 方法名：storeTemporaryPickupInBackpack
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param targetPosition 方法所需的 targetPosition 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function storeTemporaryPickupInBackpack(
   inventory: PlayerInventoryState,
   definitions: ItemDefinitionCatalog,
@@ -63,6 +73,12 @@ export function storeTemporaryPickupInBackpack(
   };
 }
 
+/**
+ * 方法名：abandonTemporaryPickup
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function abandonTemporaryPickup(
   inventory: PlayerInventoryState,
 ): RemoveTemporaryPickupResult {
@@ -77,6 +93,12 @@ export function abandonTemporaryPickup(
   };
 }
 
+/**
+ * 方法名：advanceTemporaryPickupOwnerTurn
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function advanceTemporaryPickupOwnerTurn(
   inventory: PlayerInventoryState,
 ): AdvanceTemporaryPickupResult {
@@ -110,6 +132,12 @@ export function advanceTemporaryPickupOwnerTurn(
   };
 }
 
+/**
+ * 方法名：requireTemporaryPickup
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @returns 本次处理得到的结果。
+ */
 function requireTemporaryPickup(inventory: PlayerInventoryState): TemporaryPickup {
   if (inventory.temporaryPickup === null) {
     throw new Error("Temporary pickup is empty");
@@ -118,6 +146,13 @@ function requireTemporaryPickup(inventory: PlayerInventoryState): TemporaryPicku
   return inventory.temporaryPickup;
 }
 
+/**
+ * 方法名：assertRemainingOwnerTurns
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertRemainingOwnerTurns(value: number): void {
   if (
     !Number.isSafeInteger(value) ||

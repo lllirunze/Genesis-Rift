@@ -13,6 +13,12 @@ interface LanServerOptions {
   clientOrigin: string;
 }
 
+/**
+ * 方法名：createLanServer
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param options 控制本次操作行为的可选参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createLanServer(options: LanServerOptions) {
   const httpServer = createServer((request, response) => {
     if (request.url === "/health") {

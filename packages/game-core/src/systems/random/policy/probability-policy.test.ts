@@ -6,6 +6,11 @@ import { rollIntegerChance } from "./probability-policy.ts";
 
 const STREAM_SEED = createRandomStreamSeed("0123456789abcdef");
 
+/**
+ * 方法名：createStream
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createStream(): RandomStream {
   return RandomStream.create("event", null, STREAM_SEED);
 }

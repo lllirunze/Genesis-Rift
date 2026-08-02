@@ -164,6 +164,13 @@ describe("useConsumableItem", () => {
   });
 });
 
+/**
+ * 方法名：createInventoryWithItem
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param definitionId 目标配置定义标识。
+ * @param quantity 方法所需的 quantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createInventoryWithItem(definitionId: keyof typeof ITEM_DEFINITIONS, quantity: number) {
   const definition = ITEM_DEFINITIONS[definitionId]!;
   const inventory = createPlayerInventory(PLAYER_ID);
@@ -183,6 +190,12 @@ function createInventoryWithItem(definitionId: keyof typeof ITEM_DEFINITIONS, qu
   };
 }
 
+/**
+ * 方法名：createResourceState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param currentHealth 方法所需的 currentHealth 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createResourceState(currentHealth: number): CharacterResourceState<string> {
   return {
     playerId: PLAYER_ID,
@@ -192,6 +205,12 @@ function createResourceState(currentHealth: number): CharacterResourceState<stri
   };
 }
 
+/**
+ * 方法名：createUseInput
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param itemDefinitionId 方法所需的 itemDefinitionId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createUseInput(itemDefinitionId: string) {
   return {
     playerId: PLAYER_ID,
@@ -201,6 +220,13 @@ function createUseInput(itemDefinitionId: string) {
   };
 }
 
+/**
+ * 方法名：createConsumableDefinition
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param definitionId 目标配置定义标识。
+ * @param name 方法所需的 name 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createConsumableDefinition(definitionId: string, name: string) {
   return {
     definitionId,
@@ -213,6 +239,14 @@ function createConsumableDefinition(definitionId: string, name: string) {
   } as const;
 }
 
+/**
+ * 方法名：createStatusDefinition
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param definitionId 目标配置定义标识。
+ * @param name 方法所需的 name 参数。
+ * @param kind 方法所需的 kind 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createStatusDefinition(definitionId: string, name: string, kind: "buff" | "debuff") {
   return {
     definitionId,

@@ -14,6 +14,12 @@ const EFFECT = {
   parameters: { amount: 20 },
 } as const;
 
+/**
+ * 方法名：createResourceState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param current 方法所需的 current 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createResourceState(current: number): CharacterResourceState<string> {
   return {
     playerId: PLAYER_ID,
@@ -24,6 +30,11 @@ function createResourceState(current: number): CharacterResourceState<string> {
   };
 }
 
+/**
+ * 方法名：createContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createContext() {
   return createHandCardEffectExecutionContext({
     executionId: "execution-health-1",

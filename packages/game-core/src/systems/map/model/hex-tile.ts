@@ -8,8 +8,10 @@ import { getRegionDefinition } from "./region-definition.ts";
 import { getTerrainDefinition } from "./terrain-definition.ts";
 import { type TileFeature, validateTileFeatures } from "./tile-feature.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type TilePassability = (typeof TILE_PASSABILITY_STATES)[number];
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface HexTile {
   readonly tileId: TileId;
   readonly coordinate: CubeCoordinate;
@@ -21,6 +23,7 @@ export interface HexTile {
   readonly features: readonly TileFeature[];
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CreateHexTileInput {
   readonly tileId: TileId;
   readonly coordinate: CubeCoordinate;
@@ -31,6 +34,13 @@ export interface CreateHexTileInput {
   readonly features?: readonly TileFeature[];
 }
 
+/**
+ * 方法名：validateTileElevation
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param elevation 方法所需的 elevation 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateTileElevation(elevation: number): void {
   if (!Number.isSafeInteger(elevation)) {
     throw new TypeError("elevation must be a safe integer");
@@ -43,6 +53,13 @@ export function validateTileElevation(elevation: number): void {
   }
 }
 
+/**
+ * 方法名：createHexTile
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param input 本次处理的输入数据。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createHexTile(
   input: CreateHexTileInput,
   definitions: MapContentDefinitionCatalog,

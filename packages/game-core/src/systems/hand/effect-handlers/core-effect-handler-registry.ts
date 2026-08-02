@@ -17,6 +17,7 @@ import {
   type StatusEffectHandlerDependencies,
 } from "./status-effect-handlers.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CoreHandCardEffectHandlerDependencies {
   readonly healthRestore: HealthRestoreEffectHandlerDependencies;
   readonly status: StatusEffectHandlerDependencies;
@@ -24,6 +25,13 @@ export interface CoreHandCardEffectHandlerDependencies {
   readonly handCardDraw: HandCardDrawEffectHandlerDependencies;
 }
 
+/**
+ * 方法名：registerCoreHandCardEffectHandlers
+ * 作用：执行该方法负责的单一业务操作。
+ * @param registry 方法所需的 registry 参数。
+ * @param dependencies 方法所需的 dependencies 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function registerCoreHandCardEffectHandlers(
   registry: HandCardEffectHandlerRegistry,
   dependencies: CoreHandCardEffectHandlerDependencies,
@@ -36,6 +44,12 @@ export function registerCoreHandCardEffectHandlers(
   return registry;
 }
 
+/**
+ * 方法名：createCoreHandCardEffectHandlerRegistry
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param dependencies 方法所需的 dependencies 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCoreHandCardEffectHandlerRegistry(
   dependencies: CoreHandCardEffectHandlerDependencies,
 ): HandCardEffectHandlerRegistry {

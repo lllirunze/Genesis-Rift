@@ -21,6 +21,12 @@ const DEFINITION: StatusDefinition = {
   effects: [],
 };
 
+/**
+ * 方法名：createInstanceWithStacks
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param stacks 方法所需的 stacks 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createInstanceWithStacks(stacks: number) {
   let instance = createStatusInstance({
     instanceId: "status-instance-1",

@@ -13,6 +13,7 @@ import type { GameId, ItemDefinitionCatalog } from "@genesis-rift/shared";
 
 import type { Logger, LogTarget } from "../logging/index.ts";
 
+/** 描述一次业务结算所需的上下文与外部依赖。 */
 export interface EconomyPlayerContext {
   readonly playerName: string;
   readonly gameId?: GameId;
@@ -22,6 +23,7 @@ interface EconomyInventoryRequest extends EconomyPlayerContext {
   readonly inventory: PlayerInventoryState;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface ReceiveCoinRequest extends EconomyInventoryRequest {
   readonly quantity: number;
   readonly sourceId: string;
@@ -29,6 +31,7 @@ export interface ReceiveCoinRequest extends EconomyInventoryRequest {
   readonly allowTemporaryStorage?: boolean;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ReceiveCoinServiceResult {
   readonly inventory: PlayerInventoryState;
   readonly previousBalance: number;
@@ -38,11 +41,13 @@ export interface ReceiveCoinServiceResult {
   readonly unresolvedItems: readonly UnresolvedReceivedItem[];
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface PayCoinRequest extends EconomyInventoryRequest {
   readonly coinQuantity: number;
   readonly reasonId: string;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface PurchaseItemRequest extends EconomyInventoryRequest {
   readonly transactionId: string;
   readonly itemDefinitionId: string;
@@ -52,6 +57,7 @@ export interface PurchaseItemRequest extends EconomyInventoryRequest {
   readonly stackCompatibilityKey?: string;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export type PayCoinResult =
   | {
       readonly paid: true;
@@ -69,23 +75,50 @@ export type PayCoinResult =
       readonly missingCoinQuantity: number;
     };
 
+/** 封装该模块的状态与操作入口。 */
 export class EconomyService {
   readonly #definitions: ItemDefinitionCatalog;
   readonly #logger: Logger;
 
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param definitions 方法所需的 definitions 参数。
+   * @param logger 方法所需的 logger 参数。
+   * @returns 无返回值。
+   */
   constructor(definitions: ItemDefinitionCatalog, logger: Logger) {
     this.#definitions = definitions;
     this.#logger = logger;
   }
 
+  /**
+   * 方法名：getBalance
+   * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+   * @param inventory 方法所需的 inventory 参数。
+   * @returns 本次处理得到的结果。
+   */
   getBalance(inventory: PlayerInventoryState): number {
     return getCoinBalance(inventory);
   }
 
+  /**
+   * 方法名：canAfford
+   * 作用：判断输入是否满足当前业务条件。
+   * @param inventory 方法所需的 inventory 参数。
+   * @param coinQuantity 方法所需的 coinQuantity 参数。
+   * @returns 本次处理得到的结果。
+   */
   canAfford(inventory: PlayerInventoryState, coinQuantity: number): boolean {
     return canAffordCoin(inventory, coinQuantity);
   }
 
+  /**
+   * 方法名：receiveCoins
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   receiveCoins(request: ReceiveCoinRequest): ReceiveCoinServiceResult {
     const target = this.#createTarget(request);
     const previousBalance = getCoinBalance(request.inventory);
@@ -175,6 +208,12 @@ export class EconomyService {
     }
   }
 
+  /**
+   * 方法名：payCoins
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   payCoins(request: PayCoinRequest): PayCoinResult {
     const target = this.#createTarget(request);
 
@@ -243,6 +282,12 @@ export class EconomyService {
     }
   }
 
+  /**
+   * 方法名：purchaseItem
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   purchaseItem(request: PurchaseItemRequest): PurchaseItemWithCoinResult {
     const target = this.#createTarget(request);
 

@@ -17,15 +17,26 @@ import {
 } from "./player-hand-state.ts";
 import { validateSharedHandCardZones } from "./validate-hand-card-zones.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface DrawHandCardWithRecycleResult extends DrawHandCardResult {
   readonly didRecycleDiscardPile: boolean;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface DealInitialHandCardsResult {
   readonly deckState: HandCardDeckState;
   readonly playerHandStates: readonly PlayerHandState[];
 }
 
+/**
+ * 方法名：initializeSharedHandCardDeck
+ * 作用：初始化模块运行所需的状态与依赖。
+ * @param deckId 方法所需的 deckId 参数。
+ * @param cardIds 方法所需的 cardIds 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function initializeSharedHandCardDeck(
   deckId: string,
   cardIds: readonly HandCardId[],
@@ -36,6 +47,14 @@ export function initializeSharedHandCardDeck(
   return createHandCardDeckState(deckId, randomStream.shuffle(cardIds), catalog);
 }
 
+/**
+ * 方法名：recycleSharedHandCardDiscardPile
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function recycleSharedHandCardDiscardPile(
   state: HandCardDeckState,
   catalog: HandCardCatalog,
@@ -55,6 +74,15 @@ export function recycleSharedHandCardDiscardPile(
   };
 }
 
+/**
+ * 方法名：prepareSharedHandCardDeckForDraw
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param requiredCardCount 方法所需的 requiredCardCount 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function prepareSharedHandCardDeckForDraw(
   state: HandCardDeckState,
   requiredCardCount: number,
@@ -76,6 +104,14 @@ export function prepareSharedHandCardDeckForDraw(
   };
 }
 
+/**
+ * 方法名：drawHandCardWithDiscardRecycle
+ * 作用：从共享牌库取得指定手牌并更新牌区状态。
+ * @param state 当前业务状态。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function drawHandCardWithDiscardRecycle(
   state: HandCardDeckState,
   catalog: HandCardCatalog,
@@ -91,6 +127,15 @@ export function drawHandCardWithDiscardRecycle(
   };
 }
 
+/**
+ * 方法名：dealInitialHandCards
+ * 作用：从共享牌库取得指定手牌并更新牌区状态。
+ * @param deckState 方法所需的 deckState 参数。
+ * @param playerHandStates 方法所需的 playerHandStates 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param cardsPerPlayer 方法所需的 cardsPerPlayer 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function dealInitialHandCards(
   deckState: HandCardDeckState,
   playerHandStates: readonly PlayerHandState[],
@@ -117,7 +162,7 @@ export function dealInitialHandCards(
   let nextDeckState = deckState;
   const nextPlayerHandStates = [...playerHandStates];
 
-  // Deal one card to each player per round so seating order does not receive consecutive blocks.
+  // 每轮按座位顺序为每名玩家发一张牌，避免某个座位连续获得整段牌序。
   for (let round = 0; round < cardsPerPlayer; round += 1) {
     for (let playerIndex = 0; playerIndex < nextPlayerHandStates.length; playerIndex += 1) {
       const drawResult = drawHandCardFromDeck(nextDeckState, catalog);
@@ -145,6 +190,15 @@ export function dealInitialHandCards(
   return result;
 }
 
+/**
+ * 方法名：validateInitialPlayerHands
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param playerHandStates 方法所需的 playerHandStates 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param cardsPerPlayer 方法所需的 cardsPerPlayer 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateInitialPlayerHands(
   playerHandStates: readonly PlayerHandState[],
   catalog: HandCardCatalog,
@@ -171,12 +225,27 @@ function validateInitialPlayerHands(
   }
 }
 
+/**
+ * 方法名：assertDeckRandomStream
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertDeckRandomStream(randomStream: RandomStream): void {
   if (randomStream.streamType !== "deck") {
     throw new TypeError(`Hand card flow requires a deck random stream: ${randomStream.streamType}`);
   }
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`${field} must be a non-negative safe integer`);

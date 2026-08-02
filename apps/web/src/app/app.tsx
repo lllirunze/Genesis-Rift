@@ -1,5 +1,10 @@
 import { ARCHITECTURE_LAYERS } from "./architecture-layer-config.ts";
 
+/**
+ * 方法名：App
+ * 作用：渲染网页应用的根组件。
+ * @returns 本次处理得到的结果。
+ */
 export function App() {
   return (
     <main className="app-shell">

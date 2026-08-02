@@ -4,6 +4,7 @@ import {
   type StatusDefinitionCatalog,
 } from "@genesis-rift/game-core";
 
+/** 当前业务对象的静态定义配置。 */
 export const BATTLE_FURY_STATUS_DEFINITION = {
   definitionId: "status.battle-fury",
   name: "Battle Fury",
@@ -27,6 +28,7 @@ export const BATTLE_FURY_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const WIND_BLESSING_STATUS_DEFINITION = {
   definitionId: "status.wind-blessing",
   name: "Wind Blessing",
@@ -50,6 +52,7 @@ export const WIND_BLESSING_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const VITALITY_BLESSING_STATUS_DEFINITION = {
   definitionId: "status.vitality-blessing",
   name: "Vitality Blessing",
@@ -80,6 +83,7 @@ export const VITALITY_BLESSING_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const ARCANE_ACCUMULATION_STATUS_DEFINITION = {
   definitionId: "status.arcane-accumulation",
   name: "Arcane Accumulation",
@@ -103,6 +107,7 @@ export const ARCANE_ACCUMULATION_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const EXHAUSTION_STATUS_DEFINITION = {
   definitionId: "status.exhaustion",
   name: "Exhaustion",
@@ -133,6 +138,7 @@ export const EXHAUSTION_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const POISONED_STATUS_DEFINITION = {
   definitionId: "status.poisoned",
   name: "Poisoned",
@@ -156,6 +162,7 @@ export const POISONED_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+/** 当前模块使用的只读配置注册表。 */
 export const STATUS_DEFINITION_CATALOG = {
   [BATTLE_FURY_STATUS_DEFINITION.definitionId]: BATTLE_FURY_STATUS_DEFINITION,
   [WIND_BLESSING_STATUS_DEFINITION.definitionId]: WIND_BLESSING_STATUS_DEFINITION,

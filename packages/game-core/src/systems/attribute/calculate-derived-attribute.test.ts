@@ -20,6 +20,11 @@ const ZERO_PRIMARY_ATTRIBUTES: PrimaryAttributes = {
   insight: 0,
 };
 
+/**
+ * 方法名：createConfig
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createConfig(
   overrides: Partial<DerivedAttributeFormulaConfig> = {},
 ): DerivedAttributeFormulaConfig {

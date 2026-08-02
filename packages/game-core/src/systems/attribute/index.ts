@@ -6,6 +6,7 @@ export * from "./calculate-derived-attribute.ts";
 export * from "./calculate-derived-attributes.ts";
 export * from "./character-attribute-snapshot.ts";
 
+/** 当前模块对外公开的只读配置值。 */
 export const attributeSystem: SystemScaffold<"attribute"> = {
   name: "attribute",
   status: "scaffold",

@@ -12,6 +12,7 @@ export * from "./policy/random-selection-policy.ts";
 export * from "./policy/weighted-random-policy.ts";
 export * from "./service/dice.ts";
 
+/** 当前模块对外公开的只读配置值。 */
 export const randomSystem: SystemScaffold<"random"> = {
   name: "random",
   status: "scaffold",

@@ -2,6 +2,7 @@ import type { SystemScaffold } from "../system-scaffold.ts";
 
 export * from "./map-config.ts";
 export * from "./map-content-config.ts";
+export * from "./exploration/player-exploration-state.ts";
 export * from "./geometry/cube-coordinate.ts";
 export * from "./geometry/cube-coordinate-key.ts";
 export * from "./geometry/hex-direction.ts";
@@ -15,6 +16,7 @@ export * from "./model/region-definition.ts";
 export * from "./model/terrain-definition.ts";
 export * from "./model/tile-feature.ts";
 
+/** 当前模块对外公开的只读配置值。 */
 export const mapSystem: SystemScaffold<"map"> = {
   name: "map",
   status: "scaffold",

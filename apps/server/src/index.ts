@@ -33,6 +33,12 @@ lanServer.httpServer.once("error", (error) => {
   void logger.close();
 });
 
+/**
+ * 方法名：shutdown
+ * 作用：执行该方法负责的单一业务操作。
+ * @param signal 方法所需的 signal 参数。
+ * @returns 本次处理得到的结果。
+ */
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
   if (shuttingDown) {
     return;

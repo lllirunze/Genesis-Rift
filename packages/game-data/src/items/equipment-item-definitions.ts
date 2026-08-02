@@ -1,5 +1,6 @@
 import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared";
 
+/** 当前业务对象的静态定义配置。 */
 export const HEAVY_PLATE_ARMOR_ITEM_DEFINITION = {
   definitionId: "item.equipment.heavy-plate-armor",
   name: "Heavy Plate Armor",
@@ -10,6 +11,7 @@ export const HEAVY_PLATE_ARMOR_ITEM_DEFINITION = {
   maximumStack: 1,
 } as const satisfies ItemDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const LONG_SWORD_ITEM_DEFINITION = {
   definitionId: "item.equipment.long-sword",
   name: "Long Sword",
@@ -20,6 +22,7 @@ export const LONG_SWORD_ITEM_DEFINITION = {
   maximumStack: 1,
 } as const satisfies ItemDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const TRAVEL_BOOTS_ITEM_DEFINITION = {
   definitionId: "item.equipment.travel-boots",
   name: "Travel Boots",
@@ -30,6 +33,7 @@ export const TRAVEL_BOOTS_ITEM_DEFINITION = {
   maximumStack: 1,
 } as const satisfies ItemDefinition;
 
+/** 当前模块对外公开的只读配置值。 */
 export const EQUIPMENT_ITEM_DEFINITIONS = {
   [HEAVY_PLATE_ARMOR_ITEM_DEFINITION.definitionId]: HEAVY_PLATE_ARMOR_ITEM_DEFINITION,
   [LONG_SWORD_ITEM_DEFINITION.definitionId]: LONG_SWORD_ITEM_DEFINITION,

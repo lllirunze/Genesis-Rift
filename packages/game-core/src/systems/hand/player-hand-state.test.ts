@@ -15,6 +15,12 @@ import {
 
 const PLAYER_ID = "player-1" as PlayerId;
 
+/**
+ * 方法名：createCard
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createCard(cardId: number): HandCardDefinition {
   return {
     cardId,

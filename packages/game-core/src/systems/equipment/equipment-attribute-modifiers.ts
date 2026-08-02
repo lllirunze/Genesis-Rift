@@ -14,8 +14,16 @@ import type { EquipmentDefinition } from "./equipment-definition.ts";
 import { validateEquipmentDefinition } from "./equipment-definition.ts";
 import { getEquippedEquipment, type EquipmentLoadout } from "./equipment-loadout.ts";
 
+/** 描述以标识索引业务定义的只读注册表。 */
 export type EquipmentDefinitionCatalog = Readonly<Record<string, EquipmentDefinition>>;
 
+/**
+ * 方法名：createEquipmentAttributeModifiers
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param loadout 方法所需的 loadout 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createEquipmentAttributeModifiers(
   loadout: EquipmentLoadout,
   definitions: EquipmentDefinitionCatalog,
@@ -58,6 +66,13 @@ export function createEquipmentAttributeModifiers(
   return modifiers;
 }
 
+/**
+ * 方法名：aggregateEquipmentAttributeModifiers
+ * 作用：根据输入执行确定性计算并返回结果。
+ * @param loadout 方法所需的 loadout 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function aggregateEquipmentAttributeModifiers(
   loadout: EquipmentLoadout,
   definitions: EquipmentDefinitionCatalog,
@@ -65,6 +80,15 @@ export function aggregateEquipmentAttributeModifiers(
   return aggregateAttributeModifiers(createEquipmentAttributeModifiers(loadout, definitions));
 }
 
+/**
+ * 方法名：createCharacterAttributeSnapshotWithEquipment
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param character 方法所需的 character 参数。
+ * @param configs 方法所需的 configs 参数。
+ * @param loadout 方法所需的 loadout 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCharacterAttributeSnapshotWithEquipment<DerivedAttribute extends string>(
   character: CharacterState,
   configs: Readonly<Record<DerivedAttribute, DerivedAttributeFormulaConfig>>,

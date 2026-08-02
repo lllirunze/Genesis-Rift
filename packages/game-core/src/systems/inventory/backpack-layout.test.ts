@@ -91,7 +91,7 @@ describe("backpack fixed grid", () => {
       isBackpackPositionAvailable(backpack, DEFINITIONS["item.coin"], { x: 4, y: 0 }, DEFINITIONS),
     ).toBe(false);
 
-    // A 1 x 2 potion cannot use the final row as though it were rotated to 2 x 1.
+    // 1×2 药剂不能通过旋转为 2×1 的方式占用背包最后一行。
     expect(
       isBackpackPositionAvailable(
         createBackpack(PLAYER_ID),

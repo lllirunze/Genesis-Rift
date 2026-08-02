@@ -4,17 +4,27 @@ import type {
   PlayerId,
 } from "@genesis-rift/shared";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CharacterResourceValue {
   readonly current: number;
   readonly minimum: number;
   readonly maximum: number;
 }
 
+/** 描述业务对象在运行时保存的状态。 */
 export interface CharacterResourceState<ResourceId extends string = string> {
   readonly playerId: PlayerId;
   readonly resources: Readonly<Record<ResourceId, CharacterResourceValue>>;
 }
 
+/**
+ * 方法名：createCharacterResourceState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param playerId 目标玩家标识。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param derivedAttributes 方法所需的 derivedAttributes 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCharacterResourceState<
   ResourceId extends string,
   DerivedAttribute extends string,
@@ -40,6 +50,14 @@ export function createCharacterResourceState<
   return { playerId, resources };
 }
 
+/**
+ * 方法名：synchronizeCharacterResourceMaximums
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param derivedAttributes 方法所需的 derivedAttributes 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function synchronizeCharacterResourceMaximums<
   ResourceId extends string,
   DerivedAttribute extends string,
@@ -67,6 +85,13 @@ export function synchronizeCharacterResourceMaximums<
   return { ...state, resources };
 }
 
+/**
+ * 方法名：getCharacterResource
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCharacterResource<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -80,6 +105,13 @@ export function getCharacterResource<ResourceId extends string>(
   return resource;
 }
 
+/**
+ * 方法名：validateCharacterResourceDefinitions
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateCharacterResourceDefinitions<
   ResourceId extends string,
   DerivedAttribute extends string,
@@ -111,6 +143,14 @@ export function validateCharacterResourceDefinitions<
   }
 }
 
+/**
+ * 方法名：validateCharacterResourceState
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateCharacterResourceState<
   ResourceId extends string,
   DerivedAttribute extends string,
@@ -145,6 +185,13 @@ export function validateCharacterResourceState<
   }
 }
 
+/**
+ * 方法名：getMaximumValue
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param definition 方法所需的 definition 参数。
+ * @param derivedAttributes 方法所需的 derivedAttributes 参数。
+ * @returns 本次处理得到的结果。
+ */
 function getMaximumValue<DerivedAttribute extends string>(
   definition: CharacterResourceDefinition<string, DerivedAttribute>,
   derivedAttributes: Readonly<Record<DerivedAttribute, number>>,
@@ -164,6 +211,13 @@ function getMaximumValue<DerivedAttribute extends string>(
   return maximum;
 }
 
+/**
+ * 方法名：getInitialValue
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param definition 方法所需的 definition 参数。
+ * @param maximum 方法所需的 maximum 参数。
+ * @returns 本次处理得到的结果。
+ */
 function getInitialValue(definition: CharacterResourceDefinition, maximum: number): number {
   if (definition.initialValue.kind === "maximum") {
     return maximum;
@@ -182,10 +236,26 @@ function getInitialValue(definition: CharacterResourceDefinition, maximum: numbe
   return value;
 }
 
+/**
+ * 方法名：clamp
+ * 作用：执行该方法负责的单一业务操作。
+ * @param value 待处理的值。
+ * @param minimum 方法所需的 minimum 参数。
+ * @param maximum 方法所需的 maximum 参数。
+ * @returns 本次处理得到的结果。
+ */
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   assertSafeInteger(value, field);
 
@@ -194,12 +264,28 @@ function assertNonNegativeSafeInteger(value: number, field: string): void {
   }
 }
 
+/**
+ * 方法名：assertSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value)) {
     throw new TypeError(`${field} must be a safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

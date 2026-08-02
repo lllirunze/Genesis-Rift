@@ -10,13 +10,20 @@ import {
   HAND_CARD_USAGE_TIMINGS,
 } from "./hand-card-config.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardType = (typeof HAND_CARD_TYPES)[number];
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardUsageTiming = (typeof HAND_CARD_USAGE_TIMINGS)[number];
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardResponseType = (typeof HAND_CARD_RESPONSE_TYPES)[number];
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardConditionId = (typeof HAND_CARD_CONDITION_IDS)[number];
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardTargetType = (typeof HAND_CARD_TARGET_TYPES)[number];
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardEffectId = (typeof HAND_CARD_EFFECT_IDS)[number];
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface HandCardEffectParametersById {
   readonly "attack.modifyHit": {
     readonly amount: number;
@@ -49,6 +56,7 @@ export interface HandCardEffectParametersById {
   };
 }
 
+/** 描述业务对象不随运行过程改变的静态定义。 */
 export type HandCardEffectDefinition = {
   readonly [EffectId in HandCardEffectId]: {
     readonly effectId: EffectId;
@@ -56,10 +64,13 @@ export type HandCardEffectDefinition = {
   };
 }[HandCardEffectId];
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardDestination = (typeof HAND_CARD_DESTINATIONS)[number];
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type HandCardId = number;
 
+/** 描述业务对象不随运行过程改变的静态定义。 */
 export interface HandCardUsageDefinition {
   readonly timing: HandCardUsageTiming;
   readonly responseTypes: readonly HandCardResponseType[];
@@ -67,6 +78,7 @@ export interface HandCardUsageDefinition {
   readonly targetTypes: readonly HandCardTargetType[];
 }
 
+/** 描述业务对象不随运行过程改变的静态定义。 */
 export interface HandCardDefinition {
   readonly cardId: HandCardId;
   readonly name: string;
@@ -78,8 +90,16 @@ export interface HandCardDefinition {
   readonly destinationAfterResolution: HandCardDestination;
 }
 
+/** 描述以标识索引业务定义的只读注册表。 */
 export type HandCardCatalog = Readonly<Record<HandCardId, HandCardDefinition>>;
 
+/**
+ * 方法名：validateHandCardDefinition
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definition 方法所需的 definition 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateHandCardDefinition(definition: HandCardDefinition): void {
   assertPositiveSafeInteger(definition.cardId, "cardId");
   assertCamelCaseCardName(definition.name);
@@ -142,6 +162,13 @@ export function validateHandCardDefinition(definition: HandCardDefinition): void
   }
 }
 
+/**
+ * 方法名：validateHandCardEffectDefinition
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param effect 方法所需的 effect 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateHandCardEffectDefinition(effect: HandCardEffectDefinition): void {
   const candidate = effect as unknown as {
     readonly effectId: string;
@@ -198,6 +225,13 @@ export function validateHandCardEffectDefinition(effect: HandCardEffectDefinitio
   }
 }
 
+/**
+ * 方法名：validateHandCardDefinitions
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateHandCardDefinitions(definitions: readonly HandCardDefinition[]): void {
   const cardIds = new Set<HandCardId>();
   const definitionsByName = new Map<string, HandCardDefinition>();
@@ -222,6 +256,14 @@ export function validateHandCardDefinitions(definitions: readonly HandCardDefini
   }
 }
 
+/**
+ * 方法名：validateUniqueStrings
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param values 方法所需的 values 参数。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateUniqueStrings(values: readonly string[], field: string): void {
   const uniqueValues = new Set<string>();
 
@@ -236,12 +278,27 @@ function validateUniqueStrings(values: readonly string[], field: string): void {
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);
   }
 }
 
+/**
+ * 方法名：assertCamelCaseCardName
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertCamelCaseCardName(value: string): void {
   assertNonEmptyString(value, "name");
 
@@ -250,6 +307,13 @@ function assertCamelCaseCardName(value: string): void {
   }
 }
 
+/**
+ * 方法名：assertEnglishDescription
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertEnglishDescription(value: string): void {
   assertNonEmptyString(value, "description");
 
@@ -265,6 +329,13 @@ function assertEnglishDescription(value: string): void {
   }
 }
 
+/**
+ * 方法名：hasSameCardContent
+ * 作用：判断输入是否满足当前业务条件。
+ * @param left 方法所需的 left 参数。
+ * @param right 方法所需的 right 参数。
+ * @returns 本次处理得到的结果。
+ */
 function hasSameCardContent(left: HandCardDefinition, right: HandCardDefinition): boolean {
   return (
     left.name === right.name &&
@@ -280,6 +351,13 @@ function hasSameCardContent(left: HandCardDefinition, right: HandCardDefinition)
   );
 }
 
+/**
+ * 方法名：haveSameEffects
+ * 作用：执行该方法负责的单一业务操作。
+ * @param left 方法所需的 left 参数。
+ * @param right 方法所需的 right 参数。
+ * @returns 本次处理得到的结果。
+ */
 function haveSameEffects(
   left: readonly HandCardEffectDefinition[],
   right: readonly HandCardEffectDefinition[],
@@ -298,6 +376,13 @@ function haveSameEffects(
   );
 }
 
+/**
+ * 方法名：haveSameParameters
+ * 作用：执行该方法负责的单一业务操作。
+ * @param left 方法所需的 left 参数。
+ * @param right 方法所需的 right 参数。
+ * @returns 本次处理得到的结果。
+ */
 function haveSameParameters(left: object, right: object): boolean {
   const leftEntries = Object.entries(left).sort(([leftKey], [rightKey]) =>
     leftKey.localeCompare(rightKey),
@@ -315,28 +400,67 @@ function haveSameParameters(left: object, right: object): boolean {
   );
 }
 
+/**
+ * 方法名：haveSameStrings
+ * 作用：执行该方法负责的单一业务操作。
+ * @param left 方法所需的 left 参数。
+ * @param right 方法所需的 right 参数。
+ * @returns 本次处理得到的结果。
+ */
 function haveSameStrings(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+/**
+ * 方法名：assertPositiveSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertPositiveSafeInteger(value: unknown, field: string): void {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 1) {
     throw new RangeError(`${field} must be a positive safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonZeroSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonZeroSafeInteger(value: unknown, field: string): void {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value === 0) {
     throw new RangeError(`${field} must be a non-zero safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyStringParameter
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyStringParameter(value: unknown, field: string): void {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new TypeError(`${field} must be a non-empty string`);
   }
 }
 
+/**
+ * 方法名：assertParameterRecord
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param effectId 方法所需的 effectId 参数。
+ * @returns 本次处理得到的结果。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertParameterRecord(
   value: unknown,
   effectId: string,
@@ -348,6 +472,15 @@ function assertParameterRecord(
   return value as Readonly<Record<string, unknown>>;
 }
 
+/**
+ * 方法名：assertExactParameterKeys
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param parameters 方法所需的 parameters 参数。
+ * @param expectedKeys 方法所需的 expectedKeys 参数。
+ * @param effectId 方法所需的 effectId 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertExactParameterKeys(
   parameters: Readonly<Record<string, unknown>>,
   expectedKeys: readonly string[],

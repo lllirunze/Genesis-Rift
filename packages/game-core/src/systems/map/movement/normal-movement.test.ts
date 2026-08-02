@@ -108,6 +108,12 @@ describe("normal movement", () => {
   });
 });
 
+/**
+ * 方法名：createMap
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param blockedCoordinateKeys 方法所需的 blockedCoordinateKeys 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createMap(blockedCoordinateKeys: ReadonlySet<string> = new Set()): HexMap {
   return HexMap.create(
     generateBaseMapCoordinates().map((coordinate) =>

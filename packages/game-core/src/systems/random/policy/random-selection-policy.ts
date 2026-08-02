@@ -1,5 +1,12 @@
 import type { RandomStream } from "../core/random-stream.ts";
 
+/**
+ * 方法名：pickRandomItem
+ * 作用：执行该方法负责的单一业务操作。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @param items 方法所需的 items 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function pickRandomItem<Item>(randomStream: RandomStream, items: readonly Item[]): Item {
   if (items.length === 0) {
     throw new RangeError("cannot pick from an empty item list");
@@ -12,6 +19,14 @@ export function pickRandomItem<Item>(randomStream: RandomStream, items: readonly
   return items[randomStream.nextInt(0, items.length)]!;
 }
 
+/**
+ * 方法名：pickRandomItems
+ * 作用：执行该方法负责的单一业务操作。
+ * @param randomStream 方法所需的 randomStream 参数。
+ * @param items 方法所需的 items 参数。
+ * @param count 本次操作涉及的数量。
+ * @returns 本次处理得到的结果。
+ */
 export function pickRandomItems<Item>(
   randomStream: RandomStream,
   items: readonly Item[],

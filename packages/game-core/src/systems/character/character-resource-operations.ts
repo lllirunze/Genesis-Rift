@@ -1,6 +1,7 @@
 import type { CharacterResourceState, CharacterResourceValue } from "./character-resource-state.ts";
 import { getCharacterResource } from "./character-resource-state.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface CharacterResourceChangeResult<ResourceId extends string> {
   readonly state: CharacterResourceState<ResourceId>;
   readonly resource: CharacterResourceValue;
@@ -8,6 +9,14 @@ export interface CharacterResourceChangeResult<ResourceId extends string> {
   readonly appliedAmount: number;
 }
 
+/**
+ * 方法名：increaseCharacterResource
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @param amount 本次操作涉及的数量。
+ * @returns 本次处理得到的结果。
+ */
 export function increaseCharacterResource<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -23,6 +32,14 @@ export function increaseCharacterResource<ResourceId extends string>(
   });
 }
 
+/**
+ * 方法名：decreaseCharacterResource
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @param amount 本次操作涉及的数量。
+ * @returns 本次处理得到的结果。
+ */
 export function decreaseCharacterResource<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -38,6 +55,14 @@ export function decreaseCharacterResource<ResourceId extends string>(
   });
 }
 
+/**
+ * 方法名：spendCharacterResource
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @param amount 本次操作涉及的数量。
+ * @returns 本次处理得到的结果。
+ */
 export function spendCharacterResource<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -59,6 +84,14 @@ export function spendCharacterResource<ResourceId extends string>(
   });
 }
 
+/**
+ * 方法名：setCharacterResourceCurrentValue
+ * 作用：更新目标数据，并返回满足约束的新状态。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @param value 待处理的值。
+ * @returns 本次处理得到的结果。
+ */
 export function setCharacterResourceCurrentValue<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -74,6 +107,13 @@ export function setCharacterResourceCurrentValue<ResourceId extends string>(
   });
 }
 
+/**
+ * 方法名：isCharacterResourceDepleted
+ * 作用：判断输入是否满足当前业务条件。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function isCharacterResourceDepleted<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -82,6 +122,15 @@ export function isCharacterResourceDepleted<ResourceId extends string>(
   return resource.current === resource.minimum;
 }
 
+/**
+ * 方法名：updateCharacterResource
+ * 作用：更新目标数据，并返回满足约束的新状态。
+ * @param state 当前业务状态。
+ * @param resourceId 方法所需的 resourceId 参数。
+ * @param current 方法所需的 current 参数。
+ * @param change 方法所需的 change 参数。
+ * @returns 本次处理得到的结果。
+ */
 function updateCharacterResource<ResourceId extends string>(
   state: CharacterResourceState<ResourceId>,
   resourceId: ResourceId,
@@ -104,6 +153,14 @@ function updateCharacterResource<ResourceId extends string>(
   };
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   assertSafeInteger(value, field);
 
@@ -112,6 +169,14 @@ function assertNonNegativeSafeInteger(value: number, field: string): void {
   }
 }
 
+/**
+ * 方法名：assertSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value)) {
     throw new TypeError(`${field} must be a safe integer`);

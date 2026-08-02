@@ -5,13 +5,21 @@ import { LOG_CONFIG } from "./log-config.ts";
 import { formatLogArchiveFileName } from "./log-file-name.ts";
 import type { LogWriter } from "./log-writer.ts";
 
+/** 描述调用方可以调整的可选行为参数。 */
 export interface FileLogWriterOptions {
   readonly directory?: string;
   readonly maxFileSizeBytes?: number;
   readonly now?: () => number;
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class LogStorageInitializationError extends Error {
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param cause 方法所需的 cause 参数。
+   * @returns 无返回值。
+   */
   constructor(
     readonly stage: "directory" | "file",
     cause: unknown,
@@ -21,6 +29,12 @@ export class LogStorageInitializationError extends Error {
   }
 }
 
+/**
+ * 方法名：pathExists
+ * 作用：执行该方法负责的单一业务操作。
+ * @param filePath 方法所需的 filePath 参数。
+ * @returns 本次处理得到的结果。
+ */
 async function pathExists(filePath: string): Promise<boolean> {
   try {
     await stat(filePath);
@@ -33,6 +47,7 @@ async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class FileLogWriter implements LogWriter {
   readonly #directory: string;
   readonly #latestPath: string;
@@ -59,6 +74,12 @@ export class FileLogWriter implements LogWriter {
     this.#currentSizeBytes = 0;
   }
 
+  /**
+   * 方法名：create
+   * 作用：创建并校验该方法所负责的业务对象。
+   * @param options 控制本次操作行为的可选参数。
+   * @returns 本次处理得到的结果。
+   */
   static async create(options: FileLogWriterOptions = {}): Promise<FileLogWriter> {
     const directory = path.resolve(options.directory ?? LOG_CONFIG.directory);
     const maxFileSizeBytes = options.maxFileSizeBytes ?? LOG_CONFIG.maxFileSizeBytes;
@@ -97,6 +118,12 @@ export class FileLogWriter implements LogWriter {
     }
   }
 
+  /**
+   * 方法名：write
+   * 作用：按指定等级和格式记录日志。
+   * @param line 方法所需的 line 参数。
+   * @returns 本次处理得到的结果。
+   */
   async write(line: string): Promise<void> {
     if (this.#closed) {
       throw new Error("Cannot write to a closed log writer.");
@@ -118,6 +145,11 @@ export class FileLogWriter implements LogWriter {
     this.#currentSizeBytes += bytes.byteLength;
   }
 
+  /**
+   * 方法名：close
+   * 作用：完成待处理工作并安全释放运行资源。
+   * @returns 本次处理得到的结果。
+   */
   async close(): Promise<void> {
     if (this.#closed) {
       return;
@@ -145,6 +177,14 @@ export class FileLogWriter implements LogWriter {
     this.#currentSizeBytes = 0;
   }
 
+  /**
+   * 方法名：archivePath
+   * 作用：执行该方法负责的单一业务操作。
+   * @param directory 方法所需的 directory 参数。
+   * @param sourcePath 方法所需的 sourcePath 参数。
+   * @param createdAtMs 方法所需的 createdAtMs 参数。
+   * @returns 本次处理得到的结果。
+   */
   private static async archivePath(
     directory: string,
     sourcePath: string,

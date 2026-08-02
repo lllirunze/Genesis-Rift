@@ -21,6 +21,7 @@ export * from "./hand-card-flow.ts";
 export * from "./resolve-used-hand-card.ts";
 export * from "./validate-hand-card-zones.ts";
 
+/** 当前模块对外公开的只读配置值。 */
 export const handSystem: SystemScaffold<"hand"> = {
   name: "hand",
   status: "scaffold",

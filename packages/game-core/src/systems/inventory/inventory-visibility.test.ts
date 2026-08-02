@@ -168,6 +168,11 @@ describe("inventory visibility", () => {
   });
 });
 
+/**
+ * 方法名：createInventory
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createInventory() {
   const inventory = createPlayerInventory(OWNER_ID);
   const item = createItemInstance(
@@ -186,6 +191,11 @@ function createInventory() {
   };
 }
 
+/**
+ * 方法名：createRevealGrant
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createRevealGrant(): BackpackRevealGrant {
   return {
     grantId: "reveal.scouting-glass",

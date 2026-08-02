@@ -6,6 +6,7 @@ import {
 import { REGION_DEFINITION_CATALOG } from "./region-definitions.ts";
 import { TERRAIN_DEFINITION_CATALOG } from "./terrain-definitions.ts";
 
+/** 当前模块使用的只读配置注册表。 */
 export const MAP_CONTENT_DEFINITION_CATALOG = {
   terrains: TERRAIN_DEFINITION_CATALOG,
   regions: REGION_DEFINITION_CATALOG,

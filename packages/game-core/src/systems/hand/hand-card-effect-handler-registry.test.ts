@@ -26,12 +26,23 @@ interface HealthRestoreOutput {
   readonly restoredAmount: number;
 }
 
+/**
+ * 方法名：createHealthRestoreHandler
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createHealthRestoreHandler(): HandCardEffectHandler<
   "health.restore",
   HealthRestoreOutput
 > {
   return {
     effectId: "health.restore",
+    /**
+     * 方法名：execute
+     * 作用：执行该方法负责的业务规则并返回结算结果。
+     * @param effect 方法所需的 effect 参数。
+     * @returns 本次处理得到的结果。
+     */
     execute(effect) {
       return {
         effectId: "health.restore",
@@ -86,6 +97,11 @@ describe("hand card effect handler registry", () => {
     const registry = new HandCardEffectHandlerRegistry();
     registry.register({
       effectId: "health.restore",
+      /**
+       * 方法名：execute
+       * 作用：执行该方法负责的业务规则并返回结算结果。
+       * @returns 本次处理得到的结果。
+       */
       execute() {
         return {
           effectId: "damage.reduce",
@@ -104,6 +120,11 @@ describe("hand card effect handler registry", () => {
     const registry = new HandCardEffectHandlerRegistry();
     registry.register({
       effectId: "health.restore",
+      /**
+       * 方法名：execute
+       * 作用：执行该方法负责的业务规则并返回结算结果。
+       * @returns 本次处理得到的结果。
+       */
       execute() {
         return {
           effectId: "health.restore",

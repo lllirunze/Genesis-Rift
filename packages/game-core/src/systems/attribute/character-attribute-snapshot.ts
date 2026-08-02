@@ -6,6 +6,7 @@ import { aggregateAttributeModifiers } from "./aggregate-attribute-modifiers.ts"
 import type { AttributeModifier } from "./attribute-modifier.ts";
 import { calculateDerivedAttributes } from "./calculate-derived-attributes.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CharacterAttributeSnapshot<DerivedAttribute extends string> {
   readonly currentPrimaryAttributes: PrimaryAttributes;
   readonly primaryDynamicOffset: PrimaryAttributes;
@@ -14,6 +15,14 @@ export interface CharacterAttributeSnapshot<DerivedAttribute extends string> {
   readonly derivedAttributes: Readonly<Record<DerivedAttribute, number>>;
 }
 
+/**
+ * 方法名：createCharacterAttributeSnapshot
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param character 方法所需的 character 参数。
+ * @param configs 方法所需的 configs 参数。
+ * @param additionalModifiers 方法所需的 additionalModifiers 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCharacterAttributeSnapshot<DerivedAttribute extends string>(
   character: CharacterState,
   configs: Readonly<Record<DerivedAttribute, DerivedAttributeFormulaConfig>>,
@@ -49,6 +58,14 @@ export function createCharacterAttributeSnapshot<DerivedAttribute extends string
   };
 }
 
+/**
+ * 方法名：validateDerivedOffsets
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param offsets 方法所需的 offsets 参数。
+ * @param configs 方法所需的 configs 参数。
+ * @returns 本次处理得到的结果。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateDerivedOffsets<DerivedAttribute extends string>(
   offsets: Readonly<Record<string, number>>,
   configs: Readonly<Record<DerivedAttribute, DerivedAttributeFormulaConfig>>,

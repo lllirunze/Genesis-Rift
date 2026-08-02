@@ -16,6 +16,7 @@ import type { ConsumableEffectHandlerRegistry } from "./consumable-effect-handle
 import { getItemDefinition } from "./backpack-geometry.ts";
 import type { PlayerInventoryState } from "./player-inventory-state.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface UseConsumableItemInput {
   readonly playerId: PlayerId;
   readonly itemDefinitionId: string;
@@ -23,6 +24,7 @@ export interface UseConsumableItemInput {
   readonly createStatusInstanceId: (effectIndex: number, statusDefinitionId: string) => string;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export type UseConsumableItemResult =
   | {
       readonly outcome: "used";
@@ -43,6 +45,18 @@ export type UseConsumableItemResult =
       readonly remainingItemQuantity: number;
     };
 
+/**
+ * 方法名：useConsumableItem
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param resourceState 方法所需的 resourceState 参数。
+ * @param statusState 方法所需的 statusState 参数。
+ * @param itemDefinitions 方法所需的 itemDefinitions 参数。
+ * @param usageCatalog 方法所需的 usageCatalog 参数。
+ * @param registry 方法所需的 registry 参数。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function useConsumableItem(
   inventory: PlayerInventoryState,
   resourceState: CharacterResourceState<string>,
@@ -69,7 +83,7 @@ export function useConsumableItem(
   validateConsumableUsageDefinition(usage);
   preflightHandlers(usage.effects, registry);
 
-  // Calculate consumption first, but only expose it when at least one effect succeeds.
+  // 先计算消耗结果，但只有至少一个效果成功时才对外提交该结果。
   const consumption = consumeBackpackItemQuantity(inventory.backpack, input.itemDefinitionId, 1);
   let state: ConsumableEffectState = { resourceState, statusState };
   const effectResults: ConsumableEffectExecutionResult[] = [];
@@ -113,6 +127,13 @@ export function useConsumableItem(
   });
 }
 
+/**
+ * 方法名：preflightHandlers
+ * 作用：执行该方法负责的单一业务操作。
+ * @param effects 方法所需的 effects 参数。
+ * @param registry 方法所需的 registry 参数。
+ * @returns 无返回值。
+ */
 function preflightHandlers(
   effects: readonly ConsumableEffectDefinition[],
   registry: ConsumableEffectHandlerRegistry,
@@ -122,6 +143,16 @@ function preflightHandlers(
   }
 }
 
+/**
+ * 方法名：validateOwners
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param resourceState 方法所需的 resourceState 参数。
+ * @param statusState 方法所需的 statusState 参数。
+ * @param playerId 目标玩家标识。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateOwners(
   inventory: PlayerInventoryState,
   resourceState: CharacterResourceState<string>,
@@ -141,6 +172,13 @@ function validateOwners(
   }
 }
 
+/**
+ * 方法名：validateInput
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param input 本次处理的输入数据。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateInput(input: UseConsumableItemInput): void {
   if (input.itemDefinitionId.trim().length === 0) {
     throw new TypeError("itemDefinitionId must not be empty");

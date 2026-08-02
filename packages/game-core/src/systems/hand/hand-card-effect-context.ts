@@ -10,11 +10,13 @@ import type {
 } from "./hand-card-definition.ts";
 import type { HandCardEffectStateChannel } from "./hand-card-effect-state-channel.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface HandCardEffectTargetReference {
   readonly type: HandCardTargetType;
   readonly targetId: string;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface HandCardEffectExecutionScope {
   readonly eventId: string | null;
   readonly battleId: string | null;
@@ -22,6 +24,7 @@ export interface HandCardEffectExecutionScope {
   readonly tileId: TileId | null;
 }
 
+/** 描述一次业务结算所需的上下文与外部依赖。 */
 export interface HandCardEffectExecutionContext {
   readonly executionId: string;
   readonly gameId: GameId;
@@ -37,6 +40,7 @@ export interface HandCardEffectExecutionContext {
   readonly handCardStateChannel: HandCardEffectStateChannel | null;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CreateHandCardEffectExecutionContextInput {
   readonly executionId: string;
   readonly gameId: GameId;
@@ -52,6 +56,12 @@ export interface CreateHandCardEffectExecutionContextInput {
   readonly handCardStateChannel?: HandCardEffectStateChannel | null;
 }
 
+/**
+ * 方法名：createHandCardEffectExecutionContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function createHandCardEffectExecutionContext(
   input: CreateHandCardEffectExecutionContextInput,
 ): HandCardEffectExecutionContext {
@@ -84,6 +94,13 @@ export function createHandCardEffectExecutionContext(
   });
 }
 
+/**
+ * 方法名：validateHandCardEffectExecutionContext
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param context 本次操作所需的上下文。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateHandCardEffectExecutionContext(
   context: HandCardEffectExecutionContext,
 ): void {
@@ -97,6 +114,13 @@ export function validateHandCardEffectExecutionContext(
   validateScope(context.scope);
 }
 
+/**
+ * 方法名：validateResponseContext
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param context 本次操作所需的上下文。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateResponseContext(context: HandCardEffectExecutionContext): void {
   if (context.timing === "active") {
     if (context.responseType !== null || context.triggerId !== null) {
@@ -124,6 +148,13 @@ function validateResponseContext(context: HandCardEffectExecutionContext): void 
   assertNonEmptyString(context.triggerId, "triggerId");
 }
 
+/**
+ * 方法名：validateTargets
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param targets 方法所需的 targets 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateTargets(targets: readonly HandCardEffectTargetReference[]): void {
   const targetKeys = new Set<string>();
 
@@ -143,6 +174,13 @@ function validateTargets(targets: readonly HandCardEffectTargetReference[]): voi
   }
 }
 
+/**
+ * 方法名：validateScope
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param scope 方法所需的 scope 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateScope(scope: HandCardEffectExecutionScope): void {
   assertOptionalNonEmptyString(scope.eventId, "eventId");
   assertOptionalNonEmptyString(scope.battleId, "battleId");
@@ -154,24 +192,56 @@ function validateScope(scope: HandCardEffectExecutionScope): void {
   }
 }
 
+/**
+ * 方法名：assertOptionalNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertOptionalNonEmptyString(value: string | null, field: string): void {
   if (value !== null) {
     assertNonEmptyString(value, field);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);
   }
 }
 
+/**
+ * 方法名：assertPositiveSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertPositiveSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new RangeError(`${field} must be a positive safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`${field} must be a non-negative safe integer`);

@@ -11,6 +11,7 @@ import {
   WIND_BLESSING_STATUS_DEFINITION,
 } from "../statuses/status-definitions.ts";
 
+/** 当前业务对象的静态定义配置。 */
 export const HEALING_POTION_USAGE_DEFINITION = {
   itemDefinitionId: HEALING_POTION_ITEM_DEFINITION.definitionId,
   effects: [
@@ -21,6 +22,7 @@ export const HEALING_POTION_USAGE_DEFINITION = {
   ],
 } as const satisfies ConsumableUsageDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const MANA_POTION_USAGE_DEFINITION = {
   itemDefinitionId: MANA_POTION_ITEM_DEFINITION.definitionId,
   effects: [
@@ -31,6 +33,7 @@ export const MANA_POTION_USAGE_DEFINITION = {
   ],
 } as const satisfies ConsumableUsageDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const ANTIDOTE_USAGE_DEFINITION = {
   itemDefinitionId: ANTIDOTE_ITEM_DEFINITION.definitionId,
   effects: [
@@ -41,6 +44,7 @@ export const ANTIDOTE_USAGE_DEFINITION = {
   ],
 } as const satisfies ConsumableUsageDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const WIND_TONIC_USAGE_DEFINITION = {
   itemDefinitionId: WIND_TONIC_ITEM_DEFINITION.definitionId,
   effects: [
@@ -51,6 +55,7 @@ export const WIND_TONIC_USAGE_DEFINITION = {
   ],
 } as const satisfies ConsumableUsageDefinition;
 
+/** 当前模块使用的只读配置注册表。 */
 export const CONSUMABLE_USAGE_CATALOG = {
   [HEALING_POTION_USAGE_DEFINITION.itemDefinitionId]: HEALING_POTION_USAGE_DEFINITION,
   [MANA_POTION_USAGE_DEFINITION.itemDefinitionId]: MANA_POTION_USAGE_DEFINITION,

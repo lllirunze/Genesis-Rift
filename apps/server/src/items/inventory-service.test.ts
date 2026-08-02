@@ -38,13 +38,30 @@ const DEFINITIONS = {
 class MemoryLogWriter implements LogWriter {
   readonly lines: string[] = [];
 
+  /**
+   * 方法名：write
+   * 作用：按指定等级和格式记录日志。
+   * @param line 方法所需的 line 参数。
+   * @returns 本次处理得到的结果。
+   */
   async write(line: string): Promise<void> {
     this.lines.push(line);
   }
 
+  /**
+   * 方法名：close
+   * 作用：完成待处理工作并安全释放运行资源。
+   * @returns 本次处理得到的结果。
+   */
   async close(): Promise<void> {}
 }
 
+/**
+ * 方法名：createFixture
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param inventory 方法所需的 inventory 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createFixture(inventory = createPlayerInventory(PLAYER_ID)) {
   const writer = new MemoryLogWriter();
   const timestamp = new Date(2026, 7, 1, 12, 30, 15, 21).getTime();
@@ -277,6 +294,11 @@ describe("InventoryService", () => {
   });
 });
 
+/**
+ * 方法名：createFullInventory
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createFullInventory(): PlayerInventoryState {
   const blocker = createItemInstance(
     {

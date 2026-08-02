@@ -215,6 +215,12 @@ describe("purchaseItemWithCoin", () => {
   });
 });
 
+/**
+ * 方法名：createInventoryWithCoin
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param quantity 方法所需的 quantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createInventoryWithCoin(quantity: number) {
   return receiveCoin(
     createPlayerInventory(PLAYER_ID),
@@ -228,6 +234,11 @@ function createInventoryWithCoin(quantity: number) {
   ).inventory;
 }
 
+/**
+ * 方法名：addItem
+ * 作用：在保持既有约束的前提下添加目标数据。
+ * @returns 本次处理得到的结果。
+ */
 function addItem(
   inventory: ReturnType<typeof createPlayerInventory>,
   definitionId: keyof typeof DEFINITIONS,

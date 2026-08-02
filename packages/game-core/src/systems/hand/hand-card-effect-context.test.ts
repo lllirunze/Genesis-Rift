@@ -15,6 +15,11 @@ const MASTER_SEED = createMasterSeed(
   "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
 );
 
+/**
+ * 方法名：createActiveContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createActiveContext(): HandCardEffectExecutionContext {
   return {
     executionId: "hand-card-execution-1",

@@ -19,11 +19,13 @@ import type { PlayerHandState } from "./player-hand-state.ts";
 import { resolveUsedHandCardDestination } from "./resolve-used-hand-card.ts";
 import { validateSharedHandCardZones } from "./validate-hand-card-zones.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type ExecuteHandCardEffectsContextInput = Omit<
   CreateHandCardEffectExecutionContextInput,
   "effectIndex" | "handCardStateChannel"
 >;
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ExecuteHandCardEffectsResult {
   readonly outcome: "resolved";
   readonly cardId: HandCardId;
@@ -33,6 +35,7 @@ export interface ExecuteHandCardEffectsResult {
   readonly playerHandState: PlayerHandState;
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class HandCardEffectSequenceExecutionError extends Error {
   readonly cardId: HandCardId;
   readonly failedEffectIndex: number;
@@ -58,6 +61,16 @@ export class HandCardEffectSequenceExecutionError extends Error {
   }
 }
 
+/**
+ * 方法名：executeHandCardEffects
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param deckState 方法所需的 deckState 参数。
+ * @param playerHandState 方法所需的 playerHandState 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param registry 方法所需的 registry 参数。
+ * @param contextInput 方法所需的 contextInput 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function executeHandCardEffects(
   deckState: HandCardDeckState,
   playerHandState: PlayerHandState,
@@ -115,6 +128,15 @@ export function executeHandCardEffects(
   });
 }
 
+/**
+ * 方法名：preflightEffects
+ * 作用：执行该方法负责的单一业务操作。
+ * @param card 方法所需的 card 参数。
+ * @param registry 方法所需的 registry 参数。
+ * @param contextInput 方法所需的 contextInput 参数。
+ * @param stateChannel 方法所需的 stateChannel 参数。
+ * @returns 本次处理得到的结果。
+ */
 function preflightEffects(
   card: HandCardDefinition,
   registry: HandCardEffectHandlerRegistry,
@@ -134,6 +156,14 @@ function preflightEffects(
   return Object.freeze(contexts);
 }
 
+/**
+ * 方法名：getOwnedHandCard
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param playerHandState 方法所需的 playerHandState 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function getOwnedHandCard(
   playerHandState: PlayerHandState,
   catalog: HandCardCatalog,
@@ -154,6 +184,14 @@ function getOwnedHandCard(
   return card;
 }
 
+/**
+ * 方法名：assertSourcePlayer
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param playerHandState 方法所需的 playerHandState 参数。
+ * @param sourcePlayerId 方法所需的 sourcePlayerId 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertSourcePlayer(playerHandState: PlayerHandState, sourcePlayerId: string): void {
   if (playerHandState.playerId !== sourcePlayerId) {
     throw new Error(`Hand card source player does not own the hand: ${sourcePlayerId}`);

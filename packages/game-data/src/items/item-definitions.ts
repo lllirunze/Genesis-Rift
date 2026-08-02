@@ -13,6 +13,7 @@ export * from "./equipment-item-definitions.ts";
 export * from "./material-item-definitions.ts";
 export * from "./special-item-definitions.ts";
 
+/** 当前模块使用的只读配置注册表。 */
 export const ITEM_DEFINITION_CATALOG = {
   ...CURRENCY_ITEM_DEFINITIONS,
   ...MATERIAL_ITEM_DEFINITIONS,

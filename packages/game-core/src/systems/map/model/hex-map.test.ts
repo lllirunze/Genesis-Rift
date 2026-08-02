@@ -32,6 +32,11 @@ const DEFAULT_TILE_CONTENT = {
   passability: "passable",
 } as const;
 
+/**
+ * 方法名：createCompleteTileSet
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createCompleteTileSet(): HexTile[] {
   return generateBaseMapCoordinates().map((coordinate) =>
     createHexTile(

@@ -83,6 +83,12 @@ const CATALOG = {
   6: DRAWN_CARD_TWO,
 } as const satisfies HandCardCatalog;
 
+/**
+ * 方法名：createContextInput
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createContextInput(cardId: number) {
   return {
     executionId: `execution-card-${cardId}`,
@@ -94,6 +100,12 @@ function createContextInput(cardId: number) {
   };
 }
 
+/**
+ * 方法名：createOwnedCardState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createOwnedCardState(cardId: number) {
   const deckState = createHandCardDeckState("deck.shared", [], CATALOG);
   const playerHandState = addHandCardToHand(
@@ -210,6 +222,11 @@ describe("execute hand card effects", () => {
     registry.register(createHandler("health.restore", () => "applied"));
     registry.register({
       effectId: "status.remove",
+      /**
+       * 方法名：execute
+       * 作用：执行该方法负责的业务规则并返回结算结果。
+       * @returns 本次处理得到的结果。
+       */
       execute() {
         throw new Error("Status service unavailable");
       },
@@ -251,6 +268,13 @@ describe("execute hand card effects", () => {
   });
 });
 
+/**
+ * 方法名：createHandler
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param effectId 方法所需的 effectId 参数。
+ * @param executeEffect 方法所需的 executeEffect 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createHandler<EffectId extends "health.restore" | "status.remove">(
   effectId: EffectId,
   executeEffect: (
@@ -259,6 +283,13 @@ function createHandler<EffectId extends "health.restore" | "status.remove">(
 ): HandCardEffectHandler<EffectId> {
   return {
     effectId,
+    /**
+     * 方法名：execute
+     * 作用：执行该方法负责的业务规则并返回结算结果。
+     * @param _effect 方法所需的 _effect 参数。
+     * @param context 本次操作所需的上下文。
+     * @returns 本次处理得到的结果。
+     */
     execute(_effect, context) {
       return {
         effectId,

@@ -9,8 +9,10 @@ import type { CharacterState } from "../character/character-state.ts";
 import { applyPermanentPrimaryAttributeChange } from "../character/update-primary-attributes.ts";
 import { validateLevelProgressionState } from "./level-progression-state.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type LevelUpBlockedReason = "maximum-level-reached" | "insufficient-experience";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type LevelUpEligibility =
   | {
       readonly canLevelUp: true;
@@ -26,6 +28,13 @@ export type LevelUpEligibility =
       readonly missingExperience: number;
     };
 
+/**
+ * 方法名：getLevelUpEligibility
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param character 方法所需的 character 参数。
+ * @param config 待使用或校验的配置。
+ * @returns 本次处理得到的结果。
+ */
 export function getLevelUpEligibility(
   character: CharacterState,
   config: LevelSystemConfig,
@@ -69,6 +78,14 @@ export function getLevelUpEligibility(
   };
 }
 
+/**
+ * 方法名：applyCharacterLevelUp
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param character 方法所需的 character 参数。
+ * @param config 待使用或校验的配置。
+ * @param allocation 方法所需的 allocation 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function applyCharacterLevelUp(
   character: CharacterState,
   config: LevelSystemConfig,
@@ -94,6 +111,14 @@ export function applyCharacterLevelUp(
   };
 }
 
+/**
+ * 方法名：validateAttributePointAllocation
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param allocation 方法所需的 allocation 参数。
+ * @param expectedPoints 方法所需的 expectedPoints 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateAttributePointAllocation(
   allocation: PrimaryAttributeOffset,
   expectedPoints: number,
@@ -127,6 +152,13 @@ export function validateAttributePointAllocation(
   }
 }
 
+/**
+ * 方法名：getTargetLevelDefinition
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param targetLevel 方法所需的 targetLevel 参数。
+ * @param config 待使用或校验的配置。
+ * @returns 本次处理得到的结果。
+ */
 function getTargetLevelDefinition(targetLevel: number, config: LevelSystemConfig): LevelDefinition {
   const definition = config.levels.find((candidate) => candidate.level === targetLevel);
 

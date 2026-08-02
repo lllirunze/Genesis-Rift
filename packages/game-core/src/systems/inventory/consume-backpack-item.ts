@@ -1,11 +1,20 @@
 import type { BackpackState } from "./backpack-state.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ConsumeBackpackItemQuantityResult {
   readonly backpack: BackpackState;
   readonly remainingDefinitionQuantity: number;
   readonly consumedItemInstanceIds: readonly string[];
 }
 
+/**
+ * 方法名：consumeBackpackItemQuantity
+ * 作用：执行该方法负责的单一业务操作。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definitionId 目标配置定义标识。
+ * @param quantity 方法所需的 quantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function consumeBackpackItemQuantity(
   backpack: BackpackState,
   definitionId: string,
@@ -77,12 +86,28 @@ export function consumeBackpackItemQuantity(
   };
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new TypeError(`${field} must be a non-negative safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

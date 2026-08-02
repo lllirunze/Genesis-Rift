@@ -1,5 +1,6 @@
 import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared";
 
+/** 当前业务对象的静态定义配置。 */
 export const HEALING_POTION_ITEM_DEFINITION = {
   definitionId: "item.consumable.healing-potion",
   name: "Healing Potion",
@@ -10,6 +11,7 @@ export const HEALING_POTION_ITEM_DEFINITION = {
   maximumStack: 3,
 } as const satisfies ItemDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const MANA_POTION_ITEM_DEFINITION = {
   definitionId: "item.consumable.mana-potion",
   name: "Mana Potion",
@@ -20,6 +22,7 @@ export const MANA_POTION_ITEM_DEFINITION = {
   maximumStack: 3,
 } as const satisfies ItemDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const ANTIDOTE_ITEM_DEFINITION = {
   definitionId: "item.consumable.antidote",
   name: "Antidote",
@@ -30,6 +33,7 @@ export const ANTIDOTE_ITEM_DEFINITION = {
   maximumStack: 5,
 } as const satisfies ItemDefinition;
 
+/** 当前业务对象的静态定义配置。 */
 export const WIND_TONIC_ITEM_DEFINITION = {
   definitionId: "item.consumable.wind-tonic",
   name: "Wind Tonic",
@@ -40,6 +44,7 @@ export const WIND_TONIC_ITEM_DEFINITION = {
   maximumStack: 3,
 } as const satisfies ItemDefinition;
 
+/** 当前模块对外公开的只读配置值。 */
 export const CONSUMABLE_ITEM_DEFINITIONS = {
   [HEALING_POTION_ITEM_DEFINITION.definitionId]: HEALING_POTION_ITEM_DEFINITION,
   [MANA_POTION_ITEM_DEFINITION.definitionId]: MANA_POTION_ITEM_DEFINITION,

@@ -6,6 +6,7 @@ import {
 
 import { EQUIPMENT_TYPES } from "./equipment-config.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
 
 interface EquipmentAttributeEffectBase {
@@ -13,19 +14,23 @@ interface EquipmentAttributeEffectBase {
   readonly value: number;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface EquipmentPrimaryAttributeEffect extends EquipmentAttributeEffectBase {
   readonly targetType: "primary";
   readonly targetAttribute: PrimaryAttribute;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface EquipmentDerivedAttributeEffect extends EquipmentAttributeEffectBase {
   readonly targetType: "derived";
   readonly targetAttribute: string;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type EquipmentAttributeEffect =
   EquipmentPrimaryAttributeEffect | EquipmentDerivedAttributeEffect;
 
+/** 描述业务对象不随运行过程改变的静态定义。 */
 export interface EquipmentDefinition {
   readonly definitionId: string;
   readonly name: string;
@@ -36,6 +41,13 @@ export interface EquipmentDefinition {
   readonly attributeEffects: readonly EquipmentAttributeEffect[];
 }
 
+/**
+ * 方法名：validateEquipmentDefinition
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definition 方法所需的 definition 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateEquipmentDefinition(definition: EquipmentDefinition): void {
   assertNonEmptyString(definition.definitionId, "definitionId");
   assertNonEmptyString(definition.name, "name");
@@ -70,6 +82,13 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
   }
 }
 
+/**
+ * 方法名：validateEquipmentDefinitions
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateEquipmentDefinitions(definitions: readonly EquipmentDefinition[]): void {
   const definitionIds = new Set<string>();
   const names = new Set<string>();
@@ -90,6 +109,14 @@ export function validateEquipmentDefinitions(definitions: readonly EquipmentDefi
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

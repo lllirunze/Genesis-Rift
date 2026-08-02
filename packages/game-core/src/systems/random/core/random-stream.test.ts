@@ -5,6 +5,11 @@ import { RandomStream } from "./random-stream.ts";
 
 const STREAM_SEED = createRandomStreamSeed("0123456789abcdef");
 
+/**
+ * 方法名：createWeatherStream
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createWeatherStream(): RandomStream {
   return RandomStream.create("weather", null, STREAM_SEED);
 }

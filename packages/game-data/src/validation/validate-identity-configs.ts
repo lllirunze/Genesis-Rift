@@ -5,6 +5,13 @@ import {
 import { INITIAL_PRIMARY_ATTRIBUTE_TOTAL } from "../attributes/primary-attribute-config.ts";
 import type { IdentityConfig } from "../identities/identity-config.ts";
 
+/**
+ * 方法名：validateIdentityConfig
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param config 待使用或校验的配置。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateIdentityConfig(config: IdentityConfig): void {
   for (const attribute of PRIMARY_ATTRIBUTE_KEYS) {
     const value = config.initialPrimaryAttributes[attribute];
@@ -25,6 +32,13 @@ export function validateIdentityConfig(config: IdentityConfig): void {
   validateAttributePriorities(config);
 }
 
+/**
+ * 方法名：validateAttributePriorities
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param config 待使用或校验的配置。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateAttributePriorities(config: IdentityConfig): void {
   const { primary, secondary } = config.attributePriorities;
 
@@ -77,6 +91,13 @@ function validateAttributePriorities(config: IdentityConfig): void {
   }
 }
 
+/**
+ * 方法名：validateIdentityConfigs
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param configs 方法所需的 configs 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateIdentityConfigs(configs: readonly IdentityConfig[]): void {
   const ids = new Set<string>();
 

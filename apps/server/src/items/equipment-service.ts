@@ -14,6 +14,7 @@ interface EquipmentRequest extends ItemServiceContext {
   readonly state: EquipmentInventoryState;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface EquipItemRequest extends EquipmentRequest {
   readonly itemInstanceId: string;
   readonly slot: EquipmentSlot;
@@ -23,6 +24,7 @@ export interface EquipItemRequest extends EquipmentRequest {
   };
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface UnequipItemRequest extends EquipmentRequest {
   readonly slot: EquipmentSlot;
   readonly targetPosition: {
@@ -31,23 +33,35 @@ export interface UnequipItemRequest extends EquipmentRequest {
   };
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface EquipmentServiceStateResult {
   readonly state: EquipmentInventoryState;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface EquipItemResult extends EquipmentServiceStateResult {
   readonly replacedItemInstanceId: string | null;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface UnequipItemResult extends EquipmentServiceStateResult {
   readonly unequippedItemInstanceId: string;
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class EquipmentService {
   readonly #itemDefinitions: ItemDefinitionCatalog;
   readonly #equipmentDefinitions: EquipmentDefinitionCatalog;
   readonly #logger: Logger;
 
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param itemDefinitions 方法所需的 itemDefinitions 参数。
+   * @param equipmentDefinitions 方法所需的 equipmentDefinitions 参数。
+   * @param logger 方法所需的 logger 参数。
+   * @returns 无返回值。
+   */
   constructor(
     itemDefinitions: ItemDefinitionCatalog,
     equipmentDefinitions: EquipmentDefinitionCatalog,
@@ -58,6 +72,12 @@ export class EquipmentService {
     this.#logger = logger;
   }
 
+  /**
+   * 方法名：equipItem
+   * 作用：将目标装备放入兼容栏位并更新角色状态。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   equipItem(request: EquipItemRequest): EquipItemResult {
     const target = this.#createTarget(request);
     const previousEquipment = request.state.loadout.slots[request.slot];
@@ -107,6 +127,12 @@ export class EquipmentService {
     }
   }
 
+  /**
+   * 方法名：unequipItem
+   * 作用：卸下目标装备并更新角色状态。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   unequipItem(request: UnequipItemRequest): UnequipItemResult {
     const target = this.#createTarget(request);
     const previousEquipment = request.state.loadout.slots[request.slot];

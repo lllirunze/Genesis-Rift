@@ -9,6 +9,7 @@ import type { HandCardEffectExecutionContext } from "../hand-card-effect-context
 import type { HandCardEffectHandler } from "../hand-card-effect-handler.ts";
 import { getPlayerEffectTargetIds } from "./player-effect-targets.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface StatusEffectHandlerDependencies {
   readonly definitions: StatusDefinitionCatalog;
   readonly getCharacterStatusState: (targetPlayerId: string) => CharacterStatusState | null;
@@ -21,6 +22,7 @@ export interface StatusEffectHandlerDependencies {
   readonly getCreatedAtSequence: (context: HandCardEffectExecutionContext) => number;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface StatusAddTargetResult {
   readonly targetPlayerId: string;
   readonly state: CharacterStatusState;
@@ -31,25 +33,41 @@ export interface StatusAddTargetResult {
   readonly applicationOutcome: StatusApplicationOutcome;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface StatusAddEffectOutput {
   readonly targets: readonly StatusAddTargetResult[];
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface StatusRemoveTargetResult {
   readonly targetPlayerId: string;
   readonly state: CharacterStatusState;
   readonly removedStatusInstanceId: string;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface StatusRemoveEffectOutput {
   readonly targets: readonly StatusRemoveTargetResult[];
 }
 
+/**
+ * 方法名：createStatusAddEffectHandler
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param dependencies 方法所需的 dependencies 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createStatusAddEffectHandler(
   dependencies: StatusEffectHandlerDependencies,
 ): HandCardEffectHandler<"status.add", StatusAddEffectOutput> {
   return {
     effectId: "status.add",
+    /**
+     * 方法名：execute
+     * 作用：执行该方法负责的业务规则并返回结算结果。
+     * @param effect 方法所需的 effect 参数。
+     * @param context 本次操作所需的上下文。
+     * @returns 本次处理得到的结果。
+     */
     execute(effect, context) {
       const targetResults: StatusAddTargetResult[] = [];
 
@@ -114,11 +132,24 @@ export function createStatusAddEffectHandler(
   };
 }
 
+/**
+ * 方法名：createStatusRemoveEffectHandler
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param dependencies 方法所需的 dependencies 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createStatusRemoveEffectHandler(
   dependencies: StatusEffectHandlerDependencies,
 ): HandCardEffectHandler<"status.remove", StatusRemoveEffectOutput> {
   return {
     effectId: "status.remove",
+    /**
+     * 方法名：execute
+     * 作用：执行该方法负责的业务规则并返回结算结果。
+     * @param effect 方法所需的 effect 参数。
+     * @param context 本次操作所需的上下文。
+     * @returns 本次处理得到的结果。
+     */
     execute(effect, context) {
       const targetResults: StatusRemoveTargetResult[] = [];
 
@@ -168,6 +199,14 @@ export function createStatusRemoveEffectHandler(
   };
 }
 
+/**
+ * 方法名：assertStateTarget
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param state 当前业务状态。
+ * @param targetPlayerId 方法所需的 targetPlayerId 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertStateTarget(state: CharacterStatusState, targetPlayerId: string): void {
   if (state.targetId !== targetPlayerId) {
     throw new Error(`character status state does not belong to target player: ${targetPlayerId}`);

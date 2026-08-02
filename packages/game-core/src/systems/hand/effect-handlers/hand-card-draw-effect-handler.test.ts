@@ -20,6 +20,12 @@ const MASTER_SEED = createMasterSeed(
   "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
 );
 
+/**
+ * 方法名：createCard
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createCard(cardId: number): HandCardDefinition {
   return {
     cardId,
@@ -47,6 +53,12 @@ const CATALOG = Object.fromEntries(
 ) as HandCardCatalog;
 const EFFECT = { effectId: "handCard.draw", parameters: { amount: 2 } } as const;
 
+/**
+ * 方法名：createChannel
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param deckState 方法所需的 deckState 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createChannel(deckState = createHandCardDeckState("deck.shared", [2, 3, 4], CATALOG)) {
   return HandCardEffectStateChannel.create(
     {
@@ -57,6 +69,13 @@ function createChannel(deckState = createHandCardDeckState("deck.shared", [2, 3,
   );
 }
 
+/**
+ * 方法名：createContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param channel 方法所需的 channel 参数。
+ * @param withRandomStream 方法所需的 withRandomStream 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createContext(channel: HandCardEffectStateChannel | null, withRandomStream = true) {
   return createHandCardEffectExecutionContext({
     executionId: "execution-draw-1",

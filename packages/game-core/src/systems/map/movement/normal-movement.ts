@@ -12,8 +12,10 @@ import type { HexMap } from "../model/hex-map.ts";
 import type { HexTile } from "../model/hex-tile.ts";
 import { NORMAL_MOVEMENT_UNAVAILABLE_REASONS } from "./movement-config.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type NormalMovementUnavailableReason = (typeof NORMAL_MOVEMENT_UNAVAILABLE_REASONS)[number];
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface NormalMovementCandidate {
   readonly available: true;
   readonly direction: HexDirection;
@@ -22,6 +24,7 @@ export interface NormalMovementCandidate {
   readonly ringRelation: RingMovementRelation;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface UnavailableNormalMovementDirection {
   readonly available: false;
   readonly direction: HexDirection;
@@ -29,9 +32,17 @@ export interface UnavailableNormalMovementDirection {
   readonly reason: NormalMovementUnavailableReason;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type NormalMovementDirectionEvaluation =
   NormalMovementCandidate | UnavailableNormalMovementDirection;
 
+/**
+ * 方法名：evaluateNormalMovementDirections
+ * 作用：执行该方法负责的单一业务操作。
+ * @param map 方法所需的 map 参数。
+ * @param originCoordinate 方法所需的 originCoordinate 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function evaluateNormalMovementDirections(
   map: HexMap,
   originCoordinate: CubeCoordinate,
@@ -45,6 +56,13 @@ export function evaluateNormalMovementDirections(
   );
 }
 
+/**
+ * 方法名：getNormalMovementCandidates
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param map 方法所需的 map 参数。
+ * @param originCoordinate 方法所需的 originCoordinate 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getNormalMovementCandidates(
   map: HexMap,
   originCoordinate: CubeCoordinate,
@@ -54,6 +72,14 @@ export function getNormalMovementCandidates(
   );
 }
 
+/**
+ * 方法名：evaluateNormalMovementDirection
+ * 作用：执行该方法负责的单一业务操作。
+ * @param map 方法所需的 map 参数。
+ * @param originCoordinate 方法所需的 originCoordinate 参数。
+ * @param direction 方法所需的 direction 参数。
+ * @returns 本次处理得到的结果。
+ */
 function evaluateNormalMovementDirection(
   map: HexMap,
   originCoordinate: CubeCoordinate,
@@ -96,6 +122,13 @@ function evaluateNormalMovementDirection(
   });
 }
 
+/**
+ * 方法名：requireOriginTile
+ * 作用：执行该方法负责的单一业务操作。
+ * @param map 方法所需的 map 参数。
+ * @param originCoordinate 方法所需的 originCoordinate 参数。
+ * @returns 本次处理得到的结果。
+ */
 function requireOriginTile(map: HexMap, originCoordinate: CubeCoordinate): HexTile {
   const originTile = map.getTileAt(originCoordinate);
 

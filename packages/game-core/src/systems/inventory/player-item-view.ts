@@ -10,23 +10,27 @@ import {
 } from "./inventory-visibility.ts";
 import type { PlayerInventoryState } from "./player-inventory-state.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface PublicEquipmentSlotView {
   readonly slot: EquipmentSlot;
   readonly equipment: EquipmentInstance | null;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface PublicEquipmentView {
   readonly visibility: "public";
   readonly ownerPlayerId: PlayerId;
   readonly slots: readonly PublicEquipmentSlotView[];
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface PlayerItemView {
   readonly ownerPlayerId: PlayerId;
   readonly backpack: BackpackView;
   readonly equipment: PublicEquipmentView;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CreatePlayerItemViewInput {
   readonly inventory: PlayerInventoryState;
   readonly equipmentLoadout: EquipmentLoadout;
@@ -36,6 +40,12 @@ export interface CreatePlayerItemViewInput {
   readonly revealGrants?: readonly BackpackRevealGrant[];
 }
 
+/**
+ * 方法名：createPlayerItemView
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function createPlayerItemView(input: CreatePlayerItemViewInput): PlayerItemView {
   const ownerPlayerId = input.inventory.backpack.playerId;
 
@@ -56,6 +66,12 @@ export function createPlayerItemView(input: CreatePlayerItemViewInput): PlayerIt
   });
 }
 
+/**
+ * 方法名：createPublicEquipmentView
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param loadout 方法所需的 loadout 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createPublicEquipmentView(loadout: EquipmentLoadout): PublicEquipmentView {
   return Object.freeze({
     visibility: "public",

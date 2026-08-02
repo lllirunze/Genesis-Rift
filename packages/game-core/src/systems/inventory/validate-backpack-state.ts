@@ -4,6 +4,14 @@ import type { BackpackEntry, BackpackState } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import { validateItemInstance } from "./item-instance.ts";
 
+/**
+ * 方法名：validateBackpackState
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateBackpackState(
   backpack: BackpackState,
   definitions: ItemDefinitionCatalog,

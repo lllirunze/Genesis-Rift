@@ -215,6 +215,11 @@ describe("equipment and inventory interaction", () => {
   });
 });
 
+/**
+ * 方法名：createStateWithBackpackItem
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createStateWithBackpackItem(
   definitionId: keyof typeof ITEM_DEFINITIONS,
   instanceId: string,
@@ -240,6 +245,11 @@ function createStateWithBackpackItem(
   };
 }
 
+/**
+ * 方法名：createEmptyState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createEmptyState(): EquipmentInventoryState {
   return {
     inventory: createPlayerInventory(PLAYER_ID),

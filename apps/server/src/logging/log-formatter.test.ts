@@ -5,6 +5,12 @@ import type { PlayerId } from "@genesis-rift/shared";
 import { formatLogRecord, formatLogTimestamp } from "./log-formatter.ts";
 import type { LogRecord } from "./log-record.ts";
 
+/**
+ * 方法名：createRecord
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param overrides 方法所需的 overrides 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createRecord(overrides: Partial<LogRecord> = {}): LogRecord {
   return {
     timestampMs: new Date(2026, 7, 1, 12, 30, 15, 21).getTime(),

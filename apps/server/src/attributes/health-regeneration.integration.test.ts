@@ -32,7 +32,7 @@ describe("health regeneration formula", () => {
       config: HEALTH_REGENERATION_FORMULA_CONFIG,
     });
 
-    // floor(7 x 0.25 + 6 x 0.15) = floor(2.65) = 2
+    // 向下取整：7×0.25 + 6×0.15 = 2.65，最终生命恢复为 2。
     expect(healthRegeneration).toBe(2);
   });
 
@@ -47,7 +47,7 @@ describe("health regeneration formula", () => {
       derivedDynamicOffset: 1,
     });
 
-    // floor(8 x 0.25 + 7 x 0.15 + 1) = floor(4.05) = 4
+    // 向下取整：8×0.25 + 7×0.15 + 1 = 4.05，最终生命恢复为 4。
     expect(healthRegeneration).toBe(4);
   });
 });

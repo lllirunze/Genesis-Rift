@@ -101,6 +101,13 @@ describe("backpack item stacking", () => {
   });
 });
 
+/**
+ * 方法名：createBackpackWithCoinStacks
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param targetQuantity 方法所需的 targetQuantity 参数。
+ * @param sourceQuantity 方法所需的 sourceQuantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createBackpackWithCoinStacks(targetQuantity: number, sourceQuantity: number) {
   const target = createItemInstance(
     {

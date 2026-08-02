@@ -8,6 +8,11 @@ import { FileLogWriter } from "./file-log-writer.ts";
 
 const temporaryDirectories: string[] = [];
 
+/**
+ * 方法名：createTemporaryDirectory
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 async function createTemporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), "genesis-rift-log-"));
   temporaryDirectories.push(directory);

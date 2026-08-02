@@ -13,9 +13,16 @@ import type {
   ConsumableEffectHandler,
 } from "./consumable-effect-handler.ts";
 
+/** 封装该模块的状态与操作入口。 */
 export class ConsumableEffectHandlerRegistry {
   readonly #handlers = new Map<ConsumableEffectId, unknown>();
 
+  /**
+   * 方法名：register
+   * 作用：执行该方法负责的单一业务操作。
+   * @param handler 方法所需的 handler 参数。
+   * @returns 无返回值。
+   */
   register<EffectId extends ConsumableEffectId, Output>(
     handler: ConsumableEffectHandler<EffectId, Output>,
   ): void {
@@ -28,6 +35,12 @@ export class ConsumableEffectHandlerRegistry {
     this.#handlers.set(handler.effectId, handler);
   }
 
+  /**
+   * 方法名：get
+   * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+   * @param effectId 方法所需的 effectId 参数。
+   * @returns 本次处理得到的结果。
+   */
   get<EffectId extends ConsumableEffectId>(
     effectId: EffectId,
   ): ConsumableEffectHandler<EffectId, unknown> {
@@ -41,6 +54,13 @@ export class ConsumableEffectHandlerRegistry {
     return handler as ConsumableEffectHandler<EffectId, unknown>;
   }
 
+  /**
+   * 方法名：execute
+   * 作用：执行该方法负责的业务规则并返回结算结果。
+   * @param effect 方法所需的 effect 参数。
+   * @param context 本次操作所需的上下文。
+   * @returns 本次处理得到的结果。
+   */
   execute(
     effect: ConsumableEffectDefinition,
     context: ConsumableEffectExecutionContext,
@@ -63,6 +83,13 @@ export class ConsumableEffectHandlerRegistry {
   }
 }
 
+/**
+ * 方法名：validateContext
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param context 本次操作所需的上下文。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateContext(context: ConsumableEffectExecutionContext): void {
   assertNonEmptyString(context.playerId, "playerId");
   assertNonEmptyString(context.itemDefinitionId, "itemDefinitionId");
@@ -76,12 +103,27 @@ function validateContext(context: ConsumableEffectExecutionContext): void {
   }
 }
 
+/**
+ * 方法名：assertSupportedEffectId
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param effectId 方法所需的 effectId 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertSupportedEffectId(effectId: ConsumableEffectId): void {
   if (!(CONSUMABLE_EFFECT_IDS as readonly string[]).includes(effectId)) {
     throw new RangeError(`Unsupported consumable effect handler id: ${effectId}`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

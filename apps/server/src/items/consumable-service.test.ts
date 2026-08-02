@@ -24,10 +24,21 @@ const PLAYER_ID = "player-1" as PlayerId;
 class MemoryLogWriter implements LogWriter {
   readonly lines: string[] = [];
 
+  /**
+   * 方法名：write
+   * 作用：按指定等级和格式记录日志。
+   * @param line 方法所需的 line 参数。
+   * @returns 本次处理得到的结果。
+   */
   async write(line: string): Promise<void> {
     this.lines.push(line);
   }
 
+  /**
+   * 方法名：close
+   * 作用：完成待处理工作并安全释放运行资源。
+   * @returns 本次处理得到的结果。
+   */
   async close(): Promise<void> {}
 }
 
@@ -71,6 +82,12 @@ describe("ConsumableService", () => {
   });
 });
 
+/**
+ * 方法名：createFixture
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param currentHealth 方法所需的 currentHealth 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createFixture(currentHealth: number) {
   const writer = new MemoryLogWriter();
   const logger = new Logger({
@@ -116,6 +133,13 @@ function createFixture(currentHealth: number) {
   return { inventory, logger, resourceState, service, writer };
 }
 
+/**
+ * 方法名：createRequest
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param fixture 方法所需的 fixture 参数。
+ * @param itemQuantity 方法所需的 itemQuantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createRequest(fixture: ReturnType<typeof createFixture>, itemQuantity: number) {
   return {
     playerId: PLAYER_ID,

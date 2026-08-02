@@ -41,6 +41,11 @@ const DEFINITIONS = {
   },
 } as const satisfies StatusDefinitionCatalog;
 
+/**
+ * 方法名：createContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createContext() {
   return createHandCardEffectExecutionContext({
     executionId: "execution-status-1",
@@ -53,6 +58,13 @@ function createContext() {
   });
 }
 
+/**
+ * 方法名：createDependencies
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param state 当前业务状态。
+ * @param saveState 方法所需的 saveState 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createDependencies(
   state: ReturnType<typeof createCharacterStatusState>,
   saveState = vi.fn(),

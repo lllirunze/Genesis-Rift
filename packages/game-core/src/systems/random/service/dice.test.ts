@@ -6,6 +6,11 @@ import { rollD6, rollD20 } from "./dice.ts";
 
 const STREAM_SEED = createRandomStreamSeed("0123456789abcdef");
 
+/**
+ * 方法名：createDiceStream
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createDiceStream(): RandomStream {
   return RandomStream.create("reincarnation", null, STREAM_SEED);
 }

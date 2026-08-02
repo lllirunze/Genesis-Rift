@@ -8,6 +8,7 @@ import type { HandCardEffectExecutionContext } from "../hand-card-effect-context
 import type { HandCardEffectHandler } from "../hand-card-effect-handler.ts";
 import { getPlayerEffectTargetIds } from "./player-effect-targets.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CreateHandCardItemInstanceIdsInput {
   readonly context: HandCardEffectExecutionContext;
   readonly targetPlayerId: string;
@@ -15,6 +16,7 @@ export interface CreateHandCardItemInstanceIdsInput {
   readonly quantity: number;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface ItemObtainEffectHandlerDependencies {
   readonly definitions: ItemDefinitionCatalog;
   readonly getPlayerInventoryState: (targetPlayerId: string) => PlayerInventoryState | null;
@@ -22,6 +24,7 @@ export interface ItemObtainEffectHandlerDependencies {
   readonly createItemInstanceIds: (input: CreateHandCardItemInstanceIdsInput) => readonly string[];
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ItemObtainTargetResult {
   readonly targetPlayerId: string;
   readonly inventory: PlayerInventoryState;
@@ -30,15 +33,29 @@ export interface ItemObtainTargetResult {
   readonly unresolvedItems: readonly UnresolvedReceivedItem[];
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface ItemObtainEffectOutput {
   readonly targets: readonly ItemObtainTargetResult[];
 }
 
+/**
+ * 方法名：createItemObtainEffectHandler
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param dependencies 方法所需的 dependencies 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createItemObtainEffectHandler(
   dependencies: ItemObtainEffectHandlerDependencies,
 ): HandCardEffectHandler<"item.obtain", ItemObtainEffectOutput> {
   return {
     effectId: "item.obtain",
+    /**
+     * 方法名：execute
+     * 作用：执行该方法负责的业务规则并返回结算结果。
+     * @param effect 方法所需的 effect 参数。
+     * @param context 本次操作所需的上下文。
+     * @returns 本次处理得到的结果。
+     */
     execute(effect, context) {
       const targetResults: ItemObtainTargetResult[] = [];
 

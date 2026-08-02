@@ -16,6 +16,7 @@ import type { GameId, PlayerId } from "@genesis-rift/shared";
 
 import type { Logger, LogTarget } from "../logging/index.ts";
 
+/** 描述一次业务结算所需的上下文与外部依赖。 */
 export interface StatusServiceContext {
   readonly playerId: PlayerId;
   readonly playerName: string;
@@ -23,6 +24,7 @@ export interface StatusServiceContext {
   readonly statusState: CharacterStatusState;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface ApplyStatusRequest extends StatusServiceContext {
   readonly definitionId: string;
   readonly newInstanceId: string;
@@ -30,24 +32,40 @@ export interface ApplyStatusRequest extends StatusServiceContext {
   readonly createdAtSequence: number;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface RemoveStatusStacksRequest extends StatusServiceContext {
   readonly instanceId: string;
   readonly amount: number;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface DispelStatusRequest extends StatusServiceContext {
   readonly instanceId: string;
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class StatusService {
   readonly #definitions: StatusDefinitionCatalog;
   readonly #logger: Logger;
 
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param definitions 方法所需的 definitions 参数。
+   * @param logger 方法所需的 logger 参数。
+   * @returns 无返回值。
+   */
   constructor(definitions: StatusDefinitionCatalog, logger: Logger) {
     this.#definitions = definitions;
     this.#logger = logger;
   }
 
+  /**
+   * 方法名：applyStatus
+   * 作用：执行该方法负责的业务规则并返回结算结果。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   applyStatus(request: ApplyStatusRequest): ApplyStatusToCharacterResult {
     return this.#run(request, "applyStatus", () => {
       const result = applyStatusToCharacter(request.statusState, this.#definitions, {
@@ -79,6 +97,12 @@ export class StatusService {
     });
   }
 
+  /**
+   * 方法名：advanceStatusesAtTurnEnd
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   advanceStatusesAtTurnEnd(request: StatusServiceContext): AdvanceCharacterStatusesResult {
     return this.#run(request, "advanceStatusesAtTurnEnd", () => {
       const result = advanceCharacterStatusesAtTurnEnd(request.statusState, this.#definitions);
@@ -118,6 +142,12 @@ export class StatusService {
     });
   }
 
+  /**
+   * 方法名：removeStacks
+   * 作用：移除目标数据，并返回更新后的状态。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   removeStacks(request: RemoveStatusStacksRequest): RemoveCharacterStatusStacksResult {
     return this.#run(request, "removeStacks", () => {
       const result = removeCharacterStatusStacks(
@@ -150,6 +180,12 @@ export class StatusService {
     });
   }
 
+  /**
+   * 方法名：dispelStatus
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   dispelStatus(request: DispelStatusRequest): DispelStatusResult {
     return this.#run(request, "dispelStatus", () => {
       const result = dispelCharacterStatus(
@@ -176,6 +212,12 @@ export class StatusService {
     });
   }
 
+  /**
+   * 方法名：handleDeath
+   * 作用：执行该方法负责的业务规则并返回结算结果。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   handleDeath(request: StatusServiceContext): RemoveStatusesOnDeathResult {
     return this.#run(request, "handleDeath", () => {
       const result = removeCharacterStatusesOnDeath(request.statusState, this.#definitions);

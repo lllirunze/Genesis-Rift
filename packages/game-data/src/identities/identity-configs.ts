@@ -1,6 +1,8 @@
 import type { IdentityConfig, IdentityName } from "./identity-config.ts";
 
+/** 六种职业的初始属性、资源名称与立绘配置。 */
 export const IDENTITY_CONFIGS = {
+  /** 法师职业配置。 */
   mage: {
     id: "identity.mage",
     name: "mage",
@@ -18,6 +20,7 @@ export const IDENTITY_CONFIGS = {
       insight: 6,
     },
   },
+  /** 杀手职业配置。 */
   assassin: {
     id: "identity.assassin",
     name: "assassin",
@@ -35,6 +38,7 @@ export const IDENTITY_CONFIGS = {
       insight: 4,
     },
   },
+  /** 盗贼职业配置。 */
   thief: {
     id: "identity.thief",
     name: "thief",
@@ -52,6 +56,7 @@ export const IDENTITY_CONFIGS = {
       insight: 4,
     },
   },
+  /** 游侠职业配置。 */
   ranger: {
     id: "identity.ranger",
     name: "ranger",
@@ -69,6 +74,7 @@ export const IDENTITY_CONFIGS = {
       insight: 3,
     },
   },
+  /** 魔王职业配置。 */
   demon: {
     id: "identity.demon",
     name: "demon",
@@ -86,6 +92,7 @@ export const IDENTITY_CONFIGS = {
       insight: 3,
     },
   },
+  /** 神仙长老职业配置。 */
   matriarch: {
     id: "identity.matriarch",
     name: "matriarch",
@@ -105,4 +112,5 @@ export const IDENTITY_CONFIGS = {
   },
 } as const satisfies Record<IdentityName, IdentityConfig>;
 
+/** 供需要顺序遍历职业配置的业务使用的只读列表。 */
 export const IDENTITY_CONFIG_LIST: readonly IdentityConfig[] = Object.values(IDENTITY_CONFIGS);

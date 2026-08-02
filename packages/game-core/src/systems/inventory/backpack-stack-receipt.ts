@@ -1,18 +1,29 @@
 import type { BackpackState } from "./backpack-state.ts";
 import type { ItemInstance } from "./item-instance.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface IncomingStackIdentity {
   readonly definitionId: string;
   readonly ownerPlayerId: ItemInstance["ownerPlayerId"];
   readonly stackCompatibilityKey: string;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface FillCompatibleStacksResult {
   readonly backpack: BackpackState;
   readonly addedQuantity: number;
   readonly remainingQuantity: number;
 }
 
+/**
+ * 方法名：fillCompatibleBackpackStacks
+ * 作用：执行该方法负责的单一业务操作。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param incoming 方法所需的 incoming 参数。
+ * @param quantity 方法所需的 quantity 参数。
+ * @param maximumStack 方法所需的 maximumStack 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function fillCompatibleBackpackStacks(
   backpack: BackpackState,
   incoming: IncomingStackIdentity,

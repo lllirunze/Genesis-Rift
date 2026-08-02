@@ -15,6 +15,13 @@ import { validateStatusDefinition } from "./status-definition.ts";
 import type { StatusInstance } from "./status-instance.ts";
 import { validateStatusInstance } from "./status-instance.ts";
 
+/**
+ * 方法名：createStatusAttributeModifiers
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param instances 方法所需的 instances 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createStatusAttributeModifiers(
   instances: readonly StatusInstance[],
   definitions: StatusDefinitionCatalog,
@@ -76,6 +83,13 @@ export function createStatusAttributeModifiers(
   return modifiers;
 }
 
+/**
+ * 方法名：aggregateStatusAttributeModifiers
+ * 作用：根据输入执行确定性计算并返回结果。
+ * @param instances 方法所需的 instances 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function aggregateStatusAttributeModifiers(
   instances: readonly StatusInstance[],
   definitions: StatusDefinitionCatalog,
@@ -83,6 +97,15 @@ export function aggregateStatusAttributeModifiers(
   return aggregateAttributeModifiers(createStatusAttributeModifiers(instances, definitions));
 }
 
+/**
+ * 方法名：createCharacterAttributeSnapshotWithStatuses
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param character 方法所需的 character 参数。
+ * @param configs 方法所需的 configs 参数。
+ * @param instances 方法所需的 instances 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCharacterAttributeSnapshotWithStatuses<DerivedAttribute extends string>(
   character: CharacterState,
   configs: Readonly<Record<DerivedAttribute, DerivedAttributeFormulaConfig>>,

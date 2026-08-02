@@ -3,11 +3,21 @@ import { getBackpackEntry, type BackpackPosition, type BackpackState } from "./b
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import { areItemStacksCompatible, createItemInstance, type ItemInstance } from "./item-instance.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface MergeItemStacksResult {
   readonly backpack: BackpackState;
   readonly transferredQuantity: number;
 }
 
+/**
+ * 方法名：mergeBackpackItemStacks
+ * 作用：执行该方法负责的单一业务操作。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param sourceItemInstanceId 方法所需的 sourceItemInstanceId 参数。
+ * @param targetItemInstanceId 方法所需的 targetItemInstanceId 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function mergeBackpackItemStacks(
   backpack: BackpackState,
   sourceItemInstanceId: string,
@@ -64,6 +74,17 @@ export function mergeBackpackItemStacks(
   };
 }
 
+/**
+ * 方法名：splitBackpackItemStack
+ * 作用：执行该方法负责的单一业务操作。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param sourceItemInstanceId 方法所需的 sourceItemInstanceId 参数。
+ * @param splitQuantity 方法所需的 splitQuantity 参数。
+ * @param newItemInstanceId 方法所需的 newItemInstanceId 参数。
+ * @param targetPosition 方法所需的 targetPosition 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function splitBackpackItemStack(
   backpack: BackpackState,
   sourceItemInstanceId: string,
@@ -123,6 +144,13 @@ export function splitBackpackItemStack(
   };
 }
 
+/**
+ * 方法名：getBackpackItemQuantity
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definitionId 目标配置定义标识。
+ * @returns 本次处理得到的结果。
+ */
 export function getBackpackItemQuantity(backpack: BackpackState, definitionId: string): number {
   return backpack.entries.reduce(
     (total, entry) =>
@@ -131,6 +159,13 @@ export function getBackpackItemQuantity(backpack: BackpackState, definitionId: s
   );
 }
 
+/**
+ * 方法名：getCompatibleBackpackStacks
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param item 方法所需的 item 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCompatibleBackpackStacks(
   backpack: BackpackState,
   item: ItemInstance,

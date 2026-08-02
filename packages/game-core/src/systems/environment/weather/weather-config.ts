@@ -1,5 +1,7 @@
+/** 标准扑克牌用于天气抽取的四种花色。 */
 export const WEATHER_CARD_SUITS = ["HEART", "DIAMOND", "CLUB", "SPADE"] as const;
 
+/** 每种花色包含的十三种牌面。 */
 export const WEATHER_CARD_RANKS = [
   "A",
   "2",
@@ -32,6 +34,7 @@ type JokerWeatherCardConfig = {
 };
 type WeatherCardConfig = SuitedWeatherCardConfig | JokerWeatherCardConfig;
 
+/** 四种花色牌与大小王共同组成的五十四张天气牌。 */
 export const STANDARD_WEATHER_CARDS: readonly WeatherCardConfig[] = [
   ...WEATHER_CARD_SUITS.flatMap((suit) =>
     WEATHER_CARD_RANKS.map((rank): SuitedWeatherCardConfig => ({
@@ -55,7 +58,10 @@ export const STANDARD_WEATHER_CARDS: readonly WeatherCardConfig[] = [
   },
 ];
 
+/** 供持久化和唯一性校验使用的天气牌编号列表。 */
 export const STANDARD_WEATHER_CARD_IDS = STANDARD_WEATHER_CARDS.map((card) => card.cardId);
 
+/** 五十四张标准天气牌配置的兼容版本。 */
 export const WEATHER_DECK_VERSION = "standard-54-v1" as const;
+/** 天气牌库在随机管理器中的固定随机流作用域。 */
 export const WEATHER_DECK_SCOPE_ID = "weather-deck";

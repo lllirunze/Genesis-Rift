@@ -8,6 +8,12 @@ import { addHandCardToHand, createPlayerHandState } from "./player-hand-state.ts
 
 const PLAYER_ID = "player-1" as PlayerId;
 
+/**
+ * 方法名：createCard
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardId 方法所需的 cardId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createCard(cardId: number): HandCardDefinition {
   return {
     cardId,
@@ -33,6 +39,12 @@ const CATALOG = Object.fromEntries(
   }),
 ) as HandCardCatalog;
 
+/**
+ * 方法名：createHand
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param cardIds 方法所需的 cardIds 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createHand(cardIds: readonly number[]) {
   let state = createPlayerHandState(PLAYER_ID);
 

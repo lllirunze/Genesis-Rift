@@ -15,22 +15,34 @@ import {
   type EquipmentSlot,
 } from "./equipment-loadout.ts";
 
+/** 描述业务对象在运行时保存的状态。 */
 export interface EquipmentInventoryState {
   readonly inventory: PlayerInventoryState;
   readonly loadout: EquipmentLoadout;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface EquipItemFromBackpackInput {
   readonly itemInstanceId: string;
   readonly slot: EquipmentSlot;
   readonly replacedEquipmentPosition?: BackpackPosition;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface UnequipItemToBackpackInput {
   readonly slot: EquipmentSlot;
   readonly targetPosition: BackpackPosition;
 }
 
+/**
+ * 方法名：equipItemFromBackpack
+ * 作用：将目标装备放入兼容栏位并更新角色状态。
+ * @param state 当前业务状态。
+ * @param input 本次处理的输入数据。
+ * @param itemDefinitions 方法所需的 itemDefinitions 参数。
+ * @param equipmentDefinitions 方法所需的 equipmentDefinitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function equipItemFromBackpack(
   state: EquipmentInventoryState,
   input: EquipItemFromBackpackInput,
@@ -77,6 +89,15 @@ export function equipItemFromBackpack(
   };
 }
 
+/**
+ * 方法名：unequipItemToBackpack
+ * 作用：卸下目标装备并更新角色状态。
+ * @param state 当前业务状态。
+ * @param input 本次处理的输入数据。
+ * @param itemDefinitions 方法所需的 itemDefinitions 参数。
+ * @param equipmentDefinitions 方法所需的 equipmentDefinitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function unequipItemToBackpack(
   state: EquipmentInventoryState,
   input: UnequipItemToBackpackInput,
@@ -109,6 +130,16 @@ export function unequipItemToBackpack(
   };
 }
 
+/**
+ * 方法名：placeEquippedItemInBackpack
+ * 作用：按位置与空间约束移动目标对象。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param equipment 方法所需的 equipment 参数。
+ * @param position 方法所需的 position 参数。
+ * @param itemDefinitions 方法所需的 itemDefinitions 参数。
+ * @param equipmentDefinitions 方法所需的 equipmentDefinitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 function placeEquippedItemInBackpack(
   backpack: PlayerInventoryState["backpack"],
   equipment: EquipmentInstance,
@@ -128,6 +159,12 @@ function placeEquippedItemInBackpack(
   );
 }
 
+/**
+ * 方法名：createEquipmentInstanceFromItem
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param item 方法所需的 item 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createEquipmentInstanceFromItem(item: ItemInstance): EquipmentInstance {
   if (item.quantity !== 1) {
     throw new RangeError(`Equipment item quantity must be 1: ${item.instanceId}`);
@@ -142,10 +179,23 @@ function createEquipmentInstanceFromItem(item: ItemInstance): EquipmentInstance 
   });
 }
 
+/**
+ * 方法名：createItemInstanceFromEquipment
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param equipment 方法所需的 equipment 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createItemInstanceFromEquipment(equipment: EquipmentInstance): ItemInstance {
   return { ...equipment };
 }
 
+/**
+ * 方法名：getEquipmentDefinition
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param definitionId 目标配置定义标识。
+ * @returns 本次处理得到的结果。
+ */
 function getEquipmentDefinition(
   definitions: EquipmentDefinitionCatalog,
   definitionId: string,
@@ -160,6 +210,14 @@ function getEquipmentDefinition(
   return definition;
 }
 
+/**
+ * 方法名：validateCompatibleDefinitions
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param itemDefinition 方法所需的 itemDefinition 参数。
+ * @param equipmentDefinition 方法所需的 equipmentDefinition 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateCompatibleDefinitions(
   itemDefinition: ItemDefinition,
   equipmentDefinition: EquipmentDefinition,
@@ -181,6 +239,13 @@ function validateCompatibleDefinitions(
   }
 }
 
+/**
+ * 方法名：assertMatchingPlayer
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param state 当前业务状态。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertMatchingPlayer(state: EquipmentInventoryState): void {
   if (state.inventory.backpack.playerId !== state.loadout.playerId) {
     throw new Error("Inventory and equipment loadout must belong to the same player");

@@ -22,6 +22,11 @@ const DEFINITION: StatusDefinition = {
   effects: [],
 };
 
+/**
+ * 方法名：createInactiveInstance
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createInactiveInstance() {
   return createStatusInstance({
     instanceId: "status-instance-1",

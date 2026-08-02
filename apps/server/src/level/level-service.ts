@@ -15,28 +15,33 @@ import type {
 
 import type { Logger, LogTarget } from "../logging/index.ts";
 
+/** 描述一次业务结算所需的上下文与外部依赖。 */
 export interface CharacterLevelContext {
   readonly playerName: string;
   readonly gameId?: GameId;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface GrantExperienceRequest extends CharacterLevelContext {
   readonly character: CharacterState;
   readonly amount: number;
   readonly source: string;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface GrantExperienceResult {
   readonly character: CharacterState;
   readonly eligibility: LevelUpEligibility;
   readonly becameEligible: boolean;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface AttemptLevelUpRequest extends CharacterLevelContext {
   readonly character: CharacterState;
   readonly allocation: PrimaryAttributeOffset;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export type AttemptLevelUpResult =
   | {
       readonly leveledUp: true;
@@ -53,19 +58,39 @@ export type AttemptLevelUpResult =
       readonly missingExperience: number;
     };
 
+/** 封装该模块的状态与操作入口。 */
 export class LevelService {
   readonly #config: LevelSystemConfig;
   readonly #logger: Logger;
 
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param config 待使用或校验的配置。
+   * @param logger 方法所需的 logger 参数。
+   * @returns 无返回值。
+   */
   constructor(config: LevelSystemConfig, logger: Logger) {
     this.#config = config;
     this.#logger = logger;
   }
 
+  /**
+   * 方法名：getEligibility
+   * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+   * @param character 方法所需的 character 参数。
+   * @returns 本次处理得到的结果。
+   */
   getEligibility(character: CharacterState): LevelUpEligibility {
     return getLevelUpEligibility(character, this.#config);
   }
 
+  /**
+   * 方法名：grantExperience
+   * 作用：在保持既有约束的前提下添加目标数据。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   grantExperience(request: GrantExperienceRequest): GrantExperienceResult {
     const target = this.#createTarget(request);
     const previousExperience = request.character.levelProgression.currentExperience;
@@ -118,6 +143,12 @@ export class LevelService {
     }
   }
 
+  /**
+   * 方法名：attemptLevelUp
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   attemptLevelUp(request: AttemptLevelUpRequest): AttemptLevelUpResult {
     const target = this.#createTarget(request);
     const eligibility = getLevelUpEligibility(request.character, this.#config);

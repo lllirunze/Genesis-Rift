@@ -3,11 +3,22 @@ import { getBackpackUsableArea } from "./backpack-definition.ts";
 import type { BackpackPosition, BackpackState } from "./backpack-state.ts";
 import type { ItemDefinition, ItemDefinitionCatalog } from "./item-definition.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type BackpackCell =
   | { readonly kind: "locked" }
   | { readonly kind: "empty" }
   | { readonly kind: "occupied"; readonly itemInstanceId: string };
 
+/**
+ * 方法名：isBackpackPositionAvailable
+ * 作用：判断输入是否满足当前业务条件。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definition 方法所需的 definition 参数。
+ * @param position 方法所需的 position 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param ignoredItemInstanceId 方法所需的 ignoredItemInstanceId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function isBackpackPositionAvailable(
   backpack: BackpackState,
   definition: ItemDefinition,
@@ -47,6 +58,14 @@ export function isBackpackPositionAvailable(
   return true;
 }
 
+/**
+ * 方法名：findFirstAvailableBackpackPosition
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definition 方法所需的 definition 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function findFirstAvailableBackpackPosition(
   backpack: BackpackState,
   definition: ItemDefinition,
@@ -67,6 +86,13 @@ export function findFirstAvailableBackpackPosition(
   return null;
 }
 
+/**
+ * 方法名：createBackpackGrid
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param backpack 方法所需的 backpack 参数。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createBackpackGrid(
   backpack: BackpackState,
   definitions: ItemDefinitionCatalog,
@@ -96,6 +122,13 @@ export function createBackpackGrid(
   return grid;
 }
 
+/**
+ * 方法名：getItemDefinition
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param definitionId 目标配置定义标识。
+ * @returns 本次处理得到的结果。
+ */
 export function getItemDefinition(
   definitions: ItemDefinitionCatalog,
   definitionId: string,
@@ -109,6 +142,12 @@ export function getItemDefinition(
   return definition;
 }
 
+/**
+ * 方法名：isValidPosition
+ * 作用：判断输入是否满足当前业务条件。
+ * @param position 方法所需的 position 参数。
+ * @returns 本次处理得到的结果。
+ */
 function isValidPosition(position: BackpackPosition): boolean {
   return (
     Number.isSafeInteger(position.x) &&
@@ -118,6 +157,13 @@ function isValidPosition(position: BackpackPosition): boolean {
   );
 }
 
+/**
+ * 方法名：getOccupiedCellKeys
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param position 方法所需的 position 参数。
+ * @param definition 方法所需的 definition 参数。
+ * @returns 本次处理得到的结果。
+ */
 function getOccupiedCellKeys(
   position: BackpackPosition,
   definition: ItemDefinition,

@@ -9,6 +9,7 @@ interface ConnectionState {
   setStatus: (status: ConnectionStatus) => void;
 }
 
+/** 当前模块对外公开的只读配置值。 */
 export const useConnectionStore = create<ConnectionState>((set) => ({
   status: "offline",
   serverUrl: "http://localhost:3000",

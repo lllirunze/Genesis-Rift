@@ -6,6 +6,13 @@ import type { RaceConfig } from "../races/race-config.ts";
 
 const RACE_ATTRIBUTE_OFFSET_TOTAL = 0;
 
+/**
+ * 方法名：validateRaceConfig
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param config 待使用或校验的配置。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateRaceConfig(config: RaceConfig): void {
   for (const attribute of PRIMARY_ATTRIBUTE_KEYS) {
     const value = config.initialPrimaryAttributeOffset[attribute];
@@ -26,6 +33,13 @@ export function validateRaceConfig(config: RaceConfig): void {
   validateAttributeTendencies(config);
 }
 
+/**
+ * 方法名：validateAttributeTendencies
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param config 待使用或校验的配置。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateAttributeTendencies(config: RaceConfig): void {
   const { increased, decreased } = config.attributeTendencies;
   const tendencyAttributes = [...increased, ...decreased];
@@ -57,6 +71,13 @@ function validateAttributeTendencies(config: RaceConfig): void {
   }
 }
 
+/**
+ * 方法名：validateRaceConfigs
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param configs 方法所需的 configs 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateRaceConfigs(configs: readonly RaceConfig[]): void {
   const ids = new Set<string>();
 

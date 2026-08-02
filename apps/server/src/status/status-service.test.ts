@@ -17,13 +17,30 @@ const PLAYER_ID = "player-1" as PlayerId;
 class MemoryLogWriter implements LogWriter {
   readonly lines: string[] = [];
 
+  /**
+   * 方法名：write
+   * 作用：按指定等级和格式记录日志。
+   * @param line 方法所需的 line 参数。
+   * @returns 本次处理得到的结果。
+   */
   async write(line: string): Promise<void> {
     this.lines.push(line);
   }
 
+  /**
+   * 方法名：close
+   * 作用：完成待处理工作并安全释放运行资源。
+   * @returns 本次处理得到的结果。
+   */
   async close(): Promise<void> {}
 }
 
+/**
+ * 方法名：createFixture
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param statusState 方法所需的 statusState 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createFixture(statusState = createCharacterStatusState(PLAYER_ID)) {
   const writer = new MemoryLogWriter();
   const timestamp = new Date(2026, 7, 1, 12, 30, 15, 21).getTime();
@@ -40,6 +57,12 @@ function createFixture(statusState = createCharacterStatusState(PLAYER_ID)) {
   };
 }
 
+/**
+ * 方法名：createContext
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param statusState 方法所需的 statusState 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createContext(statusState: CharacterStatusState) {
   return {
     playerId: PLAYER_ID,
@@ -48,6 +71,15 @@ function createContext(statusState: CharacterStatusState) {
   };
 }
 
+/**
+ * 方法名：applyDefinition
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param service 方法所需的 service 参数。
+ * @param statusState 方法所需的 statusState 参数。
+ * @param definitionId 目标配置定义标识。
+ * @param sequence 方法所需的 sequence 参数。
+ * @returns 本次处理得到的结果。
+ */
 function applyDefinition(
   service: StatusService,
   statusState: CharacterStatusState,

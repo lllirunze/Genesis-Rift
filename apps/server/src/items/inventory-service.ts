@@ -26,25 +26,30 @@ interface InventoryRequest extends ItemServiceContext {
   readonly inventory: PlayerInventoryState;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface ReceiveInventoryItemRequest extends InventoryRequest {
   readonly input: ReceiveItemInput;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface PlaceInventoryItemRequest extends InventoryRequest {
   readonly item: ItemInstance;
   readonly position: BackpackPosition;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface MoveInventoryItemRequest extends InventoryRequest {
   readonly itemInstanceId: string;
   readonly targetPosition: BackpackPosition;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface MergeInventoryItemStacksRequest extends InventoryRequest {
   readonly sourceItemInstanceId: string;
   readonly targetItemInstanceId: string;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface SplitInventoryItemStackRequest extends InventoryRequest {
   readonly sourceItemInstanceId: string;
   readonly splitQuantity: number;
@@ -52,51 +57,73 @@ export interface SplitInventoryItemStackRequest extends InventoryRequest {
   readonly targetPosition: BackpackPosition;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface RemoveInventoryItemRequest extends InventoryRequest {
   readonly itemInstanceId: string;
   readonly reason: string;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface ConsumeInventoryItemRequest extends InventoryRequest {
   readonly definitionId: string;
   readonly quantity: number;
   readonly reason: string;
 }
 
+/** 描述一次业务请求所需的输入数据。 */
 export interface StoreTemporaryPickupRequest extends InventoryRequest {
   readonly targetPosition?: BackpackPosition;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface InventoryStateResult {
   readonly inventory: PlayerInventoryState;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface MergeInventoryItemStacksResult extends InventoryStateResult {
   readonly transferredQuantity: number;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface RemoveInventoryItemResult extends InventoryStateResult {
   readonly item: ItemInstance;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ConsumeInventoryItemResult extends InventoryStateResult {
   readonly remainingDefinitionQuantity: number;
   readonly consumedItemInstanceIds: readonly string[];
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface AdvanceTemporaryPickupResult extends InventoryStateResult {
   readonly expiredPickup: TemporaryPickup | null;
 }
 
+/** 封装该模块的状态与操作入口。 */
 export class InventoryService {
   readonly #definitions: ItemDefinitionCatalog;
   readonly #logger: Logger;
 
+  /**
+   * 方法名：constructor
+   * 作用：初始化当前实例并保存其运行依赖。
+   * @param definitions 方法所需的 definitions 参数。
+   * @param logger 方法所需的 logger 参数。
+   * @returns 无返回值。
+   */
   constructor(definitions: ItemDefinitionCatalog, logger: Logger) {
     this.#definitions = definitions;
     this.#logger = logger;
   }
 
+  /**
+   * 方法名：receiveItem
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   receiveItem(request: ReceiveInventoryItemRequest): ReceiveItemResult {
     return this.#run(request, "receiveItem", () => {
       const result = receiveItem(request.inventory, request.input, this.#definitions);
@@ -143,6 +170,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：placeItem
+   * 作用：按位置与空间约束移动目标对象。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   placeItem(request: PlaceInventoryItemRequest): InventoryStateResult {
     return this.#run(request, "placeItem", () => {
       const backpack = placeItemInBackpack(
@@ -161,6 +194,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：moveItem
+   * 作用：按位置与空间约束移动目标对象。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   moveItem(request: MoveInventoryItemRequest): InventoryStateResult {
     return this.#run(request, "moveItem", () => {
       const backpack = moveBackpackItem(
@@ -177,6 +216,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：mergeItemStacks
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   mergeItemStacks(request: MergeInventoryItemStacksRequest): MergeInventoryItemStacksResult {
     return this.#run(request, "mergeItemStacks", () => {
       const result = mergeBackpackItemStacks(
@@ -197,6 +242,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：splitItemStack
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   splitItemStack(request: SplitInventoryItemStackRequest): InventoryStateResult {
     return this.#run(request, "splitItemStack", () => {
       const backpack = splitBackpackItemStack(
@@ -217,6 +268,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：removeItem
+   * 作用：移除目标数据，并返回更新后的状态。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   removeItem(request: RemoveInventoryItemRequest): RemoveInventoryItemResult {
     return this.#run(request, "removeItem", () => {
       this.#assertReason(request.reason);
@@ -234,6 +291,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：consumeItem
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   consumeItem(request: ConsumeInventoryItemRequest): ConsumeInventoryItemResult {
     return this.#run(request, "consumeItem", () => {
       this.#assertReason(request.reason);
@@ -261,6 +324,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：upgradeBackpack
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   upgradeBackpack(request: InventoryRequest): InventoryStateResult {
     return this.#run(request, "upgradeBackpack", () => {
       const previousLevel = request.inventory.backpack.level;
@@ -273,6 +342,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：storeTemporaryPickup
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   storeTemporaryPickup(request: StoreTemporaryPickupRequest): InventoryStateResult {
     return this.#run(request, "storeTemporaryPickup", () => {
       const pickup = request.inventory.temporaryPickup;
@@ -291,6 +366,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：abandonTemporaryPickup
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   abandonTemporaryPickup(request: InventoryRequest): RemoveInventoryItemResult {
     return this.#run(request, "abandonTemporaryPickup", () => {
       const result = abandonTemporaryPickup(request.inventory);
@@ -308,6 +389,12 @@ export class InventoryService {
     });
   }
 
+  /**
+   * 方法名：advanceTemporaryPickup
+   * 作用：执行该方法负责的单一业务操作。
+   * @param request 方法所需的 request 参数。
+   * @returns 本次处理得到的结果。
+   */
   advanceTemporaryPickup(request: InventoryRequest): AdvanceTemporaryPickupResult {
     return this.#run(request, "advanceTemporaryPickup", () => {
       const result = advanceTemporaryPickupOwnerTurn(request.inventory);

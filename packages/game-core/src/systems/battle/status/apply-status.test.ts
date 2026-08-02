@@ -4,6 +4,12 @@ import type { StatusDefinition } from "./status-definition.ts";
 import { createStatusInstance } from "./status-instance.ts";
 import { applyStatus } from "./apply-status.ts";
 
+/**
+ * 方法名：createDefinition
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param maxStacks 方法所需的 maxStacks 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createDefinition(maxStacks: number): StatusDefinition {
   return {
     definitionId: "status.focus",
@@ -31,6 +37,12 @@ function createDefinition(maxStacks: number): StatusDefinition {
   };
 }
 
+/**
+ * 方法名：createInstance
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param definition 方法所需的 definition 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createInstance(definition: StatusDefinition) {
   return createStatusInstance({
     instanceId: "status-instance-1",

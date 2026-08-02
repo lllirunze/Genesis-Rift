@@ -67,6 +67,14 @@ const DEFINITIONS = {
   [SOUL_PACT.definitionId]: SOUL_PACT,
 } as const satisfies StatusDefinitionCatalog;
 
+/**
+ * 方法名：applyDefinition
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param state 当前业务状态。
+ * @param definition 方法所需的 definition 参数。
+ * @param sequence 方法所需的 sequence 参数。
+ * @returns 本次处理得到的结果。
+ */
 function applyDefinition(
   state: CharacterStatusState,
   definition: StatusDefinition,

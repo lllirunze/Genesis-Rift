@@ -9,6 +9,7 @@ import { consumeBackpackItemQuantity } from "../inventory/consume-backpack-item.
 import type { PlayerInventoryState } from "../inventory/player-inventory-state.ts";
 import { receiveItem, type ReceiveItemResult } from "../inventory/receive-item.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface ReceiveCoinInput {
   readonly quantity: number;
   readonly sourceId: string;
@@ -16,11 +17,13 @@ export interface ReceiveCoinInput {
   readonly allowTemporaryStorage?: boolean;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface SpendCoinInput {
   readonly coinQuantity: number;
   readonly reasonId: string;
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface CoinPaymentRecord {
   readonly playerId: PlayerId;
   readonly coinQuantity: number;
@@ -28,12 +31,19 @@ export interface CoinPaymentRecord {
   readonly consumedItemInstanceIds: readonly string[];
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface SpendCoinResult {
   readonly inventory: PlayerInventoryState;
   readonly remainingBalance: number;
   readonly payment: CoinPaymentRecord;
 }
 
+/**
+ * 方法名：getCoinBalance
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param inventory 方法所需的 inventory 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCoinBalance(inventory: PlayerInventoryState): number {
   let balance = 0;
 
@@ -52,11 +62,26 @@ export function getCoinBalance(inventory: PlayerInventoryState): number {
   return balance;
 }
 
+/**
+ * 方法名：canAffordCoin
+ * 作用：判断输入是否满足当前业务条件。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param coinQuantity 方法所需的 coinQuantity 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function canAffordCoin(inventory: PlayerInventoryState, coinQuantity: number): boolean {
   assertNonNegativeSafeInteger(coinQuantity, "coinQuantity");
   return getCoinBalance(inventory) >= coinQuantity;
 }
 
+/**
+ * 方法名：receiveCoin
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param input 本次处理的输入数据。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function receiveCoin(
   inventory: PlayerInventoryState,
   input: ReceiveCoinInput,
@@ -79,6 +104,13 @@ export function receiveCoin(
   );
 }
 
+/**
+ * 方法名：spendCoin
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function spendCoin(inventory: PlayerInventoryState, input: SpendCoinInput): SpendCoinResult {
   assertNonNegativeSafeInteger(input.coinQuantity, "coinQuantity");
   assertNonEmptyString(input.reasonId, "reasonId");
@@ -112,6 +144,13 @@ export function spendCoin(inventory: PlayerInventoryState, input: SpendCoinInput
   };
 }
 
+/**
+ * 方法名：validateCoinDefinition
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateCoinDefinition(definitions: ItemDefinitionCatalog): void {
   const definition = getItemDefinition(definitions, COIN_ITEM_DEFINITION_ID);
 
@@ -120,12 +159,28 @@ function validateCoinDefinition(definitions: ItemDefinitionCatalog): void {
   }
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new TypeError(`${field} must be a non-negative safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

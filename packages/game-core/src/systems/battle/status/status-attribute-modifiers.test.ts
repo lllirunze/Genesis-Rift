@@ -51,6 +51,13 @@ const FOCUS: StatusDefinition = {
   ],
 };
 
+/**
+ * 方法名：createInstance
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param definition 方法所需的 definition 参数。
+ * @param targetId 方法所需的 targetId 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createInstance(
   definition: StatusDefinition = FOCUS,
   targetId: string = PLAYER_ID,
@@ -64,6 +71,14 @@ function createInstance(
   });
 }
 
+/**
+ * 方法名：applyStacks
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param instance 方法所需的 instance 参数。
+ * @param definition 方法所需的 definition 参数。
+ * @param stacks 方法所需的 stacks 参数。
+ * @returns 本次处理得到的结果。
+ */
 function applyStacks(
   instance: StatusInstance,
   definition: StatusDefinition,

@@ -9,11 +9,13 @@ import {
   type StatusInstance,
 } from "./status-instance.ts";
 
+/** 描述业务对象在运行时保存的状态。 */
 export interface CharacterStatusState {
   readonly targetId: string;
   readonly instances: readonly StatusInstance[];
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface ApplyStatusToCharacterInput {
   readonly definitionId: string;
   readonly newInstanceId: string;
@@ -21,6 +23,7 @@ export interface ApplyStatusToCharacterInput {
   readonly createdAtSequence: number;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ApplyStatusToCharacterResult {
   readonly state: CharacterStatusState;
   readonly instance: StatusInstance;
@@ -30,20 +33,24 @@ export interface ApplyStatusToCharacterResult {
   readonly addedStacks: 0 | 1;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface AdvanceCharacterStatusesResult {
   readonly state: CharacterStatusState;
   readonly ticked: readonly StatusInstance[];
   readonly expired: readonly StatusInstance[];
 }
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export type StatusDispelOutcome = "dispelled" | "protected" | "not_found";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface DispelStatusResult {
   readonly state: CharacterStatusState;
   readonly outcome: StatusDispelOutcome;
   readonly instance: StatusInstance | null;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface RemoveCharacterStatusStacksResult {
   readonly state: CharacterStatusState;
   readonly outcome: "unchanged" | "reduced" | "removed" | "not_found";
@@ -51,12 +58,19 @@ export interface RemoveCharacterStatusStacksResult {
   readonly removedStacks: number;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export interface RemoveStatusesOnDeathResult {
   readonly state: CharacterStatusState;
   readonly removed: readonly StatusInstance[];
   readonly retained: readonly StatusInstance[];
 }
 
+/**
+ * 方法名：createCharacterStatusState
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param targetId 方法所需的 targetId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function createCharacterStatusState(targetId: string): CharacterStatusState {
   assertNonEmptyString(targetId, "targetId");
 
@@ -66,6 +80,14 @@ export function createCharacterStatusState(targetId: string): CharacterStatusSta
   };
 }
 
+/**
+ * 方法名：validateCharacterStatusState
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 export function validateCharacterStatusState(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -101,6 +123,14 @@ export function validateCharacterStatusState(
   }
 }
 
+/**
+ * 方法名：applyStatusToCharacter
+ * 作用：执行该方法负责的业务规则并返回结算结果。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param input 本次处理的输入数据。
+ * @returns 本次处理得到的结果。
+ */
 export function applyStatusToCharacter(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -146,6 +176,13 @@ export function applyStatusToCharacter(
   };
 }
 
+/**
+ * 方法名：advanceCharacterStatusesAtTurnEnd
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function advanceCharacterStatusesAtTurnEnd(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -178,6 +215,15 @@ export function advanceCharacterStatusesAtTurnEnd(
   };
 }
 
+/**
+ * 方法名：removeCharacterStatusStacks
+ * 作用：移除目标数据，并返回更新后的状态。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param instanceId 方法所需的 instanceId 参数。
+ * @param amount 本次操作涉及的数量。
+ * @returns 本次处理得到的结果。
+ */
 export function removeCharacterStatusStacks(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -214,6 +260,14 @@ export function removeCharacterStatusStacks(
   };
 }
 
+/**
+ * 方法名：dispelCharacterStatus
+ * 作用：执行该方法负责的单一业务操作。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param instanceId 方法所需的 instanceId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function dispelCharacterStatus(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -242,6 +296,13 @@ export function dispelCharacterStatus(
   };
 }
 
+/**
+ * 方法名：removeCharacterStatusesOnDeath
+ * 作用：移除目标数据，并返回更新后的状态。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function removeCharacterStatusesOnDeath(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -263,6 +324,13 @@ export function removeCharacterStatusesOnDeath(
   };
 }
 
+/**
+ * 方法名：getCharacterStatusByInstanceId
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param state 当前业务状态。
+ * @param instanceId 方法所需的 instanceId 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCharacterStatusByInstanceId(
   state: CharacterStatusState,
   instanceId: string,
@@ -270,6 +338,14 @@ export function getCharacterStatusByInstanceId(
   return state.instances.find((instance) => instance.instanceId === instanceId) ?? null;
 }
 
+/**
+ * 方法名：getCharacterStatusesByKind
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param kind 方法所需的 kind 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCharacterStatusesByKind(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -282,6 +358,14 @@ export function getCharacterStatusesByKind(
   );
 }
 
+/**
+ * 方法名：getCharacterStatusesByTag
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param state 当前业务状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param tag 方法所需的 tag 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function getCharacterStatusesByTag(
   state: CharacterStatusState,
   definitions: StatusDefinitionCatalog,
@@ -295,6 +379,13 @@ export function getCharacterStatusesByTag(
   );
 }
 
+/**
+ * 方法名：getStatusDefinition
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param definitions 方法所需的 definitions 参数。
+ * @param definitionId 目标配置定义标识。
+ * @returns 本次处理得到的结果。
+ */
 function getStatusDefinition(
   definitions: StatusDefinitionCatalog,
   definitionId: string,
@@ -309,12 +400,28 @@ function getStatusDefinition(
   return definition;
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);
   }
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new RangeError(`${field} must be a non-negative safe integer`);

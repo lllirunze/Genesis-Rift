@@ -1,5 +1,6 @@
 import type { ArchitectureLayer } from "./architecture-layer.ts";
 
+/** 当前模块对外公开的只读配置值。 */
 export const ARCHITECTURE_LAYERS = [
   {
     name: "网页客户端",

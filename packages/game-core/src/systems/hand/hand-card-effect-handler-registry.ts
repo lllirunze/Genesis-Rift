@@ -13,9 +13,16 @@ import {
   validateHandCardEffectDefinition,
 } from "./hand-card-definition.ts";
 
+/** 封装该模块的状态与操作入口。 */
 export class HandCardEffectHandlerRegistry {
   private readonly handlers = new Map<HandCardEffectId, unknown>();
 
+  /**
+   * 方法名：register
+   * 作用：执行该方法负责的单一业务操作。
+   * @param handler 方法所需的 handler 参数。
+   * @returns 无返回值。
+   */
   register<EffectId extends HandCardEffectId, Output>(
     handler: HandCardEffectHandler<EffectId, Output>,
   ): void {
@@ -28,11 +35,23 @@ export class HandCardEffectHandlerRegistry {
     this.handlers.set(handler.effectId, handler);
   }
 
+  /**
+   * 方法名：has
+   * 作用：判断输入是否满足当前业务条件。
+   * @param effectId 方法所需的 effectId 参数。
+   * @returns 本次处理得到的结果。
+   */
   has(effectId: HandCardEffectId): boolean {
     assertSupportedEffectId(effectId);
     return this.handlers.has(effectId);
   }
 
+  /**
+   * 方法名：get
+   * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+   * @param effectId 方法所需的 effectId 参数。
+   * @returns 本次处理得到的结果。
+   */
   get<EffectId extends HandCardEffectId>(
     effectId: EffectId,
   ): HandCardEffectHandler<EffectId, unknown> {
@@ -46,6 +65,13 @@ export class HandCardEffectHandlerRegistry {
     return handler as HandCardEffectHandler<EffectId, unknown>;
   }
 
+  /**
+   * 方法名：execute
+   * 作用：执行该方法负责的业务规则并返回结算结果。
+   * @param effect 方法所需的 effect 参数。
+   * @param context 本次操作所需的上下文。
+   * @returns 本次处理得到的结果。
+   */
   execute(
     effect: HandCardEffectDefinition,
     context: HandCardEffectExecutionContext,
@@ -61,6 +87,14 @@ export class HandCardEffectHandlerRegistry {
   }
 }
 
+/**
+ * 方法名：validateExecutionResult
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param expectedEffectId 方法所需的 expectedEffectId 参数。
+ * @param result 方法所需的 result 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateExecutionResult(
   expectedEffectId: HandCardEffectId,
   result: HandCardEffectExecutionResult,
@@ -76,6 +110,13 @@ function validateExecutionResult(
   }
 }
 
+/**
+ * 方法名：assertSupportedEffectId
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param effectId 方法所需的 effectId 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertSupportedEffectId(effectId: HandCardEffectId): void {
   if (!(HAND_CARD_EFFECT_IDS as readonly string[]).includes(effectId)) {
     throw new RangeError(`Unsupported hand card effect handler id: ${effectId}`);

@@ -34,13 +34,30 @@ const RACE = {
 class MemoryLogWriter implements LogWriter {
   readonly lines: string[] = [];
 
+  /**
+   * 方法名：write
+   * 作用：按指定等级和格式记录日志。
+   * @param line 方法所需的 line 参数。
+   * @returns 本次处理得到的结果。
+   */
   async write(line: string): Promise<void> {
     this.lines.push(line);
   }
 
+  /**
+   * 方法名：close
+   * 作用：完成待处理工作并安全释放运行资源。
+   * @returns 本次处理得到的结果。
+   */
   async close(): Promise<void> {}
 }
 
+/**
+ * 方法名：createFixture
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @param character 方法所需的 character 参数。
+ * @returns 本次处理得到的结果。
+ */
 function createFixture(character: CharacterState = createTestCharacter()): {
   character: CharacterState;
   logger: Logger;
@@ -194,6 +211,11 @@ describe("LevelService", () => {
   });
 });
 
+/**
+ * 方法名：createTestCharacter
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createTestCharacter(): CharacterState {
   return createCharacter({
     playerId: PLAYER_ID,

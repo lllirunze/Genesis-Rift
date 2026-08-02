@@ -86,7 +86,7 @@ describe("level progression", () => {
     expect(character.levelProgression).toEqual({ currentLevel: 1, currentExperience: 50 });
     expect(character.currentPrimaryAttributes.spirit).toBe(5);
 
-    // Enough surplus experience remains, but one invocation still advances only one level.
+    // 即使剩余经验足够继续升级，单次调用仍然只允许提升一级。
     expect(getLevelUpEligibility(leveledCharacter, LEVEL_CONFIG).canLevelUp).toBe(true);
   });
 
@@ -139,6 +139,11 @@ describe("level progression", () => {
   });
 });
 
+/**
+ * 方法名：createTestCharacter
+ * 作用：创建并校验该方法所负责的业务对象。
+ * @returns 本次处理得到的结果。
+ */
 function createTestCharacter() {
   return createCharacter({
     playerId: PLAYER_ID,

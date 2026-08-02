@@ -5,6 +5,7 @@ import type { PlayerInventoryState } from "../inventory/player-inventory-state.t
 import { receiveItem } from "../inventory/receive-item.ts";
 import { canAffordCoin, getCoinBalance, spendCoin, type CoinPaymentRecord } from "./coin.ts";
 
+/** 描述当前模块对外公开的业务数据契约。 */
 export interface PurchaseItemWithCoinInput {
   readonly transactionId: string;
   readonly itemDefinitionId: string;
@@ -14,6 +15,7 @@ export interface PurchaseItemWithCoinInput {
   readonly stackCompatibilityKey?: string;
 }
 
+/** 描述业务操作完成后返回的结果。 */
 export type PurchaseItemWithCoinResult =
   | {
       readonly purchased: true;
@@ -50,6 +52,14 @@ export type PurchaseItemWithCoinResult =
       readonly unstoredItemQuantity: number;
     };
 
+/**
+ * 方法名：purchaseItemWithCoin
+ * 作用：执行该方法负责的单一业务操作。
+ * @param inventory 方法所需的 inventory 参数。
+ * @param input 本次处理的输入数据。
+ * @param definitions 方法所需的 definitions 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function purchaseItemWithCoin(
   inventory: PlayerInventoryState,
   input: PurchaseItemWithCoinInput,
@@ -147,6 +157,13 @@ export function purchaseItemWithCoin(
   });
 }
 
+/**
+ * 方法名：validateInput
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param input 本次处理的输入数据。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function validateInput(input: PurchaseItemWithCoinInput): void {
   assertNonEmptyString(input.transactionId, "transactionId");
   assertNonEmptyString(input.itemDefinitionId, "itemDefinitionId");
@@ -158,6 +175,13 @@ function validateInput(input: PurchaseItemWithCoinInput): void {
   }
 }
 
+/**
+ * 方法名：addSafeIntegers
+ * 作用：在保持既有约束的前提下添加目标数据。
+ * @param first 方法所需的 first 参数。
+ * @param second 方法所需的 second 参数。
+ * @returns 本次处理得到的结果。
+ */
 function addSafeIntegers(first: number, second: number): number {
   const result = first + second;
 
@@ -168,18 +192,42 @@ function addSafeIntegers(first: number, second: number): number {
   return result;
 }
 
+/**
+ * 方法名：assertPositiveSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertPositiveSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new TypeError(`${field} must be a positive safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonNegativeSafeInteger
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonNegativeSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new TypeError(`${field} must be a non-negative safe integer`);
   }
 }
 
+/**
+ * 方法名：assertNonEmptyString
+ * 作用：校验输入是否满足当前模块的业务约束。
+ * @param value 待处理的值。
+ * @param field 方法所需的 field 参数。
+ * @returns 无返回值。
+ * @throws 输入或配置不满足模块约束时抛出错误。
+ */
 function assertNonEmptyString(value: string, field: string): void {
   if (value.trim().length === 0) {
     throw new TypeError(`${field} must not be empty`);

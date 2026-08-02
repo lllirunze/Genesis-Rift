@@ -11,6 +11,7 @@ import {
 } from "./player-hand-state.ts";
 import { validateSharedHandCardZones } from "./validate-hand-card-zones.ts";
 
+/** 描述业务操作完成后返回的结果。 */
 export interface ResolveUsedHandCardDestinationResult {
   readonly deckState: HandCardDeckState;
   readonly playerHandState: PlayerHandState;
@@ -19,6 +20,15 @@ export interface ResolveUsedHandCardDestinationResult {
   readonly sizeStatus: HandSizeStatus;
 }
 
+/**
+ * 方法名：resolveUsedHandCardDestination
+ * 作用：读取并返回符合条件的业务数据，不修改输入状态。
+ * @param deckState 方法所需的 deckState 参数。
+ * @param playerHandState 方法所需的 playerHandState 参数。
+ * @param cardId 方法所需的 cardId 参数。
+ * @param catalog 方法所需的 catalog 参数。
+ * @returns 本次处理得到的结果。
+ */
 export function resolveUsedHandCardDestination(
   deckState: HandCardDeckState,
   playerHandState: PlayerHandState,
