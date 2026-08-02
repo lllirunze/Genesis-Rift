@@ -133,10 +133,34 @@ export const EXHAUSTION_STATUS_DEFINITION = {
   ],
 } as const satisfies StatusDefinition;
 
+export const POISONED_STATUS_DEFINITION = {
+  definitionId: "status.poisoned",
+  name: "Poisoned",
+  description: "Temporarily reduces health regeneration.",
+  kind: "debuff",
+  tags: ["poison", "survival", "recovery"],
+  duration: { turns: 3 },
+  maxStacks: 1,
+  removal: {
+    dispellable: true,
+    removeOnDeath: true,
+  },
+  effects: [
+    {
+      effectType: "attribute_modifier",
+      effectId: "health-regeneration",
+      targetType: "derived",
+      targetAttribute: "healthRegeneration",
+      valuePerStack: -1,
+    },
+  ],
+} as const satisfies StatusDefinition;
+
 export const STATUS_DEFINITION_CATALOG = {
   [BATTLE_FURY_STATUS_DEFINITION.definitionId]: BATTLE_FURY_STATUS_DEFINITION,
   [WIND_BLESSING_STATUS_DEFINITION.definitionId]: WIND_BLESSING_STATUS_DEFINITION,
   [VITALITY_BLESSING_STATUS_DEFINITION.definitionId]: VITALITY_BLESSING_STATUS_DEFINITION,
   [ARCANE_ACCUMULATION_STATUS_DEFINITION.definitionId]: ARCANE_ACCUMULATION_STATUS_DEFINITION,
   [EXHAUSTION_STATUS_DEFINITION.definitionId]: EXHAUSTION_STATUS_DEFINITION,
+  [POISONED_STATUS_DEFINITION.definitionId]: POISONED_STATUS_DEFINITION,
 } as const satisfies StatusDefinitionCatalog;

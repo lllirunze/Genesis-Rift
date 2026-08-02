@@ -22,6 +22,7 @@ describe("status definitions", () => {
       "status.vitality-blessing",
       "status.arcane-accumulation",
       "status.exhaustion",
+      "status.poisoned",
     ]);
   });
 

@@ -6,20 +6,49 @@ import { getCubeCoordinateKey } from "../geometry/cube-coordinate-key.ts";
 import { generateBaseMapCoordinates } from "../generation/generate-base-map-coordinates.ts";
 import { HexMap } from "./hex-map.ts";
 import { createHexTile, type HexTile } from "./hex-tile.ts";
+import type { MapContentDefinitionCatalog } from "./map-content-definition-catalog.ts";
+
+const MAP_CONTENT_DEFINITIONS = {
+  terrains: {
+    "terrain.plain": {
+      definitionId: "terrain.plain",
+      name: "Plain",
+      tags: ["land"],
+    },
+  },
+  regions: {
+    "region.wilderness": {
+      definitionId: "region.wilderness",
+      name: "Wilderness",
+      category: "wilderness",
+      tags: ["outdoor"],
+    },
+  },
+} as const satisfies MapContentDefinitionCatalog;
+
+const DEFAULT_TILE_CONTENT = {
+  terrainDefinitionId: "terrain.plain",
+  regionDefinitionId: "region.wilderness",
+  passability: "passable",
+} as const;
 
 function createCompleteTileSet(): HexTile[] {
   return generateBaseMapCoordinates().map((coordinate) =>
-    createHexTile({
-      tileId: `tile.${getCubeCoordinateKey(coordinate)}` as TileId,
-      coordinate,
-      elevation: 0,
-    }),
+    createHexTile(
+      {
+        tileId: `tile.${getCubeCoordinateKey(coordinate)}` as TileId,
+        coordinate,
+        elevation: 0,
+        ...DEFAULT_TILE_CONTENT,
+      },
+      MAP_CONTENT_DEFINITIONS,
+    ),
   );
 }
 
 describe("HexMap", () => {
   it("indexes a complete ten-ring map by id, coordinate, and ring", () => {
-    const map = HexMap.create(createCompleteTileSet());
+    const map = HexMap.create(createCompleteTileSet(), MAP_CONTENT_DEFINITIONS);
     const centerId = "tile.0,0,0" as TileId;
 
     expect(map.size).toBe(331);
@@ -32,33 +61,45 @@ describe("HexMap", () => {
   });
 
   it("rejects an incomplete tile set", () => {
-    expect(() => HexMap.create(createCompleteTileSet().slice(1))).toThrow(RangeError);
+    expect(() => HexMap.create(createCompleteTileSet().slice(1), MAP_CONTENT_DEFINITIONS)).toThrow(
+      RangeError,
+    );
   });
 
   it("rejects duplicate tile ids", () => {
     const tiles = createCompleteTileSet();
     const original = tiles[1]!;
 
-    tiles[1] = createHexTile({
-      tileId: tiles[0]!.tileId,
-      coordinate: original.coordinate,
-      elevation: original.elevation,
-    });
+    tiles[1] = createHexTile(
+      {
+        tileId: tiles[0]!.tileId,
+        coordinate: original.coordinate,
+        elevation: original.elevation,
+        ...DEFAULT_TILE_CONTENT,
+      },
+      MAP_CONTENT_DEFINITIONS,
+    );
 
-    expect(() => HexMap.create(tiles)).toThrow(/duplicate tileId/);
+    expect(() => HexMap.create(tiles, MAP_CONTENT_DEFINITIONS)).toThrow(/duplicate tileId/);
   });
 
   it("rejects duplicate coordinates", () => {
     const tiles = createCompleteTileSet();
     const original = tiles[0]!;
 
-    tiles[1] = createHexTile({
-      tileId: tiles[1]!.tileId,
-      coordinate: original.coordinate,
-      elevation: original.elevation,
-    });
+    tiles[1] = createHexTile(
+      {
+        tileId: tiles[1]!.tileId,
+        coordinate: original.coordinate,
+        elevation: original.elevation,
+        ...DEFAULT_TILE_CONTENT,
+      },
+      MAP_CONTENT_DEFINITIONS,
+    );
 
-    expect(() => HexMap.create(tiles)).toThrow(/duplicate tile coordinate/);
+    expect(() => HexMap.create(tiles, MAP_CONTENT_DEFINITIONS)).toThrow(
+      /duplicate tile coordinate/,
+    );
   });
 
   it("rejects stored ring values that disagree with coordinates", () => {
@@ -67,11 +108,11 @@ describe("HexMap", () => {
 
     tiles[0] = { ...original, ring: 1 };
 
-    expect(() => HexMap.create(tiles)).toThrow(/invalid ring value/);
+    expect(() => HexMap.create(tiles, MAP_CONTENT_DEFINITIONS)).toThrow(/invalid ring value/);
   });
 
   it("rejects invalid ring queries", () => {
-    const map = HexMap.create(createCompleteTileSet());
+    const map = HexMap.create(createCompleteTileSet(), MAP_CONTENT_DEFINITIONS);
 
     expect(() => map.getTilesInRing(-1)).toThrow(RangeError);
     expect(() => map.getTilesInRing(11)).toThrow(RangeError);

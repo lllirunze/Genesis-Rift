@@ -2,9 +2,9 @@ import { findFirstAvailableBackpackPosition, getItemDefinition } from "./backpac
 import { placeItemInBackpack } from "./backpack-operations.ts";
 import { fillCompatibleBackpackStacks } from "./backpack-stack-receipt.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
-import { createItemInstance, type ItemInstance } from "./item-instance.ts";
+import { createItemInstance, type ItemInstance, validateItemInstance } from "./item-instance.ts";
+import { TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS } from "./inventory-config.ts";
 import type { PlayerInventoryState } from "./player-inventory-state.ts";
-import { storeNewTemporaryPickup } from "./temporary-pickup.ts";
 
 export interface ReceiveItemInput {
   readonly definitionId: string;
@@ -97,7 +97,7 @@ export function receiveItem(
     }
 
     if ((input.allowTemporaryStorage ?? true) && currentInventory.temporaryPickup === null) {
-      currentInventory = storeNewTemporaryPickup(
+      currentInventory = enterTemporaryPickupFromAcquisition(
         currentInventory,
         item,
         input.sourceId,
@@ -115,6 +115,37 @@ export function receiveItem(
     backpackQuantityAdded,
     temporaryQuantityAdded,
     unresolvedItems,
+  };
+}
+
+// This is intentionally private: only the item-acquisition flow may populate temporary storage.
+function enterTemporaryPickupFromAcquisition(
+  inventory: PlayerInventoryState,
+  item: ItemInstance,
+  sourceId: string,
+  definitions: ItemDefinitionCatalog,
+): PlayerInventoryState {
+  if (inventory.temporaryPickup !== null) {
+    throw new Error("Temporary pickup is already occupied");
+  }
+
+  if (item.ownerPlayerId !== inventory.backpack.playerId) {
+    throw new Error(`Item ${item.instanceId} is owned by another player`);
+  }
+
+  if (inventory.backpack.entries.some((entry) => entry.item.instanceId === item.instanceId)) {
+    throw new Error(`Item is already stored in the backpack: ${item.instanceId}`);
+  }
+
+  validateItemInstance(item, getItemDefinition(definitions, item.definitionId));
+
+  return {
+    ...inventory,
+    temporaryPickup: {
+      item,
+      sourceId,
+      remainingOwnerTurns: TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS,
+    },
   };
 }
 

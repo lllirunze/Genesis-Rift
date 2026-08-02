@@ -4,6 +4,8 @@ import { type CubeCoordinateKey, getCubeCoordinateKey } from "../geometry/cube-c
 import { generateBaseMapCoordinates } from "../generation/generate-base-map-coordinates.ts";
 import { BASE_MAP_MAX_RING, BASE_MAP_TILE_COUNT } from "../map-config.ts";
 import { createHexTile, type HexTile } from "./hex-tile.ts";
+import type { MapContentDefinitionCatalog } from "./map-content-definition-catalog.ts";
+import { validateMapContentDefinitionCatalog } from "./map-content-definition-catalog.ts";
 
 export class HexMap {
   readonly tiles: readonly HexTile[];
@@ -24,10 +26,12 @@ export class HexMap {
     this.tilesByRing = tilesByRing;
   }
 
-  static create(tiles: readonly HexTile[]): HexMap {
+  static create(tiles: readonly HexTile[], definitions: MapContentDefinitionCatalog): HexMap {
     if (tiles.length !== BASE_MAP_TILE_COUNT) {
       throw new RangeError(`hex map must contain exactly ${BASE_MAP_TILE_COUNT} tiles`);
     }
+
+    validateMapContentDefinitionCatalog(definitions);
 
     const normalizedTiles: HexTile[] = [];
     const tilesById = new Map<TileId, HexTile>();
@@ -35,11 +39,18 @@ export class HexMap {
     const mutableTilesByRing = new Map<number, HexTile[]>();
 
     for (const tile of tiles) {
-      const normalizedTile = createHexTile({
-        tileId: tile.tileId,
-        coordinate: tile.coordinate,
-        elevation: tile.elevation,
-      });
+      const normalizedTile = createHexTile(
+        {
+          tileId: tile.tileId,
+          coordinate: tile.coordinate,
+          elevation: tile.elevation,
+          terrainDefinitionId: tile.terrainDefinitionId,
+          regionDefinitionId: tile.regionDefinitionId,
+          passability: tile.passability,
+          features: tile.features,
+        },
+        definitions,
+      );
 
       if (tile.ring !== normalizedTile.ring) {
         throw new RangeError(`tile ${tile.tileId} has an invalid ring value`);

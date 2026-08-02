@@ -7,8 +7,6 @@ import { placeItemInBackpack } from "./backpack-operations.ts";
 import { fillCompatibleBackpackStacks } from "./backpack-stack-receipt.ts";
 import type { BackpackPosition } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
-import type { ItemInstance } from "./item-instance.ts";
-import { validateItemInstance } from "./item-instance.ts";
 import { TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS } from "./inventory-config.ts";
 import type { PlayerInventoryState, TemporaryPickup } from "./player-inventory-state.ts";
 
@@ -20,41 +18,6 @@ export interface RemoveTemporaryPickupResult {
 export interface AdvanceTemporaryPickupResult {
   readonly inventory: PlayerInventoryState;
   readonly expiredPickup: TemporaryPickup | null;
-}
-
-export function storeNewTemporaryPickup(
-  inventory: PlayerInventoryState,
-  item: ItemInstance,
-  sourceId: string,
-  definitions: ItemDefinitionCatalog,
-  remainingOwnerTurns = TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS,
-): PlayerInventoryState {
-  if (inventory.temporaryPickup !== null) {
-    throw new Error("Temporary pickup is already occupied");
-  }
-
-  assertNonEmptyString(sourceId, "sourceId");
-  assertRemainingOwnerTurns(remainingOwnerTurns);
-
-  if (item.ownerPlayerId !== inventory.backpack.playerId) {
-    throw new Error(`Item ${item.instanceId} is owned by another player`);
-  }
-
-  if (inventory.backpack.entries.some((entry) => entry.item.instanceId === item.instanceId)) {
-    throw new Error(`Item is already stored in the backpack: ${item.instanceId}`);
-  }
-
-  const definition = getItemDefinition(definitions, item.definitionId);
-  validateItemInstance(item, definition);
-
-  return {
-    ...inventory,
-    temporaryPickup: {
-      item,
-      sourceId,
-      remainingOwnerTurns,
-    },
-  };
 }
 
 export function storeTemporaryPickupInBackpack(
@@ -164,11 +127,5 @@ function assertRemainingOwnerTurns(value: number): void {
     throw new RangeError(
       `remainingOwnerTurns must be between 1 and ${TEMPORARY_PICKUP_INITIAL_REMAINING_TURNS}`,
     );
-  }
-}
-
-function assertNonEmptyString(value: string, field: string): void {
-  if (value.trim().length === 0) {
-    throw new TypeError(`${field} must not be empty`);
   }
 }

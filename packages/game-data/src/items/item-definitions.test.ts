@@ -17,6 +17,7 @@ import {
   TORCH_ITEM_DEFINITION,
   TRAVEL_BOOTS_ITEM_DEFINITION,
   TREASURE_MAP_ITEM_DEFINITION,
+  WIND_TONIC_ITEM_DEFINITION,
 } from "./item-definitions.ts";
 
 describe("item definitions", () => {
@@ -68,6 +69,11 @@ describe("item definitions", () => {
       category: "consumable",
       quality: "excellent",
       maximumStack: 5,
+    });
+    expect(WIND_TONIC_ITEM_DEFINITION).toMatchObject({
+      category: "consumable",
+      quality: "excellent",
+      maximumStack: 3,
     });
   });
 
@@ -121,6 +127,7 @@ describe("item definitions", () => {
       "item.consumable.healing-potion",
       "item.consumable.mana-potion",
       "item.consumable.antidote",
+      "item.consumable.wind-tonic",
       "item.special.climbing-rope",
       "item.special.torch",
       "item.special.treasure-map",

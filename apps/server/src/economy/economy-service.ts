@@ -1,10 +1,12 @@
 import {
   canAffordCoin,
   getCoinBalance,
+  purchaseItemWithCoin,
   receiveCoin,
   spendCoin,
   type CoinPaymentRecord,
   type PlayerInventoryState,
+  type PurchaseItemWithCoinResult,
   type UnresolvedReceivedItem,
 } from "@genesis-rift/game-core";
 import type { GameId, ItemDefinitionCatalog } from "@genesis-rift/shared";
@@ -39,6 +41,15 @@ export interface ReceiveCoinServiceResult {
 export interface PayCoinRequest extends EconomyInventoryRequest {
   readonly coinQuantity: number;
   readonly reasonId: string;
+}
+
+export interface PurchaseItemRequest extends EconomyInventoryRequest {
+  readonly transactionId: string;
+  readonly itemDefinitionId: string;
+  readonly itemQuantity: number;
+  readonly totalCoinPrice: number;
+  readonly newItemInstanceIds: readonly string[];
+  readonly stackCompatibilityKey?: string;
 }
 
 export type PayCoinResult =
@@ -227,6 +238,79 @@ export class EconomyService {
       this.#logError("Shop", request, target, "Coin payment failed.", error, {
         coinQuantity: request.coinQuantity,
         reasonId: request.reasonId,
+      });
+      throw error;
+    }
+  }
+
+  purchaseItem(request: PurchaseItemRequest): PurchaseItemWithCoinResult {
+    const target = this.#createTarget(request);
+
+    try {
+      const result = purchaseItemWithCoin(
+        request.inventory,
+        {
+          transactionId: request.transactionId,
+          itemDefinitionId: request.itemDefinitionId,
+          itemQuantity: request.itemQuantity,
+          totalCoinPrice: request.totalCoinPrice,
+          newItemInstanceIds: request.newItemInstanceIds,
+          ...(request.stackCompatibilityKey === undefined
+            ? {}
+            : { stackCompatibilityKey: request.stackCompatibilityKey }),
+        },
+        this.#definitions,
+      );
+
+      if (result.purchased) {
+        this.#logger.info({
+          action: "Shop",
+          module: "EconomyService",
+          message: `Player purchased ${result.purchasedQuantity} units of item ${result.itemDefinitionId}.`,
+          target,
+          ...(request.gameId === undefined ? {} : { gameId: request.gameId }),
+          context: {
+            transactionId: result.transactionId,
+            itemDefinitionId: result.itemDefinitionId,
+            purchasedQuantity: result.purchasedQuantity,
+            totalCoinPrice: result.totalCoinPrice,
+            previousCoinBalance: result.previousCoinBalance,
+            currentCoinBalance: result.currentCoinBalance,
+            consumedCoinInstanceIds: result.payment.consumedItemInstanceIds,
+            receivedItemInstanceIds: result.receivedItemInstanceIds,
+          },
+        });
+      } else {
+        this.#logger.warn({
+          action: "Shop",
+          module: "EconomyService",
+          message:
+            result.reason === "insufficient-coin"
+              ? "Item purchase failed because the Coin balance was insufficient."
+              : "Item purchase failed because the backpack had insufficient continuous space.",
+          target,
+          ...(request.gameId === undefined ? {} : { gameId: request.gameId }),
+          context: {
+            transactionId: result.transactionId,
+            itemDefinitionId: result.itemDefinitionId,
+            requestedQuantity: result.requestedQuantity,
+            totalCoinPrice: result.totalCoinPrice,
+            previousCoinBalance: result.previousCoinBalance,
+            reason: result.reason,
+            ...(result.reason === "insufficient-coin"
+              ? { missingCoinQuantity: result.missingCoinQuantity }
+              : { unstoredItemQuantity: result.unstoredItemQuantity }),
+          },
+        });
+      }
+
+      return result;
+    } catch (error) {
+      this.#logError("Shop", request, target, "Item purchase failed.", error, {
+        transactionId: request.transactionId,
+        itemDefinitionId: request.itemDefinitionId,
+        itemQuantity: request.itemQuantity,
+        totalCoinPrice: request.totalCoinPrice,
       });
       throw error;
     }

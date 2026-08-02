@@ -7,6 +7,7 @@ import { MATERIAL_ITEM_DEFINITIONS } from "./material-item-definitions.ts";
 import { SPECIAL_ITEM_DEFINITIONS } from "./special-item-definitions.ts";
 
 export * from "./consumable-item-definitions.ts";
+export * from "./consumable-usage-definitions.ts";
 export * from "./currency-item-definitions.ts";
 export * from "./equipment-item-definitions.ts";
 export * from "./material-item-definitions.ts";

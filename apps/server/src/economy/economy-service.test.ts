@@ -37,6 +37,33 @@ const DEFINITIONS = {
     height: 6,
     maximumStack: 1,
   },
+  "item.blocker.4x5": {
+    definitionId: "item.blocker.4x5",
+    name: "Large Partial Blocker",
+    category: "special",
+    quality: "common",
+    width: 4,
+    height: 5,
+    maximumStack: 1,
+  },
+  "item.material.linen": {
+    definitionId: "item.material.linen",
+    name: "Linen",
+    category: "material",
+    quality: "common",
+    width: 1,
+    height: 1,
+    maximumStack: 5,
+  },
+  "item.special.large-crate": {
+    definitionId: "item.special.large-crate",
+    name: "Large Crate",
+    category: "special",
+    quality: "excellent",
+    width: 2,
+    height: 2,
+    maximumStack: 1,
+  },
 } as const satisfies ItemDefinitionCatalog;
 
 class MemoryLogWriter implements LogWriter {
@@ -199,6 +226,90 @@ describe("EconomyService", () => {
     expect(inventory.backpack.entries).toEqual([]);
     expect(writer.lines).toHaveLength(2);
     expect(writer.lines.every((line) => line.includes("[ERROR]"))).toBe(true);
+  });
+
+  it("atomically purchases multiple items and records the committed transaction", async () => {
+    const fixture = createFixture();
+    const inventory = fixture.service.receiveCoins({
+      inventory: fixture.inventory,
+      playerName: "Runze",
+      quantity: 10,
+      sourceId: "fixture.coin",
+      newItemInstanceIds: ["coin-1", "coin-2"],
+      allowTemporaryStorage: false,
+    }).inventory;
+    await fixture.logger.flush();
+
+    const purchaseFixture = createFixture(inventory);
+    const result = purchaseFixture.service.purchaseItem({
+      inventory,
+      playerName: "Runze",
+      transactionId: "shop.purchase.linen",
+      itemDefinitionId: "item.material.linen",
+      itemQuantity: 8,
+      totalCoinPrice: 6,
+      newItemInstanceIds: ["linen-1", "linen-2"],
+    });
+    await purchaseFixture.logger.flush();
+
+    expect(result.purchased).toBe(true);
+    expect(purchaseFixture.service.getBalance(result.inventory)).toBe(4);
+    expect(
+      result.inventory.backpack.entries.flatMap((entry) =>
+        entry.item.definitionId === "item.material.linen" ? [entry.item.quantity] : [],
+      ),
+    ).toEqual([5, 3]);
+    expect(purchaseFixture.writer.lines[0]).toContain(
+      "Player purchased 8 units of item item.material.linen.",
+    );
+  });
+
+  it("rejects a purchase when the complete quantity cannot fit", async () => {
+    const blocker = createItemInstance(
+      {
+        instanceId: "blocker-partial",
+        definitionId: "item.blocker.4x5",
+        ownerPlayerId: PLAYER_ID,
+      },
+      DEFINITIONS["item.blocker.4x5"],
+    );
+    const emptyInventory = createPlayerInventory(PLAYER_ID);
+    const blockedInventory = {
+      ...emptyInventory,
+      backpack: placeItemInBackpack(emptyInventory.backpack, blocker, { x: 0, y: 0 }, DEFINITIONS),
+    };
+    const coinFixture = createFixture(blockedInventory);
+    const inventory = coinFixture.service.receiveCoins({
+      inventory: blockedInventory,
+      playerName: "Runze",
+      quantity: 5,
+      sourceId: "fixture.coin",
+      newItemInstanceIds: ["coin-1"],
+      allowTemporaryStorage: false,
+    }).inventory;
+    await coinFixture.logger.flush();
+
+    const purchaseFixture = createFixture(inventory);
+    const result = purchaseFixture.service.purchaseItem({
+      inventory,
+      playerName: "Runze",
+      transactionId: "shop.purchase.large-crates",
+      itemDefinitionId: "item.special.large-crate",
+      itemQuantity: 2,
+      totalCoinPrice: 1,
+      newItemInstanceIds: ["crate-1", "crate-2"],
+    });
+    await purchaseFixture.logger.flush();
+
+    expect(result).toMatchObject({
+      purchased: false,
+      inventory,
+      reason: "insufficient-backpack-space",
+      unstoredItemQuantity: 2,
+    });
+    expect(result.inventory).toBe(inventory);
+    expect(purchaseFixture.service.getBalance(inventory)).toBe(5);
+    expect(purchaseFixture.writer.lines[0]).toContain("insufficient continuous space");
   });
 });
 

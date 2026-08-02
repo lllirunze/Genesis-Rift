@@ -7,10 +7,10 @@ import { getBackpackEntry } from "./backpack-state.ts";
 import type { ItemDefinitionCatalog } from "./item-definition.ts";
 import { createItemInstance } from "./item-instance.ts";
 import { createPlayerInventory } from "./player-inventory-state.ts";
+import { receiveItem } from "./receive-item.ts";
 import {
   abandonTemporaryPickup,
   advanceTemporaryPickupOwnerTurn,
-  storeNewTemporaryPickup,
   storeTemporaryPickupInBackpack,
 } from "./temporary-pickup.ts";
 import { validatePlayerInventoryState } from "./validate-player-inventory-state.ts";
@@ -39,6 +39,16 @@ const DEFINITIONS = {
 } as const satisfies ItemDefinitionCatalog;
 
 describe("temporary pickup", () => {
+  it("enters temporary storage only through an acquisition that cannot fit in the backpack", () => {
+    const inventory = createInventoryWithTemporaryCoin(2);
+
+    expect(inventory.temporaryPickup).toMatchObject({
+      item: { instanceId: "item-instance.temporary", quantity: 2 },
+      sourceId: "event.reward",
+      remainingOwnerTurns: 3,
+    });
+  });
+
   it("counts down only when its owner-turn function is advanced and expires on the third call", () => {
     const inventory = createInventoryWithTemporaryCoin(2);
     const first = advanceTemporaryPickupOwnerTurn(inventory);
@@ -168,16 +178,32 @@ describe("temporary pickup", () => {
 });
 
 function createInventoryWithTemporaryCoin(quantity: number) {
-  const inventory = createPlayerInventory(PLAYER_ID);
-  const coin = createItemInstance(
+  const blocker = createItemInstance(
     {
-      instanceId: "item-instance.temporary",
-      definitionId: "item.coin",
+      instanceId: "item-instance.acquisition-blocker",
+      definitionId: "item.blocker",
       ownerPlayerId: PLAYER_ID,
-      quantity,
     },
-    DEFINITIONS["item.coin"],
+    DEFINITIONS["item.blocker"],
   );
+  const emptyInventory = createPlayerInventory(PLAYER_ID);
+  const fullInventory = {
+    ...emptyInventory,
+    backpack: placeItemInBackpack(emptyInventory.backpack, blocker, { x: 0, y: 0 }, DEFINITIONS),
+  };
+  const receivedInventory = receiveItem(
+    fullInventory,
+    {
+      definitionId: "item.coin",
+      quantity,
+      sourceId: "event.reward",
+      newItemInstanceIds: ["item-instance.temporary"],
+    },
+    DEFINITIONS,
+  ).inventory;
 
-  return storeNewTemporaryPickup(inventory, coin, "event.reward", DEFINITIONS);
+  return {
+    ...receivedInventory,
+    backpack: removeBackpackItem(receivedInventory.backpack, blocker.instanceId).backpack,
+  };
 }
