@@ -2,6 +2,8 @@ export * from "./attributes/derived-attribute-configs.ts";
 export * from "./attributes/primary-attribute-config.ts";
 export * from "./attributes/primary-attributes.ts";
 export * from "./catalog/game-data-catalog.ts";
+export * from "./events/event-definitions.ts";
+export * from "./events/event-pool-definitions.ts";
 export * from "./identities/identity-config.ts";
 export * from "./identities/identity-configs.ts";
 export * from "./identities/identity-name-config.ts";

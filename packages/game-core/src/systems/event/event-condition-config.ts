@@ -4,12 +4,16 @@ export const EVENT_CONDITION_IDS = [
   "map.regionIs",
   /** 当前地块地形与指定地形一致。 */
   "map.terrainIs",
+  /** 当前地块包含指定地图特征。 */
+  "map.featureIs",
   /** 当前天气与指定天气一致。 */
   "weather.is",
   /** 当前昼夜阶段与指定阶段一致。 */
   "time.is",
   /** 触发玩家等级达到指定下限。 */
   "player.levelAtLeast",
+  /** 触发玩家当前未处于战斗状态。 */
+  "player.isNotInBattle",
   /** 触发玩家当前身份或职业与指定配置一致。 */
   "player.identityIs",
   /** 触发玩家种族与指定配置一致。 */
@@ -32,6 +36,8 @@ export const EVENT_CONDITION_IDS = [
   "event.wasRevealed",
   /** 指定互斥事件尚未完成揭露。 */
   "event.wasNotRevealed",
+  /** 本次触发来源是玩家首次探索当前地点。 */
+  "exploration.isFirstVisit",
 ] as const;
 
 /** 事件条件组当前支持的逻辑关系。 */

@@ -5,6 +5,14 @@ import {
   type EventConditionExpression,
 } from "./event-condition-definition.ts";
 import { EVENT_CATEGORIES, EVENT_REPEAT_RULES, EVENT_REVEAL_MODES } from "./event-config.ts";
+import {
+  validateEventDurationDefinition,
+  type EventDurationDefinition,
+} from "./event-duration-definition.ts";
+import {
+  validateEventResolutionDefinition,
+  type EventResolutionDefinition,
+} from "./event-resolution-definition.ts";
 
 /** 描述事件的主要作用与内容定位。 */
 export type EventCategory = (typeof EVENT_CATEGORIES)[number];
@@ -26,6 +34,8 @@ export interface EventDefinition {
   readonly tags: readonly string[];
   readonly revealMode: EventRevealMode;
   readonly repeatRule: EventRepeatRule;
+  readonly resolution: EventResolutionDefinition;
+  readonly duration: EventDurationDefinition;
   readonly baseWeight: number;
   readonly cooldownTurns: number;
 }
@@ -65,6 +75,9 @@ export function validateEventDefinition(definition: EventDefinition): void {
   if (!EVENT_REPEAT_RULES.includes(definition.repeatRule)) {
     throw new RangeError(`Unsupported event repeat rule: ${definition.repeatRule}`);
   }
+
+  validateEventResolutionDefinition(definition.resolution);
+  validateEventDurationDefinition(definition.duration);
 
   assertNonNegativeSafeInteger(definition.baseWeight, "baseWeight");
   assertNonNegativeSafeInteger(definition.cooldownTurns, "cooldownTurns");

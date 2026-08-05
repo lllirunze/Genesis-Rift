@@ -18,6 +18,9 @@ export interface EventConditionParametersById {
   readonly "map.terrainIs": {
     readonly terrainDefinitionId: string;
   };
+  readonly "map.featureIs": {
+    readonly featureId: string;
+  };
   readonly "weather.is": {
     readonly weatherId: string;
   };
@@ -27,6 +30,7 @@ export interface EventConditionParametersById {
   readonly "player.levelAtLeast": {
     readonly level: number;
   };
+  readonly "player.isNotInBattle": Record<string, never>;
   readonly "player.identityIs": {
     readonly identityId: string;
   };
@@ -63,6 +67,7 @@ export interface EventConditionParametersById {
   readonly "event.wasNotRevealed": {
     readonly eventId: string;
   };
+  readonly "exploration.isFirstVisit": Record<string, never>;
 }
 
 /** 描述一项不产生副作用的基础事件触发条件。 */
@@ -168,6 +173,9 @@ function validateAtomicCondition(condition: EventAtomicConditionDefinition): voi
     case "map.terrainIs":
       validateSingleStringParameter(parameters, "terrainDefinitionId", candidate.conditionId);
       return;
+    case "map.featureIs":
+      validateSingleStringParameter(parameters, "featureId", candidate.conditionId);
+      return;
     case "weather.is":
       validateSingleStringParameter(parameters, "weatherId", candidate.conditionId);
       return;
@@ -199,6 +207,10 @@ function validateAtomicCondition(condition: EventAtomicConditionDefinition): voi
     case "player.levelAtLeast":
       assertExactParameterKeys(parameters, ["level"], candidate.conditionId);
       assertPositiveSafeInteger(parameters.level, `${candidate.conditionId}.parameters.level`);
+      return;
+    case "player.isNotInBattle":
+    case "exploration.isFirstVisit":
+      assertExactParameterKeys(parameters, [], candidate.conditionId);
       return;
     case "quest.stageIs":
       assertExactParameterKeys(parameters, ["questId", "stageId"], candidate.conditionId);
