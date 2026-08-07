@@ -1,4 +1,5 @@
 import type { EventPoolCandidate } from "./collect-event-pool-candidates.ts";
+import type { EventEffectExecutionResult } from "./event-effect-handler.ts";
 import { EVENT_INSTANCE_STATUSES } from "./event-runtime-config.ts";
 
 /** 描述事件实例从抽取到终止所使用的运行时状态。 */
@@ -24,6 +25,24 @@ export interface RevealedEventInstance extends EventInstanceBase {
   readonly revealedAtTurn: number;
 }
 
+/** 描述已经确定结算路线且正在执行效果序列的事件实例。 */
+export interface ResolvingEventInstance extends EventInstanceBase {
+  readonly status: "RESOLVING";
+  readonly revealedAtTurn: number;
+  readonly resolvingAtTurn: number;
+  readonly selectedOptionId: string | null;
+}
+
+/** 描述全部事件效果已经完成执行的事件实例。 */
+export interface ResolvedEventInstance extends EventInstanceBase {
+  readonly status: "RESOLVED";
+  readonly revealedAtTurn: number;
+  readonly resolvingAtTurn: number;
+  readonly resolvedAtTurn: number;
+  readonly selectedOptionId: string | null;
+  readonly effectResults: readonly EventEffectExecutionResult[];
+}
+
 /** 描述玩家放弃揭露且不会产生效果的事件实例。 */
 export interface DeclinedEventInstance extends EventInstanceBase {
   readonly status: "DECLINED";
@@ -32,7 +51,11 @@ export interface DeclinedEventInstance extends EventInstanceBase {
 
 /** 描述事件抽取后可能处于的任意运行时状态。 */
 export type EventInstance =
-  PendingRevealEventInstance | RevealedEventInstance | DeclinedEventInstance;
+  | PendingRevealEventInstance
+  | RevealedEventInstance
+  | ResolvingEventInstance
+  | ResolvedEventInstance
+  | DeclinedEventInstance;
 
 /** 描述创建待揭露事件实例所需的输入。 */
 export interface CreatePendingEventInstanceInput {
@@ -91,6 +114,16 @@ export function validateEventInstance(instance: EventInstance): void {
 
   if (instance.status === "REVEALED") {
     assertTransitionTurn(instance.revealedAtTurn, instance.triggeredAtTurn, "revealedAtTurn");
+  }
+
+  if (instance.status === "RESOLVING" || instance.status === "RESOLVED") {
+    assertTransitionTurn(instance.revealedAtTurn, instance.triggeredAtTurn, "revealedAtTurn");
+    assertTransitionTurn(instance.resolvingAtTurn, instance.revealedAtTurn, "resolvingAtTurn");
+    assertOptionalNonEmptyString(instance.selectedOptionId, "selectedOptionId");
+  }
+
+  if (instance.status === "RESOLVED") {
+    assertTransitionTurn(instance.resolvedAtTurn, instance.resolvingAtTurn, "resolvedAtTurn");
   }
 
   if (instance.status === "DECLINED") {

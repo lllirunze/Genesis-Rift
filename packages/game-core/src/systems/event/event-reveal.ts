@@ -121,6 +121,12 @@ function validateRevealTransition(
   definition: EventDefinition,
   transitionTurn: number,
 ): void {
+  const runtimeStatus = (instance as unknown as { readonly status: string }).status;
+
+  if (runtimeStatus !== "PENDING_REVEAL") {
+    throw new Error(`Event instance must be PENDING_REVEAL, received ${runtimeStatus}`);
+  }
+
   validateEventInstance(instance);
 
   if (instance.eventId !== definition.eventId) {

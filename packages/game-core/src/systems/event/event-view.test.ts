@@ -89,7 +89,7 @@ describe("event view", () => {
           type: "CHOICE",
           options: [
             { optionId: "accept", name: "Accept" },
-            { optionId: "leave", name: "Leave" },
+            { optionId: "leave", name: "Leave", isAvailable: true },
           ],
         },
       },
