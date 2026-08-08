@@ -6,10 +6,10 @@ import {
 } from "./evaluate-event-condition.ts";
 
 const CONTEXT: EventConditionEvaluationContext = {
-  regionDefinitionId: "region.wilderness",
-  terrainDefinitionId: "terrain.forest",
+  regionDefinitionId: "region_000001",
+  terrainDefinitionId: "terrain_000002",
   featureIds: new Set(["map-feature.ancient-ruins"]),
-  weatherId: "weather.fog",
+  weatherId: "weather_000001",
   periodId: "night",
   player: {
     level: 5,
@@ -19,9 +19,9 @@ const CONTEXT: EventConditionEvaluationContext = {
     isInBattle: false,
     itemQuantities: new Map([
       ["currency.coin", 5],
-      ["item.special.torch", 1],
+      ["item_000010", 1],
     ]),
-    equippedDefinitionIds: new Set(["equipment.wind-boots"]),
+    equippedDefinitionIds: new Set(["equip_000003"]),
     resourceValues: new Map([
       ["health", 30],
       ["mana", 10],
@@ -30,7 +30,7 @@ const CONTEXT: EventConditionEvaluationContext = {
   questStages: new Map([["quest.village-help", "accepted"]]),
   dungeonId: null,
   worldStateIds: new Set(["world.rift-open"]),
-  revealedEventIds: new Set(["event.common.abandoned-camp"]),
+  revealedEventIds: new Set(["event_000001"]),
   isFirstVisit: true,
 };
 
@@ -45,12 +45,12 @@ describe("event condition evaluation", () => {
             {
               type: "CONDITION",
               conditionId: "map.regionIs",
-              parameters: { regionDefinitionId: "region.wilderness" },
+              parameters: { regionDefinitionId: "region_000001" },
             },
             {
               type: "CONDITION",
               conditionId: "weather.is",
-              parameters: { weatherId: "weather.fog" },
+              parameters: { weatherId: "weather_000001" },
             },
             {
               type: "CONDITION",
@@ -84,7 +84,7 @@ describe("event condition evaluation", () => {
             {
               type: "CONDITION",
               conditionId: "equipment.has",
-              parameters: { equipmentDefinitionId: "equipment.wind-boots" },
+              parameters: { equipmentDefinitionId: "equip_000003" },
             },
             {
               type: "CONDITION",
@@ -108,7 +108,7 @@ describe("event condition evaluation", () => {
             {
               type: "CONDITION",
               conditionId: "event.wasNotRevealed",
-              parameters: { eventId: "event.common.abandoned-camp" },
+              parameters: { eventId: "event_000001" },
             },
             {
               type: "CONDITION",

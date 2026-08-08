@@ -14,7 +14,7 @@ const PLAYER_ID = "player-1" as PlayerId;
 const OTHER_PLAYER_ID = "player-2" as PlayerId;
 
 const WEAPON: EquipmentDefinition = {
-  definitionId: "equipment.training-sword",
+  definitionId: "equip_000101",
   name: "Training Sword",
   type: "weapon",
   quality: "common",
@@ -25,7 +25,7 @@ const WEAPON: EquipmentDefinition = {
 
 const ACCESSORY: EquipmentDefinition = {
   ...WEAPON,
-  definitionId: "equipment.lucky-charm",
+  definitionId: "equip_000103",
   name: "Lucky Charm",
   type: "accessory",
 };

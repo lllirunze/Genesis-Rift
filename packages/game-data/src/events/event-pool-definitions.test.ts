@@ -16,8 +16,8 @@ describe("event pool definitions", () => {
 
   it("keeps wilderness exploration entries as references instead of copied definitions", () => {
     expect(WILDERNESS_EXPLORATION_EVENT_POOL.entries).toEqual([
-      { eventId: "event.common.abandoned-camp", weightAdjustment: 0 },
-      { eventId: "event.encounter.wild-beast-attack", weightAdjustment: 0 },
+      { eventId: "event_000001", weightAdjustment: 0 },
+      { eventId: "event_000002", weightAdjustment: 0 },
     ]);
   });
 });

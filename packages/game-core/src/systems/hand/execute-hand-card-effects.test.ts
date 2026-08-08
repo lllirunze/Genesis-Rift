@@ -1,6 +1,8 @@
 import type { GameId, PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it, vi } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import {
   executeHandCardEffects,
   HandCardEffectSequenceExecutionError,
@@ -20,7 +22,7 @@ const MASTER_SEED = createMasterSeed(
   "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
 );
 const MULTI_EFFECT_CARD: HandCardDefinition = {
-  cardId: 1,
+  cardId: createTestHandCardId(1),
   name: "fieldRecovery",
   description: "Restores health and removes one harmful status.",
   quality: "rare",
@@ -33,13 +35,13 @@ const MULTI_EFFECT_CARD: HandCardDefinition = {
   },
   effects: [
     { effectId: "health.restore", parameters: { amount: 10 } },
-    { effectId: "status.remove", parameters: { statusDefinitionId: "status.poison" } },
+    { effectId: "status.remove", parameters: { statusDefinitionId: "debuff_000102" } },
   ],
   destinationAfterResolution: "discard",
 };
 const RETURNING_CARD: HandCardDefinition = {
   ...MULTI_EFFECT_CARD,
-  cardId: 2,
+  cardId: createTestHandCardId(2),
   name: "returningRecovery",
   description: "Returns to hand after attempting its recovery effect.",
   effects: [{ effectId: "health.restore", parameters: { amount: 5 } }],
@@ -47,40 +49,40 @@ const RETURNING_CARD: HandCardDefinition = {
 };
 const MISSING_HANDLER_CARD: HandCardDefinition = {
   ...MULTI_EFFECT_CARD,
-  cardId: 3,
+  cardId: createTestHandCardId(3),
   name: "unfinishedRecovery",
   description: "Requires one effect handler that is not registered yet.",
   effects: [
     { effectId: "health.restore", parameters: { amount: 5 } },
-    { effectId: "weather.change", parameters: { weatherId: "weather.clear" } },
+    { effectId: "weather.change", parameters: { weatherId: "weather_000002" } },
   ],
 };
 const DRAW_CARD: HandCardDefinition = {
   ...MULTI_EFFECT_CARD,
-  cardId: 4,
+  cardId: createTestHandCardId(4),
   name: "fieldSupply",
   description: "Draws two cards before entering the shared discard pile.",
   effects: [{ effectId: "handCard.draw", parameters: { amount: 2 } }],
 };
 const DRAWN_CARD_ONE: HandCardDefinition = {
   ...RETURNING_CARD,
-  cardId: 5,
+  cardId: createTestHandCardId(5),
   name: "drawnRecoveryOne",
   description: "Represents the first card obtained by a draw effect.",
 };
 const DRAWN_CARD_TWO: HandCardDefinition = {
   ...RETURNING_CARD,
-  cardId: 6,
+  cardId: createTestHandCardId(6),
   name: "drawnRecoveryTwo",
   description: "Represents the second card obtained by a draw effect.",
 };
 const CATALOG = {
-  1: MULTI_EFFECT_CARD,
-  2: RETURNING_CARD,
-  3: MISSING_HANDLER_CARD,
-  4: DRAW_CARD,
-  5: DRAWN_CARD_ONE,
-  6: DRAWN_CARD_TWO,
+  [createTestHandCardId(1)]: MULTI_EFFECT_CARD,
+  [createTestHandCardId(2)]: RETURNING_CARD,
+  [createTestHandCardId(3)]: MISSING_HANDLER_CARD,
+  [createTestHandCardId(4)]: DRAW_CARD,
+  [createTestHandCardId(5)]: DRAWN_CARD_ONE,
+  [createTestHandCardId(6)]: DRAWN_CARD_TWO,
 } as const satisfies HandCardCatalog;
 
 /**
@@ -93,7 +95,7 @@ function createContextInput(cardId: number) {
   return {
     executionId: `execution-card-${cardId}`,
     gameId: GAME_ID,
-    cardId,
+    cardId: createTestHandCardId(cardId),
     sourcePlayerId: PLAYER_ID,
     timing: "active" as const,
     targets: [{ type: "player" as const, targetId: PLAYER_ID }],
@@ -110,7 +112,7 @@ function createOwnedCardState(cardId: number) {
   const deckState = createHandCardDeckState("deck.shared", [], CATALOG);
   const playerHandState = addHandCardToHand(
     createPlayerHandState(PLAYER_ID),
-    cardId,
+    createTestHandCardId(cardId),
     CATALOG,
   ).state;
 
@@ -153,7 +155,7 @@ describe("execute hand card effects", () => {
       "skipped",
     ]);
     expect(result.destination).toBe("discard");
-    expect(result.deckState.discardPile).toEqual([1]);
+    expect(result.deckState.discardPile).toEqual([createTestHandCardId(1)]);
     expect(result.playerHandState.handCardIds).toEqual([]);
     expect(Object.isFrozen(result.effectResults)).toBe(true);
   });
@@ -172,13 +174,21 @@ describe("execute hand card effects", () => {
     );
 
     expect(result.destination).toBe("hand");
-    expect(result.playerHandState.handCardIds).toEqual([2]);
+    expect(result.playerHandState.handCardIds).toEqual([createTestHandCardId(2)]);
     expect(result.deckState.discardPile).toEqual([]);
   });
 
   it("preserves newly drawn cards when resolving the used card destination", () => {
-    const deckState = createHandCardDeckState("deck.shared", [5, 6], CATALOG);
-    const playerHandState = addHandCardToHand(createPlayerHandState(PLAYER_ID), 4, CATALOG).state;
+    const deckState = createHandCardDeckState(
+      "deck.shared",
+      [createTestHandCardId(5), createTestHandCardId(6)],
+      CATALOG,
+    );
+    const playerHandState = addHandCardToHand(
+      createPlayerHandState(PLAYER_ID),
+      createTestHandCardId(4),
+      CATALOG,
+    ).state;
     const registry = new HandCardEffectHandlerRegistry();
     registry.register(createHandCardDrawEffectHandler({ catalog: CATALOG }));
 
@@ -191,12 +201,17 @@ describe("execute hand card effects", () => {
       {
         effectId: "handCard.draw",
         outcome: "applied",
-        output: { targets: [{ acquiredCardIds: [5, 6] }] },
+        output: {
+          targets: [{ acquiredCardIds: [createTestHandCardId(5), createTestHandCardId(6)] }],
+        },
       },
     ]);
-    expect(result.playerHandState.handCardIds).toEqual([5, 6]);
+    expect(result.playerHandState.handCardIds).toEqual([
+      createTestHandCardId(5),
+      createTestHandCardId(6),
+    ]);
     expect(result.deckState.drawPile).toEqual([]);
-    expect(result.deckState.discardPile).toEqual([4]);
+    expect(result.deckState.discardPile).toEqual([createTestHandCardId(4)]);
   });
 
   it("checks every handler before running the first effect", () => {
@@ -213,7 +228,7 @@ describe("execute hand card effects", () => {
       executeHandCardEffects(deckState, playerHandState, CATALOG, registry, createContextInput(3)),
     ).toThrow("Missing hand card effect handler: weather.change");
     expect(execute).not.toHaveBeenCalled();
-    expect(playerHandState.handCardIds).toEqual([3]);
+    expect(playerHandState.handCardIds).toEqual([createTestHandCardId(3)]);
     expect(deckState.discardPile).toEqual([]);
   });
 
@@ -243,13 +258,13 @@ describe("execute hand card effects", () => {
 
     expect(receivedError).toBeInstanceOf(HandCardEffectSequenceExecutionError);
     expect(receivedError).toMatchObject({
-      cardId: 1,
+      cardId: createTestHandCardId(1),
       failedEffectIndex: 1,
       failedEffectId: "status.remove",
       completedEffectResults: [{ effectId: "health.restore", outcome: "applied" }],
     });
     expect((receivedError as Error).cause).toEqual(new Error("Status service unavailable"));
-    expect(playerHandState.handCardIds).toEqual([1]);
+    expect(playerHandState.handCardIds).toEqual([createTestHandCardId(1)]);
     expect(deckState.discardPile).toEqual([]);
   });
 

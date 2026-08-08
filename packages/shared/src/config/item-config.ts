@@ -17,4 +17,4 @@ export const ITEM_CATEGORIES = [
 ] as const;
 
 /** 元宝物品在统一物品定义表中的固定标识。 */
-export const COIN_ITEM_DEFINITION_ID = "item.coin";
+export const COIN_ITEM_DEFINITION_ID = "item_000001";

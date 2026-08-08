@@ -7,20 +7,20 @@ import { calculateNormalMovementCost } from "./movement-cost-policy.ts";
 
 /** 移动成本测试使用的普通与困难地形配置。 */
 const TERRAIN_DEFINITIONS = {
-  "terrain.plain": {
-    definitionId: "terrain.plain",
+  terrain_000001: {
+    definitionId: "terrain_000001",
     name: "Plain",
     tags: ["land"],
     movementCostModifier: 0,
   },
-  "terrain.forest": {
-    definitionId: "terrain.forest",
+  terrain_000002: {
+    definitionId: "terrain_000002",
     name: "Forest",
     tags: ["land", "vegetation"],
     movementCostModifier: 1,
   },
-  "terrain.mountain": {
-    definitionId: "terrain.mountain",
+  terrain_000003: {
+    definitionId: "terrain_000003",
     name: "Mountain",
     tags: ["land", "highland"],
     movementCostModifier: 2,
@@ -34,8 +34,8 @@ describe("normal movement cost policy", () => {
     { difference: 3, uphillCost: 9, totalCost: 10 },
   ])("uses the square of an uphill elevation difference", (example) => {
     const result = calculateNormalMovementCost(
-      createTile("origin", 0, "terrain.plain"),
-      createTile("target", example.difference, "terrain.plain"),
+      createTile("origin", 0, "terrain_000001"),
+      createTile("target", example.difference, "terrain_000001"),
       TERRAIN_DEFINITIONS,
     );
 
@@ -51,8 +51,8 @@ describe("normal movement cost policy", () => {
   it("does not add an elevation cost when moving downhill", () => {
     expect(
       calculateNormalMovementCost(
-        createTile("origin", 3, "terrain.plain"),
-        createTile("target", 0, "terrain.plain"),
+        createTile("origin", 3, "terrain_000001"),
+        createTile("target", 0, "terrain_000001"),
         TERRAIN_DEFINITIONS,
       ),
     ).toEqual({
@@ -66,8 +66,8 @@ describe("normal movement cost policy", () => {
 
   it("only adds the target terrain cost", () => {
     const result = calculateNormalMovementCost(
-      createTile("origin", 0, "terrain.mountain"),
-      createTile("target", 0, "terrain.forest"),
+      createTile("origin", 0, "terrain_000003"),
+      createTile("target", 0, "terrain_000002"),
       TERRAIN_DEFINITIONS,
     );
 
@@ -81,8 +81,8 @@ describe("normal movement cost policy", () => {
 
   it.each([-1, 3])("rejects a target terrain cost outside the configured range", (terrainCost) => {
     const invalidDefinitions = {
-      "terrain.invalid": {
-        definitionId: "terrain.invalid",
+      terrain_999998: {
+        definitionId: "terrain_999998",
         name: "Invalid",
         tags: [],
         movementCostModifier: terrainCost,
@@ -91,8 +91,8 @@ describe("normal movement cost policy", () => {
 
     expect(() =>
       calculateNormalMovementCost(
-        createTile("origin", 0, "terrain.invalid"),
-        createTile("target", 0, "terrain.invalid"),
+        createTile("origin", 0, "terrain_999998"),
+        createTile("target", 0, "terrain_999998"),
         invalidDefinitions,
       ),
     ).toThrow("movementCostModifier must be between 0 and 2");
@@ -104,8 +104,8 @@ describe("normal movement cost policy", () => {
   ])("rejects elevation differences outside the inclusive range", (elevations) => {
     expect(() =>
       calculateNormalMovementCost(
-        createTile("origin", elevations.originElevation, "terrain.plain"),
-        createTile("target", elevations.targetElevation, "terrain.plain"),
+        createTile("origin", elevations.originElevation, "terrain_000001"),
+        createTile("target", elevations.targetElevation, "terrain_000001"),
         TERRAIN_DEFINITIONS,
       ),
     ).toThrow("elevation difference must be between -3 and 3");
@@ -127,7 +127,7 @@ function createTile(id: string, elevation: number, terrainDefinitionId: string):
     ring: 0,
     elevation,
     terrainDefinitionId,
-    regionDefinitionId: "region.test",
+    regionDefinitionId: "region_000101",
     passability: "passable",
     features: [],
   };

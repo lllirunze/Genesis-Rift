@@ -13,7 +13,7 @@ import type { ResolvedEventInstance } from "./event-instance.ts";
  */
 function createDefinition(duration: EventDurationDefinition): EventDefinition {
   return {
-    eventId: "event.test.duration",
+    eventId: "event_000108",
     name: "Duration Test",
     description: "An event used to test duration activation.",
     triggerCondition: null,
@@ -29,7 +29,7 @@ function createDefinition(duration: EventDurationDefinition): EventDefinition {
           effectKey: "changeWeather",
           effectId: "weather.change",
           targetType: "WORLD",
-          parameters: { weatherId: "weather.test" },
+          parameters: { weatherId: "weather_000101" },
           failurePolicy: "STOP",
         },
       ],
@@ -49,7 +49,7 @@ function createDefinition(duration: EventDurationDefinition): EventDefinition {
 function createResolvedEvent(instanceId: string): ResolvedEventInstance {
   return {
     instanceId,
-    eventId: "event.test.duration",
+    eventId: "event_000108",
     triggeringPlayerId: "player-1",
     sourcePoolIds: ["event-pool.test"],
     triggeredAtTurn: 1,

@@ -24,8 +24,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -133,10 +133,10 @@ describe("Coin economy", () => {
     const blocker = createItemInstance(
       {
         instanceId: "blocker-1",
-        definitionId: "item.blocker",
+        definitionId: "item_000101",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.blocker"],
+      DEFINITIONS["item_000101"],
     );
     const emptyInventory = createPlayerInventory(PLAYER_ID);
     const fullInventory = {

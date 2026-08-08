@@ -13,8 +13,8 @@ import { getCoinBalance, receiveCoin } from "./coin.ts";
 import { purchaseItemWithCoin } from "./purchase-item-with-coin.ts";
 
 const PLAYER_ID = "player-1" as PlayerId;
-const MATERIAL_ID = "item.material.linen";
-const LARGE_ITEM_ID = "item.special.large-crate";
+const MATERIAL_ID = "item_000102";
+const LARGE_ITEM_ID = "item_000103";
 
 const DEFINITIONS = {
   [COIN_ITEM_DEFINITION_ID]: {
@@ -44,8 +44,8 @@ const DEFINITIONS = {
     height: 2,
     maximumStack: 1,
   },
-  "item.blocker.4x5": {
-    definitionId: "item.blocker.4x5",
+  item_000105: {
+    definitionId: "item_000105",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -53,8 +53,8 @@ const DEFINITIONS = {
     height: 5,
     maximumStack: 1,
   },
-  "item.blocker.1x1": {
-    definitionId: "item.blocker.1x1",
+  item_000104: {
+    definitionId: "item_000104",
     name: "Small Blocker",
     category: "special",
     quality: "common",
@@ -120,7 +120,7 @@ describe("purchaseItemWithCoin", () => {
 
   it("fails the complete purchase when one item stack cannot fit", () => {
     let inventory = createPlayerInventory(PLAYER_ID);
-    inventory = addItem(inventory, "item.blocker.4x5", "blocker-large", 1, { x: 0, y: 0 });
+    inventory = addItem(inventory, "item_000105", "blocker-large", 1, { x: 0, y: 0 });
     inventory = receiveCoin(
       inventory,
       {
@@ -156,10 +156,10 @@ describe("purchaseItemWithCoin", () => {
 
   it("can use cells released by Coin payment during the transaction preview", () => {
     let inventory = createPlayerInventory(PLAYER_ID);
-    inventory = addItem(inventory, "item.blocker.4x5", "blocker-large", 1, { x: 0, y: 0 });
-    inventory = addItem(inventory, "item.blocker.1x1", "blocker-small-1", 1, { x: 1, y: 5 });
-    inventory = addItem(inventory, "item.blocker.1x1", "blocker-small-2", 1, { x: 2, y: 5 });
-    inventory = addItem(inventory, "item.blocker.1x1", "blocker-small-3", 1, { x: 3, y: 5 });
+    inventory = addItem(inventory, "item_000105", "blocker-large", 1, { x: 0, y: 0 });
+    inventory = addItem(inventory, "item_000104", "blocker-small-1", 1, { x: 1, y: 5 });
+    inventory = addItem(inventory, "item_000104", "blocker-small-2", 1, { x: 2, y: 5 });
+    inventory = addItem(inventory, "item_000104", "blocker-small-3", 1, { x: 3, y: 5 });
     inventory = receiveCoin(
       inventory,
       {

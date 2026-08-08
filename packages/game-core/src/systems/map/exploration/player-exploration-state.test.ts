@@ -21,16 +21,16 @@ const SPAWN_TILE_ID = "tile.0,0,0" as TileId;
 const NORTH_TILE_ID = "tile.0,1,-1" as TileId;
 const MAP_CONTENT_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: ["land"],
       movementCostModifier: 0,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: ["outdoor"],
@@ -131,8 +131,8 @@ function createMap(): HexMap {
           tileId: `tile.${getCubeCoordinateKey(coordinate)}` as TileId,
           coordinate,
           elevation: 0,
-          terrainDefinitionId: "terrain.plain",
-          regionDefinitionId: "region.wilderness",
+          terrainDefinitionId: "terrain_000001",
+          regionDefinitionId: "region_000001",
           passability: "passable",
         },
         MAP_CONTENT_DEFINITIONS,

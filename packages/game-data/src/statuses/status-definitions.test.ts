@@ -17,12 +17,12 @@ describe("status definitions", () => {
   it("provides valid and uniquely identified status configurations", () => {
     expect(() => validateStatusDefinitions(Object.values(STATUS_DEFINITION_CATALOG))).not.toThrow();
     expect(Object.keys(STATUS_DEFINITION_CATALOG)).toEqual([
-      "status.battle-fury",
-      "status.wind-blessing",
-      "status.vitality-blessing",
-      "status.arcane-accumulation",
-      "status.exhaustion",
-      "status.poisoned",
+      "buff_000001",
+      "buff_000002",
+      "buff_000003",
+      "buff_000004",
+      "debuff_000001",
+      "debuff_000002",
     ]);
   });
 

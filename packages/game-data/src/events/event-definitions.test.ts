@@ -13,10 +13,10 @@ describe("event definitions", () => {
   it("provides valid and uniquely identified event configurations", () => {
     expect(() => validateEventDefinitionCatalog(EVENT_DEFINITION_CATALOG)).not.toThrow();
     expect(Object.keys(EVENT_DEFINITION_CATALOG)).toEqual([
-      "event.common.abandoned-camp",
-      "event.encounter.wild-beast-attack",
-      "event.adventure.ancient-ruins",
-      "event.disaster.blizzard",
+      "event_000001",
+      "event_000002",
+      "event_000003",
+      "event_000004",
     ]);
   });
 

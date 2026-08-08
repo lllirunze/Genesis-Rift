@@ -13,8 +13,8 @@ import {
 
 const PLAYER_ID = "player-1" as PlayerId;
 const STATUS_DEFINITIONS = {
-  "status.focus": {
-    definitionId: "status.focus",
+  buff_000101: {
+    definitionId: "buff_000101",
     name: "Focus",
     description: "Improves focus for a short duration.",
     kind: "buff",
@@ -26,8 +26,8 @@ const STATUS_DEFINITIONS = {
   },
 } as const satisfies StatusDefinitionCatalog;
 const ITEM_DEFINITIONS = {
-  "item.herb": {
-    definitionId: "item.herb",
+  item_000201: {
+    definitionId: "item_000201",
     name: "Herb",
     category: "material",
     quality: "common",

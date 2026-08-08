@@ -12,7 +12,7 @@ import { createPendingEventInstance, validateEventInstance } from "./event-insta
  */
 function createCandidate(revealMode: EventDefinition["revealMode"]): EventPoolCandidate {
   const event: EventDefinition = {
-    eventId: `event.test.${revealMode.toLowerCase()}`,
+    eventId: revealMode === "FORCED" ? "event_000109" : "event_000110",
     name: "Test Event",
     description: "An event used to test runtime event instances.",
     triggerCondition: null,
@@ -57,7 +57,7 @@ describe("event instance", () => {
 
     expect(instance).toEqual({
       instanceId: "event-instance-1",
-      eventId: "event.test.forced",
+      eventId: "event_000109",
       triggeringPlayerId: null,
       sourcePoolIds: ["event-pool.test"],
       triggeredAtTurn: 3,

@@ -14,22 +14,22 @@ const PLAYER_ID = "movement-player" as PlayerId;
 /** 普通移动测试统一使用的基础地形与野外区域。 */
 const MAP_CONTENT_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: ["land"],
       movementCostModifier: 0,
     },
-    "terrain.forest": {
-      definitionId: "terrain.forest",
+    terrain_000002: {
+      definitionId: "terrain_000002",
       name: "Forest",
       tags: ["land", "vegetation"],
       movementCostModifier: 1,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: ["outdoor"],
@@ -125,7 +125,7 @@ describe("normal movement settlement", () => {
     const map = createMap(
       new Set(),
       new Map([["0,1,-1", 2]]),
-      new Map([["0,1,-1", "terrain.forest"]]),
+      new Map([["0,1,-1", "terrain_000002"]]),
     );
     const center = requireTile(map, { x: 0, y: 0, z: 0 });
     const north = requireTile(map, { x: 0, y: 1, z: -1 });
@@ -341,8 +341,8 @@ function createMap(
           coordinate,
           elevation: elevations.get(getCubeCoordinateKey(coordinate)) ?? 0,
           terrainDefinitionId:
-            terrainDefinitionIds.get(getCubeCoordinateKey(coordinate)) ?? "terrain.plain",
-          regionDefinitionId: "region.wilderness",
+            terrainDefinitionIds.get(getCubeCoordinateKey(coordinate)) ?? "terrain_000001",
+          regionDefinitionId: "region_000001",
           passability: blockedCoordinateKeys.has(getCubeCoordinateKey(coordinate))
             ? "blocked"
             : "passable",

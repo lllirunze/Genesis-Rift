@@ -17,16 +17,16 @@ const PLAYER_ID = "displacement-player" as PlayerId;
 /** 强制位移测试使用的普通地形与野外区域配置。 */
 const MAP_CONTENT_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: ["land"],
       movementCostModifier: 0,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: ["outdoor"],
@@ -247,8 +247,8 @@ function createMap(options: CreateMapOptions = {}): HexMap {
           tileId: `tile.${coordinateKey}` as TileId,
           coordinate,
           elevation: elevations.get(coordinateKey) ?? 0,
-          terrainDefinitionId: "terrain.plain",
-          regionDefinitionId: "region.wilderness",
+          terrainDefinitionId: "terrain_000001",
+          regionDefinitionId: "region_000001",
           passability: blockedCoordinateKeys.has(coordinateKey) ? "blocked" : "passable",
         },
         MAP_CONTENT_DEFINITIONS,

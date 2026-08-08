@@ -8,7 +8,7 @@ import {
 } from "./event-pool-definition.ts";
 
 const EVENT: EventDefinition = {
-  eventId: "event.common.test",
+  eventId: "event_000102",
   name: "Test Event",
   description: "A test event used to validate event pools.",
   triggerCondition: null,
@@ -56,7 +56,7 @@ describe("event pool definition validation", () => {
 
     expect(() =>
       validateEventPoolDefinition(
-        { ...POOL, entries: [{ eventId: "event.unknown", weightAdjustment: 0 }] },
+        { ...POOL, entries: [{ eventId: "event_999999", weightAdjustment: 0 }] },
         EVENT_CATALOG,
       ),
     ).toThrow("unknown event");

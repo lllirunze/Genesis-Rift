@@ -8,7 +8,7 @@ import {
 } from "./status-instance.ts";
 
 const DEFINITION: StatusDefinition = {
-  definitionId: "status.growing-power",
+  definitionId: "buff_000102",
   name: "Growing Power",
   description: "Provides power that can accumulate over time.",
   kind: "buff",
@@ -44,7 +44,7 @@ describe("status instance", () => {
       }),
     ).toEqual({
       instanceId: "status-instance-1",
-      definitionId: "status.growing-power",
+      definitionId: "buff_000102",
       sourceId: "character-veigar",
       targetId: "character-veigar",
       currentStacks: 0,
@@ -96,7 +96,7 @@ describe("status instance", () => {
     expect(() =>
       validateStatusInstance(instance, {
         ...DEFINITION,
-        definitionId: "status.other",
+        definitionId: "buff_000999",
       }),
     ).toThrow("definition mismatch");
 

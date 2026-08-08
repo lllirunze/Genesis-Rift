@@ -2,7 +2,7 @@ import type { RegionDefinition, RegionDefinitionCatalog } from "@genesis-rift/ga
 
 /** 当前业务对象的静态定义配置。 */
 export const WILDERNESS_REGION_DEFINITION = {
-  definitionId: "region.wilderness",
+  definitionId: "region_000001",
   name: "Wilderness",
   category: "wilderness",
   tags: ["outdoor"],
@@ -10,7 +10,7 @@ export const WILDERNESS_REGION_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const CIVILIZED_REGION_DEFINITION = {
-  definitionId: "region.civilized",
+  definitionId: "region_000002",
   name: "Civilized Area",
   category: "civilized",
   tags: ["settlement", "safe-area"],
@@ -18,7 +18,7 @@ export const CIVILIZED_REGION_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const SPECIAL_REGION_DEFINITION = {
-  definitionId: "region.special",
+  definitionId: "region_000003",
   name: "Special Area",
   category: "special",
   tags: ["special-rule"],

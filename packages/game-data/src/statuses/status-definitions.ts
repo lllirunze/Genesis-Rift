@@ -6,7 +6,7 @@ import {
 
 /** 当前业务对象的静态定义配置。 */
 export const BATTLE_FURY_STATUS_DEFINITION = {
-  definitionId: "status.battle-fury",
+  definitionId: "buff_000001",
   name: "Battle Fury",
   description: "Temporarily increases the target's physical strength.",
   kind: "buff",
@@ -30,7 +30,7 @@ export const BATTLE_FURY_STATUS_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const WIND_BLESSING_STATUS_DEFINITION = {
-  definitionId: "status.wind-blessing",
+  definitionId: "buff_000002",
   name: "Wind Blessing",
   description: "Temporarily increases the target's movement range.",
   kind: "buff",
@@ -54,7 +54,7 @@ export const WIND_BLESSING_STATUS_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const VITALITY_BLESSING_STATUS_DEFINITION = {
-  definitionId: "status.vitality-blessing",
+  definitionId: "buff_000003",
   name: "Vitality Blessing",
   description: "Improves constitution and health regeneration for a short duration.",
   kind: "buff",
@@ -85,7 +85,7 @@ export const VITALITY_BLESSING_STATUS_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const ARCANE_ACCUMULATION_STATUS_DEFINITION = {
-  definitionId: "status.arcane-accumulation",
+  definitionId: "buff_000004",
   name: "Arcane Accumulation",
   description: "Permanently accumulates insight when its trigger condition is met.",
   kind: "buff",
@@ -109,7 +109,7 @@ export const ARCANE_ACCUMULATION_STATUS_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const EXHAUSTION_STATUS_DEFINITION = {
-  definitionId: "status.exhaustion",
+  definitionId: "debuff_000001",
   name: "Exhaustion",
   description: "Temporarily reduces agility and movement range.",
   kind: "debuff",
@@ -140,7 +140,7 @@ export const EXHAUSTION_STATUS_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const POISONED_STATUS_DEFINITION = {
-  definitionId: "status.poisoned",
+  definitionId: "debuff_000002",
   name: "Poisoned",
   description: "Temporarily reduces health regeneration.",
   kind: "debuff",

@@ -1,6 +1,8 @@
 import type { GameId, PlayerId, TileId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { RandomManager } from "../random/core/random-manager.ts";
 import { createMasterSeed } from "../random/core/random-seed.ts";
 import {
@@ -24,7 +26,7 @@ function createActiveContext(): HandCardEffectExecutionContext {
   return {
     executionId: "hand-card-execution-1",
     gameId: GAME_ID,
-    cardId: 1,
+    cardId: createTestHandCardId(1),
     effectIndex: 0,
     sourcePlayerId: PLAYER_ID,
     timing: "active",
@@ -136,7 +138,7 @@ describe("hand card effect execution context", () => {
     const context = createHandCardEffectExecutionContext({
       executionId: "hand-card-execution-minimal",
       gameId: GAME_ID,
-      cardId: 1,
+      cardId: createTestHandCardId(1),
       effectIndex: 0,
       sourcePlayerId: PLAYER_ID,
       timing: "active",

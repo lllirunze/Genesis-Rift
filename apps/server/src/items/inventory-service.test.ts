@@ -15,8 +15,8 @@ import { InventoryService } from "./inventory-service.ts";
 const PLAYER_ID = "player-1" as PlayerId;
 
 const DEFINITIONS = {
-  "item.coin": {
-    definitionId: "item.coin",
+  item_000001: {
+    definitionId: "item_000001",
     name: "Coin",
     category: "currency",
     quality: "common",
@@ -24,8 +24,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -87,7 +87,7 @@ describe("InventoryService", () => {
       inventory: fullInventory,
       playerName: "Runze",
       input: {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 7,
         sourceId: "battle.loot",
         newItemInstanceIds: ["coin-1", "coin-2"],
@@ -100,7 +100,7 @@ describe("InventoryService", () => {
     expect(result.unresolvedItems[0]?.item.quantity).toBe(2);
     expect(fullInventory.temporaryPickup).toBeNull();
     expect(writer.lines).toHaveLength(3);
-    expect(writer.lines[0]).toContain("Player received 7 units of item item.coin.");
+    expect(writer.lines[0]).toContain("Player received 7 units of item item_000001.");
     expect(writer.lines[1]).toContain("temporary pickup");
     expect(writer.lines[2]).toContain("could not be stored");
   });
@@ -109,11 +109,11 @@ describe("InventoryService", () => {
     const coin = createItemInstance(
       {
         instanceId: "coin-1",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
         quantity: 5,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const initial = createPlayerInventory(PLAYER_ID);
     const inventory = {
@@ -145,7 +145,7 @@ describe("InventoryService", () => {
     const consumed = service.consumeItem({
       inventory: merged,
       playerName: "Runze",
-      definitionId: "item.coin",
+      definitionId: "item_000001",
       quantity: 2,
       reason: "shop.purchase",
     }).inventory;
@@ -179,7 +179,7 @@ describe("InventoryService", () => {
       inventory: fullInventory,
       playerName: "Runze",
       input: {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "event.reward",
         newItemInstanceIds: ["coin-temp"],
@@ -209,10 +209,10 @@ describe("InventoryService", () => {
     const coin = createItemInstance(
       {
         instanceId: "coin-direct",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const placed = service.placeItem({
       inventory: createPlayerInventory(PLAYER_ID),
@@ -228,7 +228,7 @@ describe("InventoryService", () => {
       inventory: fullInventory,
       playerName: "Runze",
       input: {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "event.reward",
         newItemInstanceIds: ["coin-temp"],
@@ -256,7 +256,7 @@ describe("InventoryService", () => {
       inventory: fullInventory,
       playerName: "Runze",
       input: {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "event.reward",
         newItemInstanceIds: ["coin-abandoned"],
@@ -303,10 +303,10 @@ function createFullInventory(): PlayerInventoryState {
   const blocker = createItemInstance(
     {
       instanceId: "blocker-1",
-      definitionId: "item.blocker",
+      definitionId: "item_000101",
       ownerPlayerId: PLAYER_ID,
     },
-    DEFINITIONS["item.blocker"],
+    DEFINITIONS["item_000101"],
   );
   const inventory = createPlayerInventory(PLAYER_ID);
 

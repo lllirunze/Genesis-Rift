@@ -2,7 +2,7 @@ import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared
 
 /** 当前业务对象的静态定义配置。 */
 export const HEAVY_PLATE_ARMOR_ITEM_DEFINITION = {
-  definitionId: "item.equipment.heavy-plate-armor",
+  definitionId: "equip_000001",
   name: "Heavy Plate Armor",
   category: "equipment",
   quality: "rare",
@@ -13,7 +13,7 @@ export const HEAVY_PLATE_ARMOR_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const LONG_SWORD_ITEM_DEFINITION = {
-  definitionId: "item.equipment.long-sword",
+  definitionId: "equip_000002",
   name: "Long Sword",
   category: "equipment",
   quality: "excellent",
@@ -24,7 +24,7 @@ export const LONG_SWORD_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const TRAVEL_BOOTS_ITEM_DEFINITION = {
-  definitionId: "item.equipment.travel-boots",
+  definitionId: "equip_000003",
   name: "Travel Boots",
   category: "equipment",
   quality: "common",

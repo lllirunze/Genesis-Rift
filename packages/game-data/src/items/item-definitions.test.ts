@@ -120,20 +120,20 @@ describe("item definitions", () => {
 
   it("collects every configured item in the unified catalog", () => {
     expect(Object.keys(ITEM_DEFINITION_CATALOG)).toEqual([
-      "item.coin",
-      "item.material.linen-cloth",
-      "item.material.iron-ore",
-      "item.material.magic-dust",
-      "item.consumable.healing-potion",
-      "item.consumable.mana-potion",
-      "item.consumable.antidote",
-      "item.consumable.wind-tonic",
-      "item.special.climbing-rope",
-      "item.special.torch",
-      "item.special.treasure-map",
-      "item.equipment.heavy-plate-armor",
-      "item.equipment.long-sword",
-      "item.equipment.travel-boots",
+      "item_000001",
+      "item_000002",
+      "item_000003",
+      "item_000004",
+      "item_000005",
+      "item_000006",
+      "item_000007",
+      "item_000008",
+      "item_000009",
+      "item_000010",
+      "item_000011",
+      "equip_000001",
+      "equip_000002",
+      "equip_000003",
     ]);
   });
 });

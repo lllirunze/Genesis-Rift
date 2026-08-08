@@ -37,7 +37,7 @@ const CONTEXT: EventConditionEvaluationContext = {
 
 const REVEALED_INSTANCE: RevealedEventInstance = {
   instanceId: "event-instance-1",
-  eventId: "event.test.resolution",
+  eventId: "event_000107",
   triggeringPlayerId: "player-1",
   sourcePoolIds: ["event-pool.test"],
   triggeredAtTurn: 2,

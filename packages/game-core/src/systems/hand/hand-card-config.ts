@@ -25,7 +25,7 @@ export const HAND_CARD_CONDITION_IDS = [
   "turn.isEnd",
   "player.canMove",
   "player.isInCombat",
-  "player.isDying",
+  "player.isDowned",
   "source.isOwnAttack",
   "target.isSelf",
   "target.isAlly",

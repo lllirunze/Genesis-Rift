@@ -1,6 +1,8 @@
 import type { PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { DEFAULT_INITIAL_HAND_SIZE } from "./hand-card-config.ts";
 import type { HandCardCatalog, HandCardDefinition } from "./hand-card-definition.ts";
 import {
@@ -21,7 +23,7 @@ const PLAYER_ID = "player-1" as PlayerId;
  * @param cardId 方法所需的 cardId 参数。
  * @returns 本次处理得到的结果。
  */
-function createCard(cardId: number): HandCardDefinition {
+function createCard(cardId: HandCardDefinition["cardId"]): HandCardDefinition {
   return {
     cardId,
     name: "sprint",
@@ -40,7 +42,7 @@ function createCard(cardId: number): HandCardDefinition {
 }
 
 const RETURN_CARD: HandCardDefinition = {
-  ...createCard(8),
+  ...createCard(createTestHandCardId(8)),
   name: "returningMap",
   description: "Returns to hand after its effect resolves.",
   quality: "rare",
@@ -49,7 +51,7 @@ const RETURN_CARD: HandCardDefinition = {
 
 const CATALOG = Object.fromEntries([
   ...Array.from({ length: 7 }, (_, index) => {
-    const card = createCard(index + 1);
+    const card = createCard(createTestHandCardId(index + 1));
     return [card.cardId, card] as const;
   }),
   [RETURN_CARD.cardId, RETURN_CARD],
@@ -72,7 +74,7 @@ describe("player hand state", () => {
     let state = createPlayerHandState(PLAYER_ID);
 
     for (let cardId = 1; cardId <= 7; cardId += 1) {
-      state = addHandCardToHand(state, cardId, CATALOG).state;
+      state = addHandCardToHand(state, createTestHandCardId(cardId), CATALOG).state;
     }
 
     expect(state.handCardIds).toHaveLength(7);
@@ -83,36 +85,44 @@ describe("player hand state", () => {
       isOverLimit: true,
     });
 
-    const discarded = discardHandCard(state, 1, CATALOG);
+    const discarded = discardHandCard(state, createTestHandCardId(1), CATALOG);
 
     expect(discarded.state.handCardIds).toHaveLength(6);
-    expect(discarded.cardId).toBe(1);
+    expect(discarded.cardId).toBe(createTestHandCardId(1));
     expect(discarded.sizeStatus.isOverLimit).toBe(false);
   });
 
   it("removes a normally resolved card for the shared discard pile", () => {
-    const initial = addHandCardToHand(createPlayerHandState(PLAYER_ID), 1, CATALOG).state;
-    const result = resolveHandCardUse(initial, 1, CATALOG);
+    const initial = addHandCardToHand(
+      createPlayerHandState(PLAYER_ID),
+      createTestHandCardId(1),
+      CATALOG,
+    ).state;
+    const result = resolveHandCardUse(initial, createTestHandCardId(1), CATALOG);
 
     expect(result.destination).toBe("discard");
     expect(result.state.handCardIds).toEqual([]);
-    expect(result.cardId).toBe(1);
+    expect(result.cardId).toBe(createTestHandCardId(1));
   });
 
   it("keeps a special returning card id in hand after resolution", () => {
-    const initial = addHandCardToHand(createPlayerHandState(PLAYER_ID), 8, CATALOG).state;
-    const result = resolveHandCardUse(initial, 8, CATALOG);
+    const initial = addHandCardToHand(
+      createPlayerHandState(PLAYER_ID),
+      createTestHandCardId(8),
+      CATALOG,
+    ).state;
+    const result = resolveHandCardUse(initial, createTestHandCardId(8), CATALOG);
 
     expect(result.destination).toBe("hand");
     expect(result.state).toBe(initial);
-    expect(result.state.handCardIds).toEqual([8]);
+    expect(result.state.handCardIds).toEqual([createTestHandCardId(8)]);
   });
 
   it("allows rules to change the limit and reports the new discard requirement", () => {
     let state = createPlayerHandState(PLAYER_ID);
 
     for (let cardId = 1; cardId <= 3; cardId += 1) {
-      state = addHandCardToHand(state, cardId, CATALOG).state;
+      state = addHandCardToHand(state, createTestHandCardId(cardId), CATALOG).state;
     }
 
     const result = setHandSizeLimit(state, CATALOG, 1);
@@ -122,9 +132,15 @@ describe("player hand state", () => {
   });
 
   it("rejects duplicate card ids in the same player hand", () => {
-    const state = addHandCardToHand(createPlayerHandState(PLAYER_ID), 1, CATALOG).state;
+    const state = addHandCardToHand(
+      createPlayerHandState(PLAYER_ID),
+      createTestHandCardId(1),
+      CATALOG,
+    ).state;
 
-    expect(() => addHandCardToHand(state, 1, CATALOG)).toThrow("Duplicate hand card id");
+    expect(() => addHandCardToHand(state, createTestHandCardId(1), CATALOG)).toThrow(
+      "Duplicate hand card id",
+    );
   });
 
   it("rejects duplicated card ids in a player hand state", () => {
@@ -133,7 +149,7 @@ describe("player hand state", () => {
         {
           playerId: PLAYER_ID,
           sizeLimit: 6,
-          handCardIds: [1, 1],
+          handCardIds: [createTestHandCardId(1), createTestHandCardId(1)],
         },
         CATALOG,
       ),

@@ -21,7 +21,7 @@ const ZERO_PRIMARY_ATTRIBUTES = {
 } as const;
 
 const WIND_BOOTS: EquipmentDefinition = {
-  definitionId: "equipment.wind-boots",
+  definitionId: "equip_000003",
   name: "Wind Boots",
   type: "shoes",
   quality: "rare",

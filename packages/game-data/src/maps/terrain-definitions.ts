@@ -2,7 +2,7 @@ import type { TerrainDefinition, TerrainDefinitionCatalog } from "@genesis-rift/
 
 /** 当前业务对象的静态定义配置。 */
 export const PLAIN_TERRAIN_DEFINITION = {
-  definitionId: "terrain.plain",
+  definitionId: "terrain_000001",
   name: "Plain",
   tags: ["land", "open"],
   movementCostModifier: 0,
@@ -10,7 +10,7 @@ export const PLAIN_TERRAIN_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const FOREST_TERRAIN_DEFINITION = {
-  definitionId: "terrain.forest",
+  definitionId: "terrain_000002",
   name: "Forest",
   tags: ["land", "vegetation"],
   movementCostModifier: 1,
@@ -18,7 +18,7 @@ export const FOREST_TERRAIN_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const MOUNTAIN_TERRAIN_DEFINITION = {
-  definitionId: "terrain.mountain",
+  definitionId: "terrain_000003",
   name: "Mountain",
   tags: ["land", "highland"],
   movementCostModifier: 2,
@@ -26,7 +26,7 @@ export const MOUNTAIN_TERRAIN_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const RIVER_TERRAIN_DEFINITION = {
-  definitionId: "terrain.river",
+  definitionId: "terrain_000004",
   name: "River",
   tags: ["water", "flowing"],
   movementCostModifier: 2,

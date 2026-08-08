@@ -9,16 +9,16 @@ import { createHexTile } from "./hex-tile.ts";
 const CENTER_TILE_ID = "tile.center" as TileId;
 const MAP_CONTENT_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: ["land"],
       movementCostModifier: 0,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: ["outdoor"],
@@ -27,8 +27,8 @@ const MAP_CONTENT_DEFINITIONS = {
 } as const satisfies MapContentDefinitionCatalog;
 
 const DEFAULT_TILE_CONTENT = {
-  terrainDefinitionId: "terrain.plain",
-  regionDefinitionId: "region.wilderness",
+  terrainDefinitionId: "terrain_000001",
+  regionDefinitionId: "region_000001",
   passability: "passable",
 } as const;
 
@@ -220,7 +220,7 @@ describe("HexTile", () => {
           coordinate: { x: 0, y: 0, z: 0 },
           elevation: 0,
           ...DEFAULT_TILE_CONTENT,
-          terrainDefinitionId: "terrain.unknown",
+          terrainDefinitionId: "terrain_999999",
         },
         MAP_CONTENT_DEFINITIONS,
       ),

@@ -37,7 +37,7 @@ describe("event duration definition validation", () => {
     expect(() =>
       validateEventDurationDefinition({
         type: "UNTIL_WORLD_EVENT_END",
-        worldEventId: "event.world.harvest-era",
+        worldEventId: "event_000101",
         repeat: { policy: "IGNORE" },
       }),
     ).not.toThrow();
@@ -98,7 +98,7 @@ describe("event duration definition validation", () => {
     expect(() =>
       validateEventDurationDefinition({
         type: "UNTIL_WORLD_EVENT_END",
-        worldEventId: "event.world.harvest-era",
+        worldEventId: "event_000101",
         repeat: { policy: "REFRESH" },
       }),
     ).toThrow("cannot use the REFRESH repeat policy");

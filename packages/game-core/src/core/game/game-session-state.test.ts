@@ -33,16 +33,16 @@ const PLAYER_TWO_ID = "player-two" as PlayerId;
 /** 测试地图使用的最小地形与区域定义。 */
 const MAP_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: [],
       movementCostModifier: 0,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: [],
@@ -72,8 +72,8 @@ function createTestMap(): HexMap {
         tileId: `tile-${index}` as TileId,
         coordinate,
         elevation: 0,
-        terrainDefinitionId: "terrain.plain",
-        regionDefinitionId: "region.wilderness",
+        terrainDefinitionId: "terrain_000001",
+        regionDefinitionId: "region_000001",
         passability: "passable",
       },
       MAP_DEFINITIONS,

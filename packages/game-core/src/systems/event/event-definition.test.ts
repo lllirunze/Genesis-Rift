@@ -23,7 +23,7 @@ const ABANDONED_CAMP_EFFECTS = [
 ] as const satisfies readonly EventEffectDefinition[];
 
 const ABANDONED_CAMP_EVENT: EventDefinition = {
-  eventId: "event.common.abandoned-camp",
+  eventId: "event_000001",
   name: "Abandoned Camp",
   description: "The player discovers an abandoned camp in the wilderness.",
   triggerCondition: null,
@@ -50,7 +50,7 @@ describe("event definition validation", () => {
     expect(() =>
       validateEventDefinition({
         ...ABANDONED_CAMP_EVENT,
-        eventId: "event.adventure.ancient-ruins",
+        eventId: "event_000003",
         name: "Ancient Ruins",
         category: "adventure",
         rarity: "rare",
@@ -84,7 +84,7 @@ describe("event definition validation", () => {
         triggerCondition: {
           type: "CONDITION",
           conditionId: "map.regionIs",
-          parameters: { regionDefinitionId: "region.wilderness" },
+          parameters: { regionDefinitionId: "region_000001" },
         },
       }),
     ).not.toThrow();
@@ -119,7 +119,7 @@ describe("event definition validation", () => {
                   effectId: "item.obtain",
                   targetType: "TRIGGER_PLAYER",
                   parameters: {
-                    itemDefinitionId: "item.material.iron-ore",
+                    itemDefinitionId: "item_000003",
                     quantity: 2,
                   },
                   failurePolicy: "STOP",
@@ -205,11 +205,11 @@ describe("event definition validation", () => {
 
     expect(() => validateEventDefinitionCatalog(catalog)).not.toThrow();
     expect(getEventDefinition(catalog, ABANDONED_CAMP_EVENT.eventId)).toBe(ABANDONED_CAMP_EVENT);
-    expect(() => getEventDefinition(catalog, "event.unknown")).toThrow("Unknown event definition");
+    expect(() => getEventDefinition(catalog, "event_999999")).toThrow("Unknown event definition");
 
     expect(() =>
       validateEventDefinitionCatalog({
-        "event.common.wrong-key": ABANDONED_CAMP_EVENT,
+        event_999998: ABANDONED_CAMP_EVENT,
       }),
     ).toThrow("does not match event id");
   });

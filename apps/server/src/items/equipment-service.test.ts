@@ -19,8 +19,8 @@ import { EquipmentService } from "./equipment-service.ts";
 const PLAYER_ID = "player-1" as PlayerId;
 
 const ITEM_DEFINITIONS = {
-  "item.sword": {
-    definitionId: "item.sword",
+  equip_000201: {
+    definitionId: "equip_000201",
     name: "Training Sword",
     category: "equipment",
     quality: "common",
@@ -28,8 +28,8 @@ const ITEM_DEFINITIONS = {
     height: 4,
     maximumStack: 1,
   },
-  "item.axe": {
-    definitionId: "item.axe",
+  equip_000202: {
+    definitionId: "equip_000202",
     name: "Battle Axe",
     category: "equipment",
     quality: "excellent",
@@ -40,8 +40,8 @@ const ITEM_DEFINITIONS = {
 } as const satisfies ItemDefinitionCatalog;
 
 const EQUIPMENT_DEFINITIONS = {
-  "item.sword": {
-    definitionId: "item.sword",
+  equip_000201: {
+    definitionId: "equip_000201",
     name: "Training Sword",
     type: "weapon",
     quality: "common",
@@ -49,8 +49,8 @@ const EQUIPMENT_DEFINITIONS = {
     allowDuplicateEquipping: false,
     attributeEffects: [],
   },
-  "item.axe": {
-    definitionId: "item.axe",
+  equip_000202: {
+    definitionId: "equip_000202",
     name: "Battle Axe",
     type: "weapon",
     quality: "excellent",
@@ -87,7 +87,7 @@ class MemoryLogWriter implements LogWriter {
  * @param state 当前业务状态。
  * @returns 本次处理得到的结果。
  */
-function createFixture(state = createStateWithBackpackItem("item.sword", "sword-1")) {
+function createFixture(state = createStateWithBackpackItem("equip_000201", "sword-1")) {
   const writer = new MemoryLogWriter();
   const timestamp = new Date(2026, 7, 1, 12, 30, 15, 21).getTime();
   const logger = new Logger({
@@ -138,17 +138,17 @@ describe("EquipmentService", () => {
   it("atomically replaces equipment and reports the replaced instance", async () => {
     const oldEquipment = createEquipmentInstance({
       instanceId: "sword-1",
-      definitionId: "item.sword",
+      definitionId: "equip_000201",
       ownerPlayerId: PLAYER_ID,
     });
-    const state = createStateWithBackpackItem("item.axe", "axe-1");
+    const state = createStateWithBackpackItem("equip_000202", "axe-1");
     const equippedState = {
       ...state,
       loadout: equipEquipment(
         state.loadout,
         "weapon",
         oldEquipment,
-        EQUIPMENT_DEFINITIONS["item.sword"],
+        EQUIPMENT_DEFINITIONS["equip_000201"],
       ).loadout,
     };
     const { logger, service, writer } = createFixture(equippedState);

@@ -17,8 +17,8 @@ import { createEmptyEquipmentLoadout, equipEquipment } from "./equipment-loadout
 const PLAYER_ID = "player-1" as PlayerId;
 
 const ITEM_DEFINITIONS = {
-  "item.equipment.training-sword": {
-    definitionId: "item.equipment.training-sword",
+  equip_000101: {
+    definitionId: "equip_000101",
     name: "Training Sword",
     category: "equipment",
     quality: "common",
@@ -26,8 +26,8 @@ const ITEM_DEFINITIONS = {
     height: 4,
     maximumStack: 1,
   },
-  "item.equipment.battle-axe": {
-    definitionId: "item.equipment.battle-axe",
+  equip_000102: {
+    definitionId: "equip_000102",
     name: "Battle Axe",
     category: "equipment",
     quality: "excellent",
@@ -38,8 +38,8 @@ const ITEM_DEFINITIONS = {
 } as const satisfies ItemDefinitionCatalog;
 
 const EQUIPMENT_DEFINITIONS = {
-  "item.equipment.training-sword": {
-    definitionId: "item.equipment.training-sword",
+  equip_000101: {
+    definitionId: "equip_000101",
     name: "Training Sword",
     type: "weapon",
     quality: "common",
@@ -47,8 +47,8 @@ const EQUIPMENT_DEFINITIONS = {
     allowDuplicateEquipping: false,
     attributeEffects: [],
   },
-  "item.equipment.battle-axe": {
-    definitionId: "item.equipment.battle-axe",
+  equip_000102: {
+    definitionId: "equip_000102",
     name: "Battle Axe",
     type: "weapon",
     quality: "excellent",
@@ -60,7 +60,7 @@ const EQUIPMENT_DEFINITIONS = {
 
 describe("equipment and inventory interaction", () => {
   it("equips an item from the backpack without losing its instance metadata", () => {
-    const state = createStateWithBackpackItem("item.equipment.training-sword", "sword-1", {
+    const state = createStateWithBackpackItem("equip_000101", "sword-1", {
       x: 0,
       y: 0,
     });
@@ -74,7 +74,7 @@ describe("equipment and inventory interaction", () => {
     expect(result.inventory.backpack.entries).toEqual([]);
     expect(result.loadout.slots.weapon).toEqual({
       instanceId: "sword-1",
-      definitionId: "item.equipment.training-sword",
+      definitionId: "equip_000101",
       ownerPlayerId: PLAYER_ID,
       quantity: 1,
       stackCompatibilityKey: "bound.player-1",
@@ -84,7 +84,7 @@ describe("equipment and inventory interaction", () => {
   });
 
   it("unequips an item to the requested backpack position", () => {
-    const initial = createStateWithBackpackItem("item.equipment.training-sword", "sword-1", {
+    const initial = createStateWithBackpackItem("equip_000101", "sword-1", {
       x: 0,
       y: 0,
     });
@@ -114,7 +114,7 @@ describe("equipment and inventory interaction", () => {
   it("atomically replaces equipment and returns the previous item to the freed space", () => {
     const oldEquipment = createEquipmentInstance({
       instanceId: "sword-1",
-      definitionId: "item.equipment.training-sword",
+      definitionId: "equip_000101",
       ownerPlayerId: PLAYER_ID,
       stackCompatibilityKey: "worn",
     });
@@ -122,10 +122,10 @@ describe("equipment and inventory interaction", () => {
       createEmptyEquipmentLoadout(PLAYER_ID),
       "weapon",
       oldEquipment,
-      EQUIPMENT_DEFINITIONS["item.equipment.training-sword"],
+      EQUIPMENT_DEFINITIONS["equip_000101"],
     ).loadout;
     const state = {
-      ...createStateWithBackpackItem("item.equipment.battle-axe", "axe-1", { x: 1, y: 2 }),
+      ...createStateWithBackpackItem("equip_000102", "axe-1", { x: 1, y: 2 }),
       loadout: initialLoadout,
     };
     const result = equipItemFromBackpack(
@@ -150,17 +150,17 @@ describe("equipment and inventory interaction", () => {
   it("keeps both original states unchanged when replacement cannot return the old item", () => {
     const oldEquipment = createEquipmentInstance({
       instanceId: "sword-1",
-      definitionId: "item.equipment.training-sword",
+      definitionId: "equip_000101",
       ownerPlayerId: PLAYER_ID,
     });
     const initialLoadout = equipEquipment(
       createEmptyEquipmentLoadout(PLAYER_ID),
       "weapon",
       oldEquipment,
-      EQUIPMENT_DEFINITIONS["item.equipment.training-sword"],
+      EQUIPMENT_DEFINITIONS["equip_000101"],
     ).loadout;
     const state = {
-      ...createStateWithBackpackItem("item.equipment.battle-axe", "axe-1", { x: 0, y: 0 }),
+      ...createStateWithBackpackItem("equip_000102", "axe-1", { x: 0, y: 0 }),
       loadout: initialLoadout,
     };
 
@@ -183,16 +183,16 @@ describe("equipment and inventory interaction", () => {
   it("requires a return position when replacing equipment and rejects an empty unequip slot", () => {
     const oldEquipment = createEquipmentInstance({
       instanceId: "sword-1",
-      definitionId: "item.equipment.training-sword",
+      definitionId: "equip_000101",
       ownerPlayerId: PLAYER_ID,
     });
     const state = {
-      ...createStateWithBackpackItem("item.equipment.battle-axe", "axe-1", { x: 0, y: 0 }),
+      ...createStateWithBackpackItem("equip_000102", "axe-1", { x: 0, y: 0 }),
       loadout: equipEquipment(
         createEmptyEquipmentLoadout(PLAYER_ID),
         "weapon",
         oldEquipment,
-        EQUIPMENT_DEFINITIONS["item.equipment.training-sword"],
+        EQUIPMENT_DEFINITIONS["equip_000101"],
       ).loadout,
     };
 

@@ -2,7 +2,7 @@ import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared
 
 /** 当前业务对象的静态定义配置。 */
 export const LINEN_CLOTH_ITEM_DEFINITION = {
-  definitionId: "item.material.linen-cloth",
+  definitionId: "item_000002",
   name: "Linen Cloth",
   category: "material",
   quality: "common",
@@ -13,7 +13,7 @@ export const LINEN_CLOTH_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const IRON_ORE_ITEM_DEFINITION = {
-  definitionId: "item.material.iron-ore",
+  definitionId: "item_000003",
   name: "Iron Ore",
   category: "material",
   quality: "common",
@@ -24,7 +24,7 @@ export const IRON_ORE_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const MAGIC_DUST_ITEM_DEFINITION = {
-  definitionId: "item.material.magic-dust",
+  definitionId: "item_000004",
   name: "Magic Dust",
   category: "material",
   quality: "excellent",

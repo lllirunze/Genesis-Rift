@@ -11,7 +11,7 @@ import {
 } from "./event-runtime-state.ts";
 
 const DEFINITION: EventDefinition = {
-  eventId: "event.test.runtime-state",
+  eventId: "event_000105",
   name: "Runtime State Test",
   description: "An event used to test the unified runtime container.",
   triggerCondition: null,
@@ -27,7 +27,7 @@ const DEFINITION: EventDefinition = {
         effectKey: "changeWeather",
         effectId: "weather.change",
         targetType: "WORLD",
-        parameters: { weatherId: "weather.test" },
+        parameters: { weatherId: "weather_000101" },
         failurePolicy: "STOP",
       },
     ],

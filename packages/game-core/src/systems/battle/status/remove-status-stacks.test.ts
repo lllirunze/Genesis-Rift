@@ -7,7 +7,7 @@ import type { StatusDefinition } from "./status-definition.ts";
 import { createStatusInstance } from "./status-instance.ts";
 
 const DEFINITION: StatusDefinition = {
-  definitionId: "status.growing-power",
+  definitionId: "buff_000102",
   name: "Growing Power",
   description: "Accumulates power when its trigger condition is met.",
   kind: "buff",

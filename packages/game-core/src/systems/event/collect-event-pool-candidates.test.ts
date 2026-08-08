@@ -5,7 +5,7 @@ import type { EventDefinition, EventDefinitionCatalog } from "./event-definition
 import type { EventPoolDefinition } from "./event-pool-definition.ts";
 
 const EVENT: EventDefinition = {
-  eventId: "event.common.test",
+  eventId: "event_000102",
   name: "Test Event",
   description: "A test event used to collect pool candidates.",
   triggerCondition: null,

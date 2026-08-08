@@ -17,28 +17,28 @@ const PLAYER_ID = "pathfinding-player" as PlayerId;
 /** 寻路测试统一使用的普通、森林与山地配置。 */
 const MAP_CONTENT_DEFINITIONS = {
   terrains: {
-    "terrain.plain": {
-      definitionId: "terrain.plain",
+    terrain_000001: {
+      definitionId: "terrain_000001",
       name: "Plain",
       tags: ["land"],
       movementCostModifier: 0,
     },
-    "terrain.forest": {
-      definitionId: "terrain.forest",
+    terrain_000002: {
+      definitionId: "terrain_000002",
       name: "Forest",
       tags: ["land", "vegetation"],
       movementCostModifier: 1,
     },
-    "terrain.mountain": {
-      definitionId: "terrain.mountain",
+    terrain_000003: {
+      definitionId: "terrain_000003",
       name: "Mountain",
       tags: ["land", "highland"],
       movementCostModifier: 2,
     },
   },
   regions: {
-    "region.wilderness": {
-      definitionId: "region.wilderness",
+    region_000001: {
+      definitionId: "region_000001",
       name: "Wilderness",
       category: "wilderness",
       tags: ["outdoor"],
@@ -49,7 +49,7 @@ const MAP_CONTENT_DEFINITIONS = {
 describe("normal movement pathfinding", () => {
   it("selects the route with the lowest total movement cost", () => {
     const map = createMap({
-      terrainDefinitionIds: new Map([["0,1,-1", "terrain.mountain"]]),
+      terrainDefinitionIds: new Map([["0,1,-1", "terrain_000003"]]),
     });
     const center = requireTile(map, { x: 0, y: 0, z: 0 });
     const north = requireTile(map, { x: 0, y: 1, z: -1 });
@@ -235,8 +235,8 @@ function createMap(options: CreateMapOptions = {}): HexMap {
           tileId: `tile.${coordinateKey}` as TileId,
           coordinate,
           elevation: elevations.get(coordinateKey) ?? 0,
-          terrainDefinitionId: terrainDefinitionIds.get(coordinateKey) ?? "terrain.plain",
-          regionDefinitionId: "region.wilderness",
+          terrainDefinitionId: terrainDefinitionIds.get(coordinateKey) ?? "terrain_000001",
+          regionDefinitionId: "region_000001",
           passability: blockedCoordinateKeys.has(coordinateKey) ? "blocked" : "passable",
         },
         MAP_CONTENT_DEFINITIONS,

@@ -1,4 +1,4 @@
-import { isStandardQuality, type StandardQuality } from "@genesis-rift/shared";
+import { assertResourceId, isStandardQuality, type StandardQuality } from "@genesis-rift/shared";
 
 import {
   validateEventConditionExpression,
@@ -51,7 +51,7 @@ export type EventDefinitionCatalog = Readonly<Record<string, EventDefinition>>;
  * @throws 字段为空、枚举值不受支持或整数配置非法时抛出错误。
  */
 export function validateEventDefinition(definition: EventDefinition): void {
-  assertNonEmptyString(definition.eventId, "eventId");
+  assertResourceId(definition.eventId, "event");
   assertNonEmptyString(definition.name, "name");
   assertNonEmptyString(definition.description, "description");
   assertUniqueNonEmptyStrings(definition.tags, "tags");

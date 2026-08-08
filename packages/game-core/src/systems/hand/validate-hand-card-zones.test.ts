@@ -1,6 +1,8 @@
 import type { PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { addHandCardToSharedDiscardPile, createHandCardDeckState } from "./hand-card-deck-state.ts";
 import type { HandCardCatalog, HandCardDefinition } from "./hand-card-definition.ts";
 import { addHandCardToHand, createPlayerHandState } from "./player-hand-state.ts";
@@ -15,7 +17,7 @@ const PLAYER_TWO_ID = "player-2" as PlayerId;
  * @param cardId 方法所需的 cardId 参数。
  * @returns 本次处理得到的结果。
  */
-function createCard(cardId: number): HandCardDefinition {
+function createCard(cardId: HandCardDefinition["cardId"]): HandCardDefinition {
   return {
     cardId,
     name: "sprint",
@@ -34,15 +36,32 @@ function createCard(cardId: number): HandCardDefinition {
 }
 
 const CATALOG = Object.fromEntries(
-  [1, 2, 3, 4].map((cardId) => [cardId, createCard(cardId)]),
+  [
+    createTestHandCardId(1),
+    createTestHandCardId(2),
+    createTestHandCardId(3),
+    createTestHandCardId(4),
+  ].map((cardId) => [cardId, createCard(cardId)]),
 ) as HandCardCatalog;
 
 describe("shared hand card zone validation", () => {
   it("accepts globally unique cards across shared and player zones", () => {
-    const deckWithDrawPile = createHandCardDeckState("deck.shared", [1], CATALOG);
-    const deck = addHandCardToSharedDiscardPile(deckWithDrawPile, 2, CATALOG);
-    const playerOneHand = addHandCardToHand(createPlayerHandState(PLAYER_ONE_ID), 3, CATALOG).state;
-    const playerTwoHand = addHandCardToHand(createPlayerHandState(PLAYER_TWO_ID), 4, CATALOG).state;
+    const deckWithDrawPile = createHandCardDeckState(
+      "deck.shared",
+      [createTestHandCardId(1)],
+      CATALOG,
+    );
+    const deck = addHandCardToSharedDiscardPile(deckWithDrawPile, createTestHandCardId(2), CATALOG);
+    const playerOneHand = addHandCardToHand(
+      createPlayerHandState(PLAYER_ONE_ID),
+      createTestHandCardId(3),
+      CATALOG,
+    ).state;
+    const playerTwoHand = addHandCardToHand(
+      createPlayerHandState(PLAYER_TWO_ID),
+      createTestHandCardId(4),
+      CATALOG,
+    ).state;
 
     expect(() =>
       validateSharedHandCardZones(deck, [playerOneHand, playerTwoHand], CATALOG),
@@ -50,22 +69,36 @@ describe("shared hand card zone validation", () => {
   });
 
   it("rejects a card shared by the deck and a player hand", () => {
-    const deck = createHandCardDeckState("deck.shared", [1], CATALOG);
-    const hand = addHandCardToHand(createPlayerHandState(PLAYER_ONE_ID), 1, CATALOG).state;
+    const deck = createHandCardDeckState("deck.shared", [createTestHandCardId(1)], CATALOG);
+    const hand = addHandCardToHand(
+      createPlayerHandState(PLAYER_ONE_ID),
+      createTestHandCardId(1),
+      CATALOG,
+    ).state;
 
     expect(() => validateSharedHandCardZones(deck, [hand], CATALOG)).toThrow(
-      "Hand card 1 exists in multiple zones: shared draw pile, player hand player-1",
+      "Hand card card_000001 exists in multiple zones: shared draw pile, player hand player-1",
     );
   });
 
   it("rejects a card shared by multiple player hands", () => {
     const deck = createHandCardDeckState("deck.shared", [], CATALOG);
-    const playerOneHand = addHandCardToHand(createPlayerHandState(PLAYER_ONE_ID), 1, CATALOG).state;
-    const playerTwoHand = addHandCardToHand(createPlayerHandState(PLAYER_TWO_ID), 1, CATALOG).state;
+    const playerOneHand = addHandCardToHand(
+      createPlayerHandState(PLAYER_ONE_ID),
+      createTestHandCardId(1),
+      CATALOG,
+    ).state;
+    const playerTwoHand = addHandCardToHand(
+      createPlayerHandState(PLAYER_TWO_ID),
+      createTestHandCardId(1),
+      CATALOG,
+    ).state;
 
     expect(() =>
       validateSharedHandCardZones(deck, [playerOneHand, playerTwoHand], CATALOG),
-    ).toThrow("Hand card 1 exists in multiple zones: player hand player-1, player hand player-2");
+    ).toThrow(
+      "Hand card card_000001 exists in multiple zones: player hand player-1, player hand player-2",
+    );
   });
 
   it("rejects duplicate player hand states", () => {
@@ -73,7 +106,7 @@ describe("shared hand card zone validation", () => {
     const firstState = createPlayerHandState(PLAYER_ONE_ID);
     const duplicateState = addHandCardToHand(
       createPlayerHandState(PLAYER_ONE_ID),
-      1,
+      createTestHandCardId(1),
       CATALOG,
     ).state;
 

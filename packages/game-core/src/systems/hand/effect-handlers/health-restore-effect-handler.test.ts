@@ -1,6 +1,8 @@
 import type { GameId, PlayerId, TileId } from "@genesis-rift/shared";
 import { describe, expect, it, vi } from "vitest";
 
+import { createTestHandCardId } from "../hand-card-test-helper.ts";
+
 import type { CharacterResourceState } from "../../character/index.ts";
 import { createHandCardEffectExecutionContext } from "../hand-card-effect-context.ts";
 import { HandCardEffectHandlerRegistry } from "../hand-card-effect-handler-registry.ts";
@@ -39,7 +41,7 @@ function createContext() {
   return createHandCardEffectExecutionContext({
     executionId: "execution-health-1",
     gameId: GAME_ID,
-    cardId: 1,
+    cardId: createTestHandCardId(1),
     effectIndex: 0,
     sourcePlayerId: PLAYER_ID,
     timing: "active",

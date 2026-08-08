@@ -6,7 +6,7 @@ import { HEALTH_RESOURCE_DEFINITION } from "../resources/character-resource-defi
 
 /** 强制揭露、包含物资搜索与休息选择的普通探索事件。 */
 export const ABANDONED_CAMP_EVENT_DEFINITION = {
-  eventId: "event.common.abandoned-camp",
+  eventId: "event_000001",
   name: "Abandoned Camp",
   description: "The player discovers an abandoned camp in the wilderness.",
   triggerCondition: {
@@ -69,7 +69,7 @@ export const ABANDONED_CAMP_EVENT_DEFINITION = {
 
 /** 强制揭露并为触发玩家创建野外遭遇战斗的事件。 */
 export const WILD_BEAST_ATTACK_EVENT_DEFINITION = {
-  eventId: "event.encounter.wild-beast-attack",
+  eventId: "event_000002",
   name: "Wild Beast Attack",
   description: "A wild beast suddenly attacks the player during exploration.",
   triggerCondition: {
@@ -116,7 +116,7 @@ export const WILD_BEAST_ATTACK_EVENT_DEFINITION = {
 
 /** 可选择揭露、提供图纸知识或稀有材料路线的奇遇事件。 */
 export const ANCIENT_RUINS_EVENT_DEFINITION = {
-  eventId: "event.adventure.ancient-ruins",
+  eventId: "event_000003",
   name: "Ancient Ruins",
   description: "The player discovers ancient ruins containing forgotten knowledge and relics.",
   triggerCondition: {
@@ -190,7 +190,7 @@ export const ANCIENT_RUINS_EVENT_DEFINITION = {
 
 /** 强制揭露并在山地区域制造持续暴风雪的灾难事件。 */
 export const BLIZZARD_EVENT_DEFINITION = {
-  eventId: "event.disaster.blizzard",
+  eventId: "event_000004",
   name: "Blizzard",
   description: "A violent blizzard covers the current mountain region.",
   triggerCondition: {
@@ -213,7 +213,7 @@ export const BLIZZARD_EVENT_DEFINITION = {
         effectId: "weather.change",
         targetType: "CURRENT_REGION",
         parameters: {
-          weatherId: "weather.blizzard",
+          weatherId: "weather_000004",
         },
         failurePolicy: "STOP",
       },

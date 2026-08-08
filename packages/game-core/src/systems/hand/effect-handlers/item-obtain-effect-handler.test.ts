@@ -1,6 +1,8 @@
 import type { GameId, ItemDefinitionCatalog, PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it, vi } from "vitest";
 
+import { createTestHandCardId } from "../hand-card-test-helper.ts";
+
 import {
   createItemInstance,
   createPlayerInventory,
@@ -13,8 +15,8 @@ import { createItemObtainEffectHandler } from "./item-obtain-effect-handler.ts";
 const GAME_ID = "game-1" as GameId;
 const PLAYER_ID = "player-1" as PlayerId;
 const DEFINITIONS = {
-  "item.herb": {
-    definitionId: "item.herb",
+  item_000201: {
+    definitionId: "item_000201",
     name: "Herb",
     category: "material",
     quality: "common",
@@ -22,8 +24,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Blocker",
     category: "special",
     quality: "common",
@@ -34,7 +36,7 @@ const DEFINITIONS = {
 } as const satisfies ItemDefinitionCatalog;
 const EFFECT = {
   effectId: "item.obtain",
-  parameters: { itemDefinitionId: "item.herb", quantity: 7 },
+  parameters: { itemDefinitionId: "item_000201", quantity: 7 },
 } as const;
 
 /**
@@ -46,7 +48,7 @@ function createContext() {
   return createHandCardEffectExecutionContext({
     executionId: "execution-item-1",
     gameId: GAME_ID,
-    cardId: 1,
+    cardId: createTestHandCardId(1),
     effectIndex: 0,
     sourcePlayerId: PLAYER_ID,
     timing: "active",
@@ -92,8 +94,8 @@ describe("item obtain hand card effect handler", () => {
             inventory: {
               backpack: {
                 entries: [
-                  { item: { definitionId: "item.herb", quantity: 5 } },
-                  { item: { definitionId: "item.herb", quantity: 2 } },
+                  { item: { definitionId: "item_000201", quantity: 5 } },
+                  { item: { definitionId: "item_000201", quantity: 2 } },
                 ],
               },
             },
@@ -108,10 +110,10 @@ describe("item obtain hand card effect handler", () => {
     const blocker = createItemInstance(
       {
         instanceId: "item-instance.blocker",
-        definitionId: "item.blocker",
+        definitionId: "item_000101",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.blocker"],
+      DEFINITIONS["item_000101"],
     );
     const emptyInventory = createPlayerInventory(PLAYER_ID);
     const fullInventory = {
@@ -139,9 +141,9 @@ describe("item obtain hand card effect handler", () => {
             backpackQuantityAdded: 0,
             temporaryQuantityAdded: 5,
             inventory: {
-              temporaryPickup: { item: { definitionId: "item.herb", quantity: 5 } },
+              temporaryPickup: { item: { definitionId: "item_000201", quantity: 5 } },
             },
-            unresolvedItems: [{ item: { definitionId: "item.herb", quantity: 2 } }],
+            unresolvedItems: [{ item: { definitionId: "item_000201", quantity: 2 } }],
           },
         ],
       },

@@ -22,7 +22,7 @@ export type RegionDefinitionCatalog = Readonly<Record<string, RegionDefinition>>
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateRegionDefinition(definition: RegionDefinition): void {
-  assertNonEmptyString(definition.definitionId, "definitionId");
+  assertResourceId(definition.definitionId, "region");
   assertNonEmptyString(definition.name, "name");
 
   if (!REGION_CATEGORIES.includes(definition.category)) {
@@ -106,3 +106,4 @@ function assertNonEmptyString(value: string, field: string): void {
     throw new TypeError(`${field} must not be empty`);
   }
 }
+import { assertResourceId } from "@genesis-rift/shared";

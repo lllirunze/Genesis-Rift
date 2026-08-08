@@ -7,7 +7,7 @@ import {
 } from "./equipment-definition.ts";
 
 const DEFINITION: EquipmentDefinition = {
-  definitionId: "equipment.wind-boots",
+  definitionId: "equip_000003",
   name: "Wind Boots",
   type: "shoes",
   quality: "rare",
@@ -52,10 +52,7 @@ describe("equipment definition validation", () => {
 
   it("requires globally unique definition ids and names", () => {
     expect(() =>
-      validateEquipmentDefinitions([
-        DEFINITION,
-        { ...DEFINITION, definitionId: "equipment.wind-boots-copy" },
-      ]),
+      validateEquipmentDefinitions([DEFINITION, { ...DEFINITION, definitionId: "equip_000104" }]),
     ).toThrow("Duplicate equipment name");
   });
 });

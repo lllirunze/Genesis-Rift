@@ -25,8 +25,8 @@ const PLAYER_ID = "player-1" as PlayerId;
 const OTHER_PLAYER_ID = "player-2" as PlayerId;
 
 const DEFINITIONS = {
-  "item.coin": {
-    definitionId: "item.coin",
+  item_000001: {
+    definitionId: "item_000001",
     name: "Coin",
     category: "currency",
     quality: "common",
@@ -34,8 +34,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.potion": {
-    definitionId: "item.potion",
+  item_000202: {
+    definitionId: "item_000202",
     name: "Potion",
     category: "consumable",
     quality: "common",
@@ -43,8 +43,8 @@ const DEFINITIONS = {
     height: 2,
     maximumStack: 1,
   },
-  "item.armor": {
-    definitionId: "item.armor",
+  equip_000203: {
+    definitionId: "equip_000203",
     name: "Armor",
     category: "equipment",
     quality: "excellent",
@@ -72,10 +72,10 @@ describe("backpack fixed grid", () => {
     const potion = createItemInstance(
       {
         instanceId: "item-instance.potion",
-        definitionId: "item.potion",
+        definitionId: "item_000202",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.potion"],
+      DEFINITIONS["item_000202"],
     );
     const backpack = placeItemInBackpack(
       createBackpack(PLAYER_ID),
@@ -85,17 +85,27 @@ describe("backpack fixed grid", () => {
     );
 
     expect(
-      isBackpackPositionAvailable(backpack, DEFINITIONS["item.coin"], { x: 0, y: 1 }, DEFINITIONS),
+      isBackpackPositionAvailable(
+        backpack,
+        DEFINITIONS["item_000001"],
+        { x: 0, y: 1 },
+        DEFINITIONS,
+      ),
     ).toBe(false);
     expect(
-      isBackpackPositionAvailable(backpack, DEFINITIONS["item.coin"], { x: 4, y: 0 }, DEFINITIONS),
+      isBackpackPositionAvailable(
+        backpack,
+        DEFINITIONS["item_000001"],
+        { x: 4, y: 0 },
+        DEFINITIONS,
+      ),
     ).toBe(false);
 
     // 1×2 药剂不能通过旋转为 2×1 的方式占用背包最后一行。
     expect(
       isBackpackPositionAvailable(
         createBackpack(PLAYER_ID),
-        DEFINITIONS["item.potion"],
+        DEFINITIONS["item_000202"],
         { x: 0, y: 5 },
         DEFINITIONS,
       ),
@@ -106,10 +116,10 @@ describe("backpack fixed grid", () => {
     const armor = createItemInstance(
       {
         instanceId: "item-instance.armor",
-        definitionId: "item.armor",
+        definitionId: "equip_000203",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.armor"],
+      DEFINITIONS["equip_000203"],
     );
     const backpack = placeItemInBackpack(
       createBackpack(PLAYER_ID),
@@ -130,10 +140,10 @@ describe("backpack fixed grid", () => {
     const coin = createItemInstance(
       {
         instanceId: "item-instance.coin",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const levelOne = placeItemInBackpack(
       createBackpack(PLAYER_ID),
@@ -149,15 +159,25 @@ describe("backpack fixed grid", () => {
     expect(getBackpackUnlockedCellCount(levelTwo)).toBe(36);
     expect(getBackpackUnlockedCellCount(levelThree)).toBe(48);
     expect(
-      isBackpackPositionAvailable(levelTwo, DEFINITIONS["item.coin"], { x: 5, y: 5 }, DEFINITIONS),
+      isBackpackPositionAvailable(
+        levelTwo,
+        DEFINITIONS["item_000001"],
+        { x: 5, y: 5 },
+        DEFINITIONS,
+      ),
     ).toBe(true);
     expect(
-      isBackpackPositionAvailable(levelTwo, DEFINITIONS["item.coin"], { x: 5, y: 6 }, DEFINITIONS),
+      isBackpackPositionAvailable(
+        levelTwo,
+        DEFINITIONS["item_000001"],
+        { x: 5, y: 6 },
+        DEFINITIONS,
+      ),
     ).toBe(false);
     expect(
       isBackpackPositionAvailable(
         levelThree,
-        DEFINITIONS["item.coin"],
+        DEFINITIONS["item_000001"],
         { x: 5, y: 7 },
         DEFINITIONS,
       ),
@@ -169,10 +189,10 @@ describe("backpack fixed grid", () => {
     const coin = createItemInstance(
       {
         instanceId: "item-instance.coin",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const backpack = placeItemInBackpack(
       createBackpack(PLAYER_ID),
@@ -182,7 +202,7 @@ describe("backpack fixed grid", () => {
     );
 
     expect(
-      findFirstAvailableBackpackPosition(backpack, DEFINITIONS["item.coin"], DEFINITIONS),
+      findFirstAvailableBackpackPosition(backpack, DEFINITIONS["item_000001"], DEFINITIONS),
     ).toEqual({ x: 1, y: 0 });
   });
 
@@ -190,10 +210,10 @@ describe("backpack fixed grid", () => {
     const foreignCoin = createItemInstance(
       {
         instanceId: "item-instance.coin",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: OTHER_PLAYER_ID,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
 
     expect(() =>
@@ -205,10 +225,10 @@ describe("backpack fixed grid", () => {
     const coin = createItemInstance(
       {
         instanceId: "item-instance.coin",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const invalidBackpack = {
       ...createBackpack(PLAYER_ID),

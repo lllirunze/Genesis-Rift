@@ -1,4 +1,9 @@
-import { isStandardQuality, type StandardQuality } from "@genesis-rift/shared";
+import {
+  assertResourceId,
+  isStandardQuality,
+  type ResourceId,
+  type StandardQuality,
+} from "@genesis-rift/shared";
 
 import {
   HAND_CARD_CONDITION_IDS,
@@ -68,7 +73,7 @@ export type HandCardEffectDefinition = {
 export type HandCardDestination = (typeof HAND_CARD_DESTINATIONS)[number];
 
 /** 描述当前模块对外公开的业务数据契约。 */
-export type HandCardId = number;
+export type HandCardId = ResourceId<"card">;
 
 /** 描述业务对象不随运行过程改变的静态定义。 */
 export interface HandCardUsageDefinition {
@@ -91,7 +96,7 @@ export interface HandCardDefinition {
 }
 
 /** 描述以标识索引业务定义的只读注册表。 */
-export type HandCardCatalog = Readonly<Record<HandCardId, HandCardDefinition>>;
+export type HandCardCatalog = Readonly<Record<string, HandCardDefinition>>;
 
 /**
  * 方法名：validateHandCardDefinition
@@ -101,7 +106,7 @@ export type HandCardCatalog = Readonly<Record<HandCardId, HandCardDefinition>>;
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateHandCardDefinition(definition: HandCardDefinition): void {
-  assertPositiveSafeInteger(definition.cardId, "cardId");
+  assertResourceId(definition.cardId, "card");
   assertCamelCaseCardName(definition.name);
   assertEnglishDescription(definition.description);
 
@@ -195,7 +200,7 @@ export function validateHandCardEffectDefinition(effect: HandCardEffectDefinitio
       return;
     case "status.add":
       assertExactParameterKeys(parameters, ["statusDefinitionId", "stacks"], candidate.effectId);
-      assertNonEmptyStringParameter(
+      assertStatusResourceId(
         parameters.statusDefinitionId,
         `${candidate.effectId}.parameters.statusDefinitionId`,
       );
@@ -203,26 +208,75 @@ export function validateHandCardEffectDefinition(effect: HandCardEffectDefinitio
       return;
     case "status.remove":
       assertExactParameterKeys(parameters, ["statusDefinitionId"], candidate.effectId);
-      assertNonEmptyStringParameter(
+      assertStatusResourceId(
         parameters.statusDefinitionId,
         `${candidate.effectId}.parameters.statusDefinitionId`,
       );
       return;
     case "weather.change":
       assertExactParameterKeys(parameters, ["weatherId"], candidate.effectId);
-      assertNonEmptyStringParameter(
+      assertResourceIdParameter(
         parameters.weatherId,
+        "weather",
         `${candidate.effectId}.parameters.weatherId`,
       );
       return;
     case "item.obtain":
       assertExactParameterKeys(parameters, ["itemDefinitionId", "quantity"], candidate.effectId);
-      assertNonEmptyStringParameter(
+      assertItemResourceId(
         parameters.itemDefinitionId,
         `${candidate.effectId}.parameters.itemDefinitionId`,
       );
       assertPositiveSafeInteger(parameters.quantity, `${candidate.effectId}.parameters.quantity`);
   }
+}
+
+/**
+ * 方法名：assertStatusResourceId
+ * 作用：校验效果参数引用 Buff 或 Debuff 静态资源。
+ * @param value 需要校验的参数值。
+ * @param field 出现在错误信息中的字段名称。
+ * @returns 无返回值。
+ * @throws 参数不是合法状态资源 ID 时抛出错误。
+ */
+function assertStatusResourceId(value: unknown, field: string): void {
+  assertNonEmptyStringParameter(value, field);
+  assertResourceId(value);
+
+  if (!value.startsWith("buff_") && !value.startsWith("debuff_")) {
+    throw new RangeError(`${field} must reference a buff or debuff resource: ${value}`);
+  }
+}
+
+/**
+ * 方法名：assertItemResourceId
+ * 作用：校验效果参数引用普通物品或装备静态资源。
+ * @param value 需要校验的参数值。
+ * @param field 出现在错误信息中的字段名称。
+ * @returns 无返回值。
+ * @throws 参数不是合法物品或装备资源 ID 时抛出错误。
+ */
+function assertItemResourceId(value: unknown, field: string): void {
+  assertNonEmptyStringParameter(value, field);
+  assertResourceId(value);
+
+  if (!value.startsWith("item_") && !value.startsWith("equip_")) {
+    throw new RangeError(`${field} must reference an item or equipment resource: ${value}`);
+  }
+}
+
+/**
+ * 方法名：assertResourceIdParameter
+ * 作用：校验效果参数为指定类型的静态资源 ID。
+ * @param value 需要校验的参数值。
+ * @param prefix 期望使用的资源类型前缀。
+ * @param field 出现在错误信息中的字段名称。
+ * @returns 无返回值。
+ * @throws 参数不是指定类型资源 ID 时抛出错误。
+ */
+function assertResourceIdParameter(value: unknown, prefix: "weather", field: string): void {
+  assertNonEmptyStringParameter(value, field);
+  assertResourceId(value, prefix);
 }
 
 /**
@@ -447,7 +501,7 @@ function assertNonZeroSafeInteger(value: unknown, field: string): void {
  * @returns 无返回值。
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
-function assertNonEmptyStringParameter(value: unknown, field: string): void {
+function assertNonEmptyStringParameter(value: unknown, field: string): asserts value is string {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new TypeError(`${field} must be a non-empty string`);
   }

@@ -12,10 +12,10 @@ import {
 } from "./select-event-candidate.ts";
 
 const CONDITION_CONTEXT: EventConditionEvaluationContext = {
-  regionDefinitionId: "region.wilderness",
-  terrainDefinitionId: "terrain.forest",
+  regionDefinitionId: "region_000001",
+  terrainDefinitionId: "terrain_000002",
   featureIds: new Set(),
-  weatherId: "weather.clear",
+  weatherId: "weather_000002",
   periodId: "day",
   player: null,
   questStages: new Map(),
@@ -98,17 +98,17 @@ function createSelectionContext(
 
 describe("event candidate selection", () => {
   it("filters candidates by trigger conditions and positive current weight", () => {
-    const eligible = createCandidate(createEvent("event.eligible"));
+    const eligible = createCandidate(createEvent("event_000118"));
     const wrongRegion = createCandidate(
-      createEvent("event.wrong-region", {
+      createEvent("event_000122", {
         triggerCondition: {
           type: "CONDITION",
           conditionId: "map.regionIs",
-          parameters: { regionDefinitionId: "region.civilized" },
+          parameters: { regionDefinitionId: "region_000002" },
         },
       }),
     );
-    const zeroWeight = createCandidate(createEvent("event.zero-weight"), 0);
+    const zeroWeight = createCandidate(createEvent("event_000123"), 0);
 
     expect(
       filterEligibleEventCandidates([eligible, wrongRegion, zeroWeight], createSelectionContext()),
@@ -116,16 +116,14 @@ describe("event candidate selection", () => {
   });
 
   it("enforces per-game and per-player reveal limits", () => {
-    const oncePerGame = createCandidate(
-      createEvent("event.once-game", { repeatRule: "oncePerGame" }),
-    );
+    const oncePerGame = createCandidate(createEvent("event_000119", { repeatRule: "oncePerGame" }));
     const oncePerPlayer = createCandidate(
-      createEvent("event.once-player", { repeatRule: "oncePerPlayer" }),
+      createEvent("event_000120", { repeatRule: "oncePerPlayer" }),
     );
     const context = createSelectionContext({
       revealedOccurrences: [
-        { eventId: "event.once-game", triggeringPlayerId: "player-2", revealedAtTurn: 2 },
-        { eventId: "event.once-player", triggeringPlayerId: "player-2", revealedAtTurn: 3 },
+        { eventId: "event_000119", triggeringPlayerId: "player-2", revealedAtTurn: 2 },
+        { eventId: "event_000120", triggeringPlayerId: "player-2", revealedAtTurn: 3 },
       ],
     });
 
@@ -141,7 +139,7 @@ describe("event candidate selection", () => {
   });
 
   it("applies cooldowns within the triggering player scope", () => {
-    const candidate = createCandidate(createEvent("event.cooldown", { cooldownTurns: 2 }));
+    const candidate = createCandidate(createEvent("event_000117", { cooldownTurns: 2 }));
     const occurrence = {
       eventId: candidate.event.eventId,
       triggeringPlayerId: "player-1",
@@ -164,8 +162,8 @@ describe("event candidate selection", () => {
 
   it("selects reproducibly with the event random stream", () => {
     const candidates = [
-      createCandidate(createEvent("event.common"), 100),
-      createCandidate(createEvent("event.rare"), 40),
+      createCandidate(createEvent("event_000125"), 100),
+      createCandidate(createEvent("event_000121"), 40),
     ];
     const seed = createRandomStreamSeed("0123456789abcdef");
     const firstStream = RandomStream.create("event", "event-pool.test", seed);

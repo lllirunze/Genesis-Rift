@@ -1,6 +1,8 @@
 import type { PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { RandomManager } from "../random/core/random-manager.ts";
 import { createMasterSeed } from "../random/core/random-seed.ts";
 import { createHandCardDeckState } from "./hand-card-deck-state.ts";
@@ -16,7 +18,16 @@ import { createPlayerHandState } from "./player-hand-state.ts";
 const MASTER_SEED = createMasterSeed(
   "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
 );
-const CARD_IDS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const CARD_IDS = [
+  createTestHandCardId(1),
+  createTestHandCardId(2),
+  createTestHandCardId(3),
+  createTestHandCardId(4),
+  createTestHandCardId(5),
+  createTestHandCardId(6),
+  createTestHandCardId(7),
+  createTestHandCardId(8),
+] as const;
 const PLAYER_ONE_ID = "player-1" as PlayerId;
 const PLAYER_TWO_ID = "player-2" as PlayerId;
 
@@ -26,7 +37,7 @@ const PLAYER_TWO_ID = "player-2" as PlayerId;
  * @param cardId 方法所需的 cardId 参数。
  * @returns 本次处理得到的结果。
  */
-function createCard(cardId: number): HandCardDefinition {
+function createCard(cardId: HandCardDefinition["cardId"]): HandCardDefinition {
   return {
     cardId,
     name: "sprint",
@@ -68,9 +79,20 @@ describe("hand card flow", () => {
 
     expect(firstDeck.drawPile).toEqual(secondDeck.drawPile);
     expect(firstDeck.drawPile).not.toEqual(CARD_IDS);
-    expect([...firstDeck.drawPile].sort((left, right) => left - right)).toEqual(CARD_IDS);
+    expect([...firstDeck.drawPile].sort((left, right) => left.localeCompare(right))).toEqual(
+      CARD_IDS,
+    );
     expect(firstDeck.discardPile).toEqual([]);
-    expect(CARD_IDS).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(CARD_IDS).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+      createTestHandCardId(3),
+      createTestHandCardId(4),
+      createTestHandCardId(5),
+      createTestHandCardId(6),
+      createTestHandCardId(7),
+      createTestHandCardId(8),
+    ]);
   });
 
   it("rejects random streams owned by another business module", () => {
@@ -87,18 +109,33 @@ describe("hand card flow", () => {
     const exhaustedDeck = {
       deckId: "deck.shared",
       drawPile: [],
-      discardPile: [1, 2, 3, 4],
+      discardPile: [
+        createTestHandCardId(1),
+        createTestHandCardId(2),
+        createTestHandCardId(3),
+        createTestHandCardId(4),
+      ],
     } as const;
 
     const recycled = recycleSharedHandCardDiscardPile(exhaustedDeck, CATALOG, randomStream);
 
-    expect([...recycled.drawPile].sort((left, right) => left - right)).toEqual([1, 2, 3, 4]);
+    expect([...recycled.drawPile].sort((left, right) => left.localeCompare(right))).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+      createTestHandCardId(3),
+      createTestHandCardId(4),
+    ]);
     expect(recycled.discardPile).toEqual([]);
 
     const activeDeck = {
       deckId: "deck.shared",
-      drawPile: [5],
-      discardPile: [1, 2, 3, 4],
+      drawPile: [createTestHandCardId(5)],
+      discardPile: [
+        createTestHandCardId(1),
+        createTestHandCardId(2),
+        createTestHandCardId(3),
+        createTestHandCardId(4),
+      ],
     } as const;
 
     expect(recycleSharedHandCardDiscardPile(activeDeck, CATALOG, randomStream)).toBe(activeDeck);
@@ -111,7 +148,7 @@ describe("hand card flow", () => {
       {
         deckId: "deck.shared",
         drawPile: [],
-        discardPile: [1, 2],
+        discardPile: [createTestHandCardId(1), createTestHandCardId(2)],
       },
       CATALOG,
       randomStream,
@@ -141,16 +178,31 @@ describe("hand card flow", () => {
 
     const result = dealInitialHandCards(deck, playerHands, CATALOG);
 
-    expect(result.playerHandStates[0]?.handCardIds).toEqual([1, 3]);
-    expect(result.playerHandStates[1]?.handCardIds).toEqual([2, 4]);
-    expect(result.deckState.drawPile).toEqual([5, 6, 7, 8]);
+    expect(result.playerHandStates[0]?.handCardIds).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(3),
+    ]);
+    expect(result.playerHandStates[1]?.handCardIds).toEqual([
+      createTestHandCardId(2),
+      createTestHandCardId(4),
+    ]);
+    expect(result.deckState.drawPile).toEqual([
+      createTestHandCardId(5),
+      createTestHandCardId(6),
+      createTestHandCardId(7),
+      createTestHandCardId(8),
+    ]);
     expect(result.deckState.discardPile).toEqual([]);
     expect(playerHands[0]?.handCardIds).toEqual([]);
     expect(deck.drawPile).toEqual(CARD_IDS);
   });
 
   it("rejects initial dealing before changing state when the shared deck is too small", () => {
-    const deck = createHandCardDeckState("deck.shared", [1, 2, 3], CATALOG);
+    const deck = createHandCardDeckState(
+      "deck.shared",
+      [createTestHandCardId(1), createTestHandCardId(2), createTestHandCardId(3)],
+      CATALOG,
+    );
     const playerHands = [
       createPlayerHandState(PLAYER_ONE_ID),
       createPlayerHandState(PLAYER_TWO_ID),
@@ -159,7 +211,11 @@ describe("hand card flow", () => {
     expect(() => dealInitialHandCards(deck, playerHands, CATALOG)).toThrow(
       "Not enough hand cards for initial dealing",
     );
-    expect(deck.drawPile).toEqual([1, 2, 3]);
+    expect(deck.drawPile).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+      createTestHandCardId(3),
+    ]);
     expect(playerHands.every((state) => state.handCardIds.length === 0)).toBe(true);
   });
 });

@@ -8,7 +8,7 @@ import {
 import { PERMANENT_STATUS_DURATION_TURNS } from "./status-config.ts";
 
 const STATUS_DEFINITION: StatusDefinition = {
-  definitionId: "status.wind-blessing",
+  definitionId: "buff_000002",
   name: "Wind Blessing",
   description: "Temporarily improves the target's movement range.",
   kind: "buff",
@@ -84,7 +84,7 @@ describe("status definition validation", () => {
     expect(() =>
       validateStatusDefinitions([
         STATUS_DEFINITION,
-        { ...STATUS_DEFINITION, definitionId: "status.wind-blessing-copy" },
+        { ...STATUS_DEFINITION, definitionId: "buff_000003" },
       ]),
     ).toThrow("Duplicate status name");
   });

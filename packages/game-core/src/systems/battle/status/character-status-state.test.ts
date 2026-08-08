@@ -17,7 +17,7 @@ import { type StatusDefinition, type StatusDefinitionCatalog } from "./status-de
 import { PERMANENT_STATUS_DURATION_TURNS } from "./status-config.ts";
 
 const FOCUS: StatusDefinition = {
-  definitionId: "status.focus",
+  definitionId: "buff_000101",
   name: "Focus",
   description: "Improves insight for a short duration.",
   kind: "buff",
@@ -32,7 +32,7 @@ const FOCUS: StatusDefinition = {
 };
 
 const EXHAUSTION: StatusDefinition = {
-  definitionId: "status.exhaustion",
+  definitionId: "debuff_000001",
   name: "Exhaustion",
   description: "Reduces movement for a short duration.",
   kind: "debuff",
@@ -47,7 +47,7 @@ const EXHAUSTION: StatusDefinition = {
 };
 
 const SOUL_PACT: StatusDefinition = {
-  definitionId: "status.soul-pact",
+  definitionId: "buff_000103",
   name: "Soul Pact",
   description: "A permanent pact that remains after death.",
   kind: "buff",

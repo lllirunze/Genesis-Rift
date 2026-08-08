@@ -24,7 +24,7 @@ describe("event condition definition validation", () => {
         {
           type: "CONDITION",
           conditionId: "map.regionIs",
-          parameters: { regionDefinitionId: "region.wilderness" },
+          parameters: { regionDefinitionId: "region_000001" },
         },
         {
           type: "GROUP",
@@ -38,7 +38,7 @@ describe("event condition definition validation", () => {
             {
               type: "CONDITION",
               conditionId: "weather.is",
-              parameters: { weatherId: "weather.fog" },
+              parameters: { weatherId: "weather_000001" },
             },
           ],
         },
@@ -86,7 +86,7 @@ describe("event condition definition validation", () => {
         type: "CONDITION",
         conditionId: "inventory.hasItem",
         parameters: {
-          itemDefinitionId: "item.material.iron-ore",
+          itemDefinitionId: "item_000003",
           quantity: 0,
         },
       }),
@@ -97,7 +97,7 @@ describe("event condition definition validation", () => {
         type: "CONDITION",
         conditionId: "weather.is",
         parameters: {
-          weatherId: "weather.rain",
+          weatherId: "weather_000003",
           extra: true,
         } as { weatherId: string },
       }),

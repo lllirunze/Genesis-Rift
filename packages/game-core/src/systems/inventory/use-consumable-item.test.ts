@@ -15,11 +15,11 @@ import { createPlayerInventory } from "./player-inventory-state.ts";
 import { useConsumableItem } from "./use-consumable-item.ts";
 
 const PLAYER_ID = "player-1" as PlayerId;
-const HEALING_POTION_ID = "item.consumable.healing-potion";
-const TONIC_ID = "item.consumable.wind-tonic";
-const ANTIDOTE_ID = "item.consumable.antidote";
-const POISON_STATUS_ID = "status.poisoned";
-const WIND_STATUS_ID = "status.wind-blessing";
+const HEALING_POTION_ID = "item_000005";
+const TONIC_ID = "item_000008";
+const ANTIDOTE_ID = "item_000007";
+const POISON_STATUS_ID = "debuff_000002";
+const WIND_STATUS_ID = "buff_000002";
 
 const ITEM_DEFINITIONS = {
   [HEALING_POTION_ID]: createConsumableDefinition(HEALING_POTION_ID, "Healing Potion"),
@@ -142,7 +142,7 @@ describe("useConsumableItem", () => {
           { effectId: "resource.restore", parameters: { resourceId: "health", amount: 25 } },
           {
             effectId: "status.add",
-            parameters: { statusDefinitionId: "status.missing" },
+            parameters: { statusDefinitionId: "debuff_999999" },
           },
         ],
       },

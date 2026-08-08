@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import {
   validateHandCardDefinition,
   validateHandCardDefinitions,
@@ -7,7 +9,7 @@ import {
 } from "./hand-card-definition.ts";
 
 const DEFINITION: HandCardDefinition = {
-  cardId: 1,
+  cardId: createTestHandCardId(1),
   name: "preciseStrike",
   description: "Improves one attack before its hit result is resolved.",
   quality: "common",
@@ -53,11 +55,14 @@ describe("hand card definition", () => {
     }
   });
 
-  it("rejects zero, negative, and non-integer card ids", () => {
-    for (const cardId of [0, -1, 1.5]) {
-      expect(() => validateHandCardDefinition({ ...DEFINITION, cardId })).toThrow(
-        "cardId must be a positive safe integer",
-      );
+  it("rejects reserved, malformed, and wrong-prefix card ids", () => {
+    for (const cardId of ["card_000000", "card_1", "item_000001"]) {
+      expect(() =>
+        validateHandCardDefinition({
+          ...DEFINITION,
+          cardId: cardId as HandCardDefinition["cardId"],
+        }),
+      ).toThrow();
     }
   });
 
@@ -182,7 +187,7 @@ describe("hand card definition", () => {
           { effectId: "health.restore", parameters: { amount: 5 } },
           {
             effectId: "status.add",
-            parameters: { statusDefinitionId: "status.regeneration", stacks: 1 },
+            parameters: { statusDefinitionId: "buff_000105", stacks: 1 },
           },
         ],
       }),
@@ -264,7 +269,7 @@ describe("hand card definition", () => {
 
   it("allows identical card content when global card ids differ", () => {
     expect(() =>
-      validateHandCardDefinitions([DEFINITION, { ...DEFINITION, cardId: 2 }]),
+      validateHandCardDefinitions([DEFINITION, { ...DEFINITION, cardId: createTestHandCardId(2) }]),
     ).not.toThrow();
   });
 
@@ -274,7 +279,7 @@ describe("hand card definition", () => {
         DEFINITION,
         {
           ...DEFINITION,
-          cardId: 2,
+          cardId: createTestHandCardId(2),
           description: "Uses the same name for a different effect.",
         },
       ]),
@@ -287,7 +292,7 @@ describe("hand card definition", () => {
         DEFINITION,
         {
           ...DEFINITION,
-          cardId: 2,
+          cardId: createTestHandCardId(2),
           effects: [{ effectId: "attack.modifyHit", parameters: { amount: 20 } }],
         },
       ]),

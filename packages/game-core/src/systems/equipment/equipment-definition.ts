@@ -1,4 +1,5 @@
 import {
+  assertResourceId,
   isStandardQuality,
   type PrimaryAttribute,
   type StandardQuality,
@@ -49,7 +50,7 @@ export interface EquipmentDefinition {
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateEquipmentDefinition(definition: EquipmentDefinition): void {
-  assertNonEmptyString(definition.definitionId, "definitionId");
+  assertResourceId(definition.definitionId, "equip");
   assertNonEmptyString(definition.name, "name");
   assertNonEmptyString(definition.corePosition, "corePosition");
 

@@ -1,6 +1,8 @@
 import type { PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { RandomManager } from "../random/core/random-manager.ts";
 import { createMasterSeed } from "../random/core/random-seed.ts";
 import { acquireHandCardsFromSharedDeck } from "./acquire-hand-cards.ts";
@@ -20,7 +22,7 @@ const PLAYER_ID = "player-1" as PlayerId;
  * @param cardId 方法所需的 cardId 参数。
  * @returns 本次处理得到的结果。
  */
-function createCard(cardId: number): HandCardDefinition {
+function createCard(cardId: HandCardDefinition["cardId"]): HandCardDefinition {
   return {
     cardId,
     name: "sprint",
@@ -39,12 +41,21 @@ function createCard(cardId: number): HandCardDefinition {
 }
 
 const CATALOG = Object.fromEntries(
-  [1, 2, 3, 4].map((cardId) => [cardId, createCard(cardId)]),
+  [
+    createTestHandCardId(1),
+    createTestHandCardId(2),
+    createTestHandCardId(3),
+    createTestHandCardId(4),
+  ].map((cardId) => [cardId, createCard(cardId)]),
 ) as HandCardCatalog;
 
 describe("acquire hand cards", () => {
   it("draws only when an explicit business source is supplied", () => {
-    const deck = createHandCardDeckState("deck.shared", [1, 2, 3], CATALOG);
+    const deck = createHandCardDeckState(
+      "deck.shared",
+      [createTestHandCardId(1), createTestHandCardId(2), createTestHandCardId(3)],
+      CATALOG,
+    );
     const playerHand = createPlayerHandState(PLAYER_ID);
     const randomStream = RandomManager.create(MASTER_SEED).getStream("deck", "deck.shared");
 
@@ -57,15 +68,18 @@ describe("acquire hand cards", () => {
       2,
     );
 
-    expect(result.acquiredCardIds).toEqual([1, 2]);
-    expect(result.playerHandState.handCardIds).toEqual([1, 2]);
-    expect(result.deckState.drawPile).toEqual([3]);
+    expect(result.acquiredCardIds).toEqual([createTestHandCardId(1), createTestHandCardId(2)]);
+    expect(result.playerHandState.handCardIds).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+    ]);
+    expect(result.deckState.drawPile).toEqual([createTestHandCardId(3)]);
     expect(result.source).toEqual({ type: "chest", sourceId: "chest-forest-01" });
     expect(result.isComplete).toBe(true);
   });
 
   it("returns a partial result when both shared piles are exhausted", () => {
-    const deck = createHandCardDeckState("deck.shared", [1], CATALOG);
+    const deck = createHandCardDeckState("deck.shared", [createTestHandCardId(1)], CATALOG);
     const result = acquireHandCardsFromSharedDeck(
       deck,
       createPlayerHandState(PLAYER_ID),
@@ -75,7 +89,7 @@ describe("acquire hand cards", () => {
       2,
     );
 
-    expect(result.acquiredCardIds).toEqual([1]);
+    expect(result.acquiredCardIds).toEqual([createTestHandCardId(1)]);
     expect(result.isComplete).toBe(false);
     expect(result.requestedAmount).toBe(2);
   });
@@ -83,8 +97,8 @@ describe("acquire hand cards", () => {
   it("shuffles the discard pile to the deck bottom before drawing multiple cards", () => {
     const deck = {
       deckId: "deck.shared",
-      drawPile: [1, 2],
-      discardPile: [3, 4],
+      drawPile: [createTestHandCardId(1), createTestHandCardId(2)],
+      discardPile: [createTestHandCardId(3), createTestHandCardId(4)],
     } as const;
     const result = acquireHandCardsFromSharedDeck(
       deck,
@@ -95,17 +109,27 @@ describe("acquire hand cards", () => {
       3,
     );
 
-    expect(result.acquiredCardIds.slice(0, 2)).toEqual([1, 2]);
+    expect(result.acquiredCardIds.slice(0, 2)).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+    ]);
     expect(result.acquiredCardIds).toHaveLength(3);
     expect(result.deckState.drawPile).toHaveLength(1);
     expect(result.deckState.discardPile).toEqual([]);
     expect(
-      [...result.acquiredCardIds, ...result.deckState.drawPile].sort((left, right) => left - right),
-    ).toEqual([1, 2, 3, 4]);
+      [...result.acquiredCardIds, ...result.deckState.drawPile].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    ).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+      createTestHandCardId(3),
+      createTestHandCardId(4),
+    ]);
   });
 
   it("rejects implicit turn draws and invalid amounts", () => {
-    const deck = createHandCardDeckState("deck.shared", [1], CATALOG);
+    const deck = createHandCardDeckState("deck.shared", [createTestHandCardId(1)], CATALOG);
     const playerHand = createPlayerHandState(PLAYER_ID);
     const randomStream = RandomManager.create(MASTER_SEED).getStream("deck", "deck.shared");
 

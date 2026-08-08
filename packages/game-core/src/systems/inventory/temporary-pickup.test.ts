@@ -18,8 +18,8 @@ import { validatePlayerInventoryState } from "./validate-player-inventory-state.
 const PLAYER_ID = "player-1" as PlayerId;
 
 const DEFINITIONS = {
-  "item.coin": {
-    definitionId: "item.coin",
+  item_000001: {
+    definitionId: "item_000001",
     name: "Coin",
     category: "currency",
     quality: "common",
@@ -27,8 +27,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -69,11 +69,11 @@ describe("temporary pickup", () => {
     const existingCoin = createItemInstance(
       {
         instanceId: "item-instance.existing",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
         quantity: 3,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const initialInventory = createInventoryWithTemporaryCoin(2);
     const inventory = {
@@ -98,11 +98,11 @@ describe("temporary pickup", () => {
     const existingCoin = createItemInstance(
       {
         instanceId: "item-instance.existing",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
         quantity: 4,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const initialInventory = createInventoryWithTemporaryCoin(2);
     const inventory = {
@@ -126,10 +126,10 @@ describe("temporary pickup", () => {
     const blocker = createItemInstance(
       {
         instanceId: "item-instance.blocker",
-        definitionId: "item.blocker",
+        definitionId: "item_000101",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.blocker"],
+      DEFINITIONS["item_000101"],
     );
     const initialInventory = createInventoryWithTemporaryCoin(1);
     const fullInventory = {
@@ -187,10 +187,10 @@ function createInventoryWithTemporaryCoin(quantity: number) {
   const blocker = createItemInstance(
     {
       instanceId: "item-instance.acquisition-blocker",
-      definitionId: "item.blocker",
+      definitionId: "item_000101",
       ownerPlayerId: PLAYER_ID,
     },
-    DEFINITIONS["item.blocker"],
+    DEFINITIONS["item_000101"],
   );
   const emptyInventory = createPlayerInventory(PLAYER_ID);
   const fullInventory = {
@@ -200,7 +200,7 @@ function createInventoryWithTemporaryCoin(quantity: number) {
   const receivedInventory = receiveItem(
     fullInventory,
     {
-      definitionId: "item.coin",
+      definitionId: "item_000001",
       quantity,
       sourceId: "event.reward",
       newItemInstanceIds: ["item-instance.temporary"],

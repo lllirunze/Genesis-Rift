@@ -22,7 +22,7 @@ const ZERO_PRIMARY_ATTRIBUTES = {
 } as const;
 
 const FOCUS: StatusDefinition = {
-  definitionId: "status.focus",
+  definitionId: "buff_000101",
   name: "Focus",
   description: "Improves insight and movement range per stack.",
   kind: "buff",

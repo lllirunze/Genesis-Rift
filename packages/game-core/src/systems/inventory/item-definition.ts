@@ -1,4 +1,5 @@
 import {
+  assertResourceId,
   ITEM_CATEGORIES,
   isQuality,
   type ItemDefinition,
@@ -22,7 +23,7 @@ export {
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateItemDefinition(definition: ItemDefinition): void {
-  assertNonEmptyString(definition.definitionId, "definitionId");
+  assertResourceId(definition.definitionId, definition.category === "equipment" ? "equip" : "item");
   assertNonEmptyString(definition.name, "name");
 
   if (!ITEM_CATEGORIES.some((category) => category === definition.category)) {

@@ -44,7 +44,7 @@ function createDefinition(eventId: string, duration: EventDefinition["duration"]
           effectKey: "changeWeather",
           effectId: "weather.change",
           targetType: "WORLD",
-          parameters: { weatherId: "weather.test" },
+          parameters: { weatherId: "weather_000101" },
           failurePolicy: "STOP",
         },
       ],
@@ -88,7 +88,7 @@ function createInstance(
 
 describe("event duration advancement", () => {
   it("decrements fixed rounds only at the configured timing", () => {
-    const definition = createDefinition("event.fixed", {
+    const definition = createDefinition("event_000111", {
       type: "FIXED_ROUNDS",
       rounds: 2,
       updateTiming: "ROUND_END",
@@ -96,7 +96,7 @@ describe("event duration advancement", () => {
     });
     const getConditionContext = vi.fn(() => CONDITION_CONTEXT);
     const skipped = advanceEventDurations(
-      [createInstance("event.fixed", "FIXED_ROUNDS")],
+      [createInstance("event_000111", "FIXED_ROUNDS")],
       {
         [definition.eventId]: definition,
       },
@@ -131,13 +131,13 @@ describe("event duration advancement", () => {
 
   it("ends fixed, condition-based, and world-linked durations with matching reasons", () => {
     const definitions = {
-      "event.fixed": createDefinition("event.fixed", {
+      event_000111: createDefinition("event_000111", {
         type: "FIXED_ROUNDS",
         rounds: 1,
         updateTiming: "ROUND_END",
         repeat: { policy: "IGNORE" },
       }),
-      "event.condition": createDefinition("event.condition", {
+      event_000110: createDefinition("event_000110", {
         type: "UNTIL_CONDITION",
         endCondition: {
           type: "CONDITION",
@@ -147,22 +147,22 @@ describe("event duration advancement", () => {
         updateTiming: "ROUND_END",
         repeat: { policy: "IGNORE" },
       }),
-      "event.world": createDefinition("event.world", {
+      event_000114: createDefinition("event_000114", {
         type: "UNTIL_WORLD_EVENT_END",
-        worldEventId: "event.world.parent",
+        worldEventId: "event_000115",
         repeat: { policy: "IGNORE" },
       }),
-      "event.permanent": createDefinition("event.permanent", {
+      event_000112: createDefinition("event_000112", {
         type: "PERMANENT",
         repeat: { policy: "IGNORE" },
       }),
     } satisfies EventDefinitionCatalog;
     const result = advanceEventDurations(
       [
-        createInstance("event.fixed", "FIXED_ROUNDS", 1),
-        createInstance("event.condition", "UNTIL_CONDITION"),
-        createInstance("event.world", "UNTIL_WORLD_EVENT_END"),
-        createInstance("event.permanent", "PERMANENT"),
+        createInstance("event_000111", "FIXED_ROUNDS", 1),
+        createInstance("event_000110", "UNTIL_CONDITION"),
+        createInstance("event_000114", "UNTIL_WORLD_EVENT_END"),
+        createInstance("event_000112", "PERMANENT"),
       ],
       definitions,
       {
@@ -170,7 +170,7 @@ describe("event duration advancement", () => {
         currentTurn: 2,
         currentPlayerId: null,
         updateSequence: 2,
-        endedWorldEventIds: new Set(["event.world.parent"]),
+        endedWorldEventIds: new Set(["event_000115"]),
         getConditionContext: () => CONDITION_CONTEXT,
       },
     );
@@ -180,19 +180,19 @@ describe("event duration advancement", () => {
       "CONDITION_MET",
       "WORLD_EVENT_ENDED",
     ]);
-    expect(result.activeInstances).toEqual([createInstance("event.permanent", "PERMANENT")]);
+    expect(result.activeInstances).toEqual([createInstance("event_000112", "PERMANENT")]);
     expect(result.endInstructions).toHaveLength(3);
   });
 
   it("updates player-turn durations only for their triggering player", () => {
-    const definition = createDefinition("event.player", {
+    const definition = createDefinition("event_000113", {
       type: "FIXED_ROUNDS",
       rounds: 2,
       updateTiming: "TRIGGER_PLAYER_TURN_END",
       repeat: { policy: "IGNORE" },
     });
     const catalog = { [definition.eventId]: definition };
-    const instance = createInstance("event.player", "FIXED_ROUNDS");
+    const instance = createInstance("event_000113", "FIXED_ROUNDS");
     const skipped = advanceEventDurations([instance], catalog, {
       timing: "TRIGGER_PLAYER_TURN_END",
       currentTurn: 2,

@@ -12,7 +12,7 @@ import { applyStatus } from "./apply-status.ts";
  */
 function createDefinition(maxStacks: number): StatusDefinition {
   return {
-    definitionId: "status.focus",
+    definitionId: "buff_000101",
     name: "Focus",
     description: "Temporarily improves insight.",
     kind: "buff",

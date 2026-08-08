@@ -28,7 +28,7 @@ const CONTEXT: EventConditionEvaluationContext = {
 };
 
 const CHOICE_DEFINITION: EventDefinition = {
-  eventId: "event.test.options",
+  eventId: "event_000106",
   name: "Test Options",
   description: "An event used to test option availability.",
   triggerCondition: null,

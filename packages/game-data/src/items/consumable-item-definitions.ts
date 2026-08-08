@@ -2,7 +2,7 @@ import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared
 
 /** 当前业务对象的静态定义配置。 */
 export const HEALING_POTION_ITEM_DEFINITION = {
-  definitionId: "item.consumable.healing-potion",
+  definitionId: "item_000005",
   name: "Healing Potion",
   category: "consumable",
   quality: "common",
@@ -13,7 +13,7 @@ export const HEALING_POTION_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const MANA_POTION_ITEM_DEFINITION = {
-  definitionId: "item.consumable.mana-potion",
+  definitionId: "item_000006",
   name: "Mana Potion",
   category: "consumable",
   quality: "common",
@@ -24,7 +24,7 @@ export const MANA_POTION_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const ANTIDOTE_ITEM_DEFINITION = {
-  definitionId: "item.consumable.antidote",
+  definitionId: "item_000007",
   name: "Antidote",
   category: "consumable",
   quality: "excellent",
@@ -35,7 +35,7 @@ export const ANTIDOTE_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const WIND_TONIC_ITEM_DEFINITION = {
-  definitionId: "item.consumable.wind-tonic",
+  definitionId: "item_000008",
   name: "Wind Tonic",
   category: "consumable",
   quality: "excellent",

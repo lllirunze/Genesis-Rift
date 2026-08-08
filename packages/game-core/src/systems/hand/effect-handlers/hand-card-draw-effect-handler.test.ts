@@ -1,6 +1,8 @@
 import type { GameId, PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it } from "vitest";
 
+import { createTestHandCardId } from "../hand-card-test-helper.ts";
+
 import { RandomManager } from "../../random/core/random-manager.ts";
 import { createMasterSeed } from "../../random/core/random-seed.ts";
 import { createHandCardEffectExecutionContext } from "../hand-card-effect-context.ts";
@@ -26,12 +28,14 @@ const MASTER_SEED = createMasterSeed(
  * @param cardId 方法所需的 cardId 参数。
  * @returns 本次处理得到的结果。
  */
-function createCard(cardId: number): HandCardDefinition {
+function createCard(cardId: HandCardDefinition["cardId"]): HandCardDefinition {
   return {
     cardId,
-    name: cardId === 1 ? "fieldSupply" : "sprint",
+    name: cardId === createTestHandCardId(1) ? "fieldSupply" : "sprint",
     description:
-      cardId === 1 ? "Draws two hand cards from the shared deck." : "Improves one movement action.",
+      cardId === createTestHandCardId(1)
+        ? "Draws two hand cards from the shared deck."
+        : "Improves one movement action.",
     quality: "common",
     type: "action",
     usage: {
@@ -41,7 +45,7 @@ function createCard(cardId: number): HandCardDefinition {
       targetTypes: ["player"],
     },
     effects:
-      cardId === 1
+      cardId === createTestHandCardId(1)
         ? [{ effectId: "handCard.draw", parameters: { amount: 2 } }]
         : [{ effectId: "movement.modify", parameters: { amount: 1 } }],
     destinationAfterResolution: "discard",
@@ -49,7 +53,12 @@ function createCard(cardId: number): HandCardDefinition {
 }
 
 const CATALOG = Object.fromEntries(
-  [1, 2, 3, 4].map((cardId) => [cardId, createCard(cardId)]),
+  [
+    createTestHandCardId(1),
+    createTestHandCardId(2),
+    createTestHandCardId(3),
+    createTestHandCardId(4),
+  ].map((cardId) => [cardId, createCard(cardId)]),
 ) as HandCardCatalog;
 const EFFECT = { effectId: "handCard.draw", parameters: { amount: 2 } } as const;
 
@@ -59,11 +68,19 @@ const EFFECT = { effectId: "handCard.draw", parameters: { amount: 2 } } as const
  * @param deckState 方法所需的 deckState 参数。
  * @returns 本次处理得到的结果。
  */
-function createChannel(deckState = createHandCardDeckState("deck.shared", [2, 3, 4], CATALOG)) {
+function createChannel(
+  deckState = createHandCardDeckState(
+    "deck.shared",
+    [createTestHandCardId(2), createTestHandCardId(3), createTestHandCardId(4)],
+    CATALOG,
+  ),
+) {
   return HandCardEffectStateChannel.create(
     {
       deckState,
-      playerHandStates: [addHandCardToHand(createPlayerHandState(PLAYER_ID), 1, CATALOG).state],
+      playerHandStates: [
+        addHandCardToHand(createPlayerHandState(PLAYER_ID), createTestHandCardId(1), CATALOG).state,
+      ],
     },
     CATALOG,
   );
@@ -80,7 +97,7 @@ function createContext(channel: HandCardEffectStateChannel | null, withRandomStr
   return createHandCardEffectExecutionContext({
     executionId: "execution-draw-1",
     gameId: GAME_ID,
-    cardId: 1,
+    cardId: createTestHandCardId(1),
     effectIndex: 0,
     sourcePlayerId: PLAYER_ID,
     timing: "active",
@@ -108,21 +125,29 @@ describe("hand card draw effect handler", () => {
           {
             targetPlayerId: PLAYER_ID,
             requestedAmount: 2,
-            acquiredCardIds: [2, 3],
+            acquiredCardIds: [createTestHandCardId(2), createTestHandCardId(3)],
             isComplete: true,
           },
         ],
       },
     });
-    expect(channel.getPlayerHandState(PLAYER_ID)?.handCardIds).toEqual([1, 2, 3]);
-    expect(channel.getDeckState().drawPile).toEqual([4]);
+    expect(channel.getPlayerHandState(PLAYER_ID)?.handCardIds).toEqual([
+      createTestHandCardId(1),
+      createTestHandCardId(2),
+      createTestHandCardId(3),
+    ]);
+    expect(channel.getDeckState().drawPile).toEqual([createTestHandCardId(4)]);
   });
 
   it("keeps the last draw-pile card ahead of the shuffled discard pile", () => {
-    const deckWithLastCard = createHandCardDeckState("deck.shared", [2], CATALOG);
+    const deckWithLastCard = createHandCardDeckState(
+      "deck.shared",
+      [createTestHandCardId(2)],
+      CATALOG,
+    );
     const deck = addHandCardToSharedDiscardPile(
-      addHandCardToSharedDiscardPile(deckWithLastCard, 3, CATALOG),
-      4,
+      addHandCardToSharedDiscardPile(deckWithLastCard, createTestHandCardId(3), CATALOG),
+      createTestHandCardId(4),
       CATALOG,
     );
     const channel = createChannel(deck);
@@ -132,7 +157,9 @@ describe("hand card draw effect handler", () => {
     const result = registry.execute(EFFECT, createContext(channel));
 
     expect(result).toMatchObject({
-      output: { targets: [{ acquiredCardIds: [2, expect.any(Number)] }] },
+      output: {
+        targets: [{ acquiredCardIds: [createTestHandCardId(2), expect.any(String)] }],
+      },
     });
     expect(channel.getDeckState().discardPile).toEqual([]);
     expect(channel.getDeckState().drawPile).toHaveLength(1);
@@ -160,6 +187,6 @@ describe("hand card draw effect handler", () => {
       outcome: "skipped",
       output: null,
     });
-    expect(channel.getPlayerHandState(PLAYER_ID)?.handCardIds).toEqual([1]);
+    expect(channel.getPlayerHandState(PLAYER_ID)?.handCardIds).toEqual([createTestHandCardId(1)]);
   });
 });

@@ -2,7 +2,7 @@ import type { ItemDefinition, ItemDefinitionCatalog } from "@genesis-rift/shared
 
 /** 当前业务对象的静态定义配置。 */
 export const CLIMBING_ROPE_ITEM_DEFINITION = {
-  definitionId: "item.special.climbing-rope",
+  definitionId: "item_000009",
   name: "Climbing Rope",
   category: "special",
   quality: "common",
@@ -13,7 +13,7 @@ export const CLIMBING_ROPE_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const TORCH_ITEM_DEFINITION = {
-  definitionId: "item.special.torch",
+  definitionId: "item_000010",
   name: "Torch",
   category: "special",
   quality: "common",
@@ -24,7 +24,7 @@ export const TORCH_ITEM_DEFINITION = {
 
 /** 当前业务对象的静态定义配置。 */
 export const TREASURE_MAP_ITEM_DEFINITION = {
-  definitionId: "item.special.treasure-map",
+  definitionId: "item_000011",
   name: "Treasure Map",
   category: "special",
   quality: "rare",

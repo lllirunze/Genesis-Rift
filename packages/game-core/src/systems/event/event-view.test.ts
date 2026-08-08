@@ -5,7 +5,7 @@ import type { EventInstance } from "./event-instance.ts";
 import { createEventView } from "./event-view.ts";
 
 const DEFINITION: EventDefinition = {
-  eventId: "event.adventure.hidden-choice",
+  eventId: "event_000103",
   name: "Hidden Choice",
   description: "A hidden event that offers two choices after reveal.",
   triggerCondition: null,

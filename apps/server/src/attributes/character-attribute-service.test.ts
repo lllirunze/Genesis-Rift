@@ -22,7 +22,7 @@ import { CharacterAttributeService } from "./character-attribute-service.ts";
 const PLAYER_ID = "player-1" as PlayerId;
 
 const WIND_BOOTS: EquipmentDefinition = {
-  definitionId: "equipment.wind-boots",
+  definitionId: "equip_000003",
   name: "Wind Boots",
   type: "shoes",
   quality: "rare",

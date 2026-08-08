@@ -27,7 +27,7 @@ Before submitting changes, run `npm test`, `npm run typecheck`, and `npm run for
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation and Prettier defaults. Files and directories use `kebab-case`; functions and variables use `camelCase`; types and classes use `PascalCase`; module constants use `UPPER_SNAKE_CASE`. Use meaningful English names and stable namespaced IDs such as `equipment.weapon.wooden-sword`.
+Use two-space indentation and Prettier defaults. Files and directories use `kebab-case`; functions and variables use `camelCase`; types and classes use `PascalCase`; module constants use `UPPER_SNAKE_CASE`. Static resource IDs use `<type>_<6 digits>`, such as `equip_000001`; never encode names, quality, or subtypes in IDs.
 
 Write code comments and TSDoc in Chinese. Public methods should document method name, purpose, parameters, return value, and relevant errors. Never place comments after code on the same line. Avoid direct `console.log` and `Math.random`; use the project logging and random systems.
 

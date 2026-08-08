@@ -6,7 +6,7 @@ import type { StatusDefinition } from "./status-definition.ts";
 import { createStatusInstance } from "./status-instance.ts";
 
 const DEFINITION: StatusDefinition = {
-  definitionId: "status.wind-blessing",
+  definitionId: "buff_000002",
   name: "Wind Blessing",
   description: "Temporarily improves movement range.",
   kind: "buff",

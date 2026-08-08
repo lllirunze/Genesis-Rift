@@ -1,4 +1,4 @@
-import type { PrimaryAttribute } from "@genesis-rift/shared";
+import { assertResourceId, type PrimaryAttribute } from "@genesis-rift/shared";
 
 import { STATUS_KINDS } from "./status-config.ts";
 
@@ -61,7 +61,7 @@ export type StatusDefinitionCatalog = Readonly<Record<string, StatusDefinition>>
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateStatusDefinition(definition: StatusDefinition): void {
-  assertNonEmptyString(definition.definitionId, "definitionId");
+  assertResourceId(definition.definitionId, definition.kind === "buff" ? "buff" : "debuff");
   assertNonEmptyString(definition.name, "name");
   assertNonEmptyString(definition.description, "description");
 

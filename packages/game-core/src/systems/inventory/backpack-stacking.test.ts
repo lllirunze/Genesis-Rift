@@ -15,8 +15,8 @@ import { createItemInstance } from "./item-instance.ts";
 const PLAYER_ID = "player-1" as PlayerId;
 
 const DEFINITIONS = {
-  "item.coin": {
-    definitionId: "item.coin",
+  item_000001: {
+    definitionId: "item_000001",
     name: "Coin",
     category: "currency",
     quality: "common",
@@ -39,7 +39,7 @@ describe("backpack item stacking", () => {
     expect(result.transferredQuantity).toBe(1);
     expect(getBackpackEntry(result.backpack, "item-instance.target").item.quantity).toBe(5);
     expect(getBackpackEntry(result.backpack, "item-instance.source").item.quantity).toBe(2);
-    expect(getBackpackItemQuantity(result.backpack, "item.coin")).toBe(7);
+    expect(getBackpackItemQuantity(result.backpack, "item_000001")).toBe(7);
     expect(getBackpackEntry(backpack, "item-instance.target").item.quantity).toBe(4);
   });
 
@@ -73,7 +73,7 @@ describe("backpack item stacking", () => {
       position: { x: 2, y: 0 },
       item: { quantity: 2, stackCompatibilityKey: "default" },
     });
-    expect(getBackpackItemQuantity(splitBackpack, "item.coin")).toBe(5);
+    expect(getBackpackItemQuantity(splitBackpack, "item_000001")).toBe(5);
   });
 
   it("rejects invalid merges and splits without changing the source backpack", () => {
@@ -97,7 +97,7 @@ describe("backpack item stacking", () => {
         DEFINITIONS,
       ),
     ).toThrow("less than the source stack quantity");
-    expect(getBackpackItemQuantity(backpack, "item.coin")).toBe(6);
+    expect(getBackpackItemQuantity(backpack, "item_000001")).toBe(6);
   });
 });
 
@@ -112,20 +112,20 @@ function createBackpackWithCoinStacks(targetQuantity: number, sourceQuantity: nu
   const target = createItemInstance(
     {
       instanceId: "item-instance.target",
-      definitionId: "item.coin",
+      definitionId: "item_000001",
       ownerPlayerId: PLAYER_ID,
       quantity: targetQuantity,
     },
-    DEFINITIONS["item.coin"],
+    DEFINITIONS["item_000001"],
   );
   const source = createItemInstance(
     {
       instanceId: "item-instance.source",
-      definitionId: "item.coin",
+      definitionId: "item_000001",
       ownerPlayerId: PLAYER_ID,
       quantity: sourceQuantity,
     },
-    DEFINITIONS["item.coin"],
+    DEFINITIONS["item_000001"],
   );
   const withTarget = placeItemInBackpack(
     createBackpack(PLAYER_ID),

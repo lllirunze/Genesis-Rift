@@ -28,8 +28,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -37,8 +37,8 @@ const DEFINITIONS = {
     height: 6,
     maximumStack: 1,
   },
-  "item.blocker.4x5": {
-    definitionId: "item.blocker.4x5",
+  item_000105: {
+    definitionId: "item_000105",
     name: "Large Partial Blocker",
     category: "special",
     quality: "common",
@@ -46,8 +46,8 @@ const DEFINITIONS = {
     height: 5,
     maximumStack: 1,
   },
-  "item.material.linen": {
-    definitionId: "item.material.linen",
+  item_000102: {
+    definitionId: "item_000102",
     name: "Linen",
     category: "material",
     quality: "common",
@@ -55,8 +55,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.special.large-crate": {
-    definitionId: "item.special.large-crate",
+  item_000103: {
+    definitionId: "item_000103",
     name: "Large Crate",
     category: "special",
     quality: "excellent",
@@ -262,7 +262,7 @@ describe("EconomyService", () => {
       inventory,
       playerName: "Runze",
       transactionId: "shop.purchase.linen",
-      itemDefinitionId: "item.material.linen",
+      itemDefinitionId: "item_000102",
       itemQuantity: 8,
       totalCoinPrice: 6,
       newItemInstanceIds: ["linen-1", "linen-2"],
@@ -273,11 +273,11 @@ describe("EconomyService", () => {
     expect(purchaseFixture.service.getBalance(result.inventory)).toBe(4);
     expect(
       result.inventory.backpack.entries.flatMap((entry) =>
-        entry.item.definitionId === "item.material.linen" ? [entry.item.quantity] : [],
+        entry.item.definitionId === "item_000102" ? [entry.item.quantity] : [],
       ),
     ).toEqual([5, 3]);
     expect(purchaseFixture.writer.lines[0]).toContain(
-      "Player purchased 8 units of item item.material.linen.",
+      "Player purchased 8 units of item item_000102.",
     );
   });
 
@@ -285,10 +285,10 @@ describe("EconomyService", () => {
     const blocker = createItemInstance(
       {
         instanceId: "blocker-partial",
-        definitionId: "item.blocker.4x5",
+        definitionId: "item_000105",
         ownerPlayerId: PLAYER_ID,
       },
-      DEFINITIONS["item.blocker.4x5"],
+      DEFINITIONS["item_000105"],
     );
     const emptyInventory = createPlayerInventory(PLAYER_ID);
     const blockedInventory = {
@@ -311,7 +311,7 @@ describe("EconomyService", () => {
       inventory,
       playerName: "Runze",
       transactionId: "shop.purchase.large-crates",
-      itemDefinitionId: "item.special.large-crate",
+      itemDefinitionId: "item_000103",
       itemQuantity: 2,
       totalCoinPrice: 1,
       newItemInstanceIds: ["crate-1", "crate-2"],
@@ -339,10 +339,10 @@ function createFullInventory(): PlayerInventoryState {
   const blocker = createItemInstance(
     {
       instanceId: "blocker-1",
-      definitionId: "item.blocker",
+      definitionId: "item_000101",
       ownerPlayerId: PLAYER_ID,
     },
-    DEFINITIONS["item.blocker"],
+    DEFINITIONS["item_000101"],
   );
   const inventory = createPlayerInventory(PLAYER_ID);
 

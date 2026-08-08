@@ -52,9 +52,7 @@ describe("ConsumableService", () => {
     expect(result.resourceState.resources.health?.current).toBe(65);
     expect(result.remainingItemQuantity).toBe(1);
     expect(fixture.writer.lines).toHaveLength(1);
-    expect(fixture.writer.lines[0]).toContain(
-      "Player used consumable item item.consumable.healing-potion.",
-    );
+    expect(fixture.writer.lines[0]).toContain("Player used consumable item item_000005.");
   });
 
   it("does not consume a healing potion when health is already full", async () => {
@@ -71,7 +69,7 @@ describe("ConsumableService", () => {
     const fixture = createFixture(40);
     const request = {
       ...createRequest(fixture, 1),
-      itemDefinitionId: "item.consumable.missing",
+      itemDefinitionId: "item_999999",
     };
 
     expect(() => fixture.service.useItem(request)).toThrow("Missing item definition");

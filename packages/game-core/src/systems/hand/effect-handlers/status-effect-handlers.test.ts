@@ -1,6 +1,8 @@
 import type { GameId, PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it, vi } from "vitest";
 
+import { createTestHandCardId } from "../hand-card-test-helper.ts";
+
 import {
   applyStatusToCharacter,
   createCharacterStatusState,
@@ -17,8 +19,8 @@ import {
 const GAME_ID = "game-1" as GameId;
 const PLAYER_ID = "player-1" as PlayerId;
 const DEFINITIONS = {
-  "status.focus": {
-    definitionId: "status.focus",
+  buff_000101: {
+    definitionId: "buff_000101",
     name: "Focus",
     description: "Improves insight for a short duration.",
     kind: "buff",
@@ -28,8 +30,8 @@ const DEFINITIONS = {
     removal: { dispellable: true, removeOnDeath: true },
     effects: [],
   },
-  "status.contract": {
-    definitionId: "status.contract",
+  buff_000104: {
+    definitionId: "buff_000104",
     name: "Contract",
     description: "Represents a protected permanent agreement.",
     kind: "buff",
@@ -50,7 +52,7 @@ function createContext() {
   return createHandCardEffectExecutionContext({
     executionId: "execution-status-1",
     gameId: GAME_ID,
-    cardId: 1,
+    cardId: createTestHandCardId(1),
     effectIndex: 0,
     sourcePlayerId: PLAYER_ID,
     timing: "active",
@@ -92,7 +94,7 @@ describe("status hand card effect handlers", () => {
     const result = registry.execute(
       {
         effectId: "status.add",
-        parameters: { statusDefinitionId: "status.focus", stacks: 2 },
+        parameters: { statusDefinitionId: "buff_000101", stacks: 2 },
       },
       createContext(),
     );
@@ -110,7 +112,7 @@ describe("status hand card effect handlers", () => {
             state: {
               instances: [
                 {
-                  definitionId: "status.focus",
+                  definitionId: "buff_000101",
                   currentStacks: 2,
                   remainingTurns: 3,
                   createdAtSequence: 10,
@@ -127,7 +129,7 @@ describe("status hand card effect handlers", () => {
   it("removes a dispellable status by definition id", () => {
     const saveState = vi.fn();
     const initial = applyStatusToCharacter(createCharacterStatusState(PLAYER_ID), DEFINITIONS, {
-      definitionId: "status.focus",
+      definitionId: "buff_000101",
       newInstanceId: "status-instance.focus",
       sourceId: "event-1",
       createdAtSequence: 1,
@@ -138,7 +140,7 @@ describe("status hand card effect handlers", () => {
     const result = registry.execute(
       {
         effectId: "status.remove",
-        parameters: { statusDefinitionId: "status.focus" },
+        parameters: { statusDefinitionId: "buff_000101" },
       },
       createContext(),
     );
@@ -164,7 +166,7 @@ describe("status hand card effect handlers", () => {
       createCharacterStatusState(PLAYER_ID),
       DEFINITIONS,
       {
-        definitionId: "status.contract",
+        definitionId: "buff_000104",
         newInstanceId: "status-instance.contract",
         sourceId: "event-1",
         createdAtSequence: 1,
@@ -180,7 +182,7 @@ describe("status hand card effect handlers", () => {
       registry.execute(
         {
           effectId: "status.remove",
-          parameters: { statusDefinitionId: "status.contract" },
+          parameters: { statusDefinitionId: "buff_000104" },
         },
         createContext(),
       ),

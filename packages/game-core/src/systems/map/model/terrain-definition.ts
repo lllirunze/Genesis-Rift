@@ -18,7 +18,7 @@ export type TerrainDefinitionCatalog = Readonly<Record<string, TerrainDefinition
  * @throws 输入或配置不满足模块约束时抛出错误。
  */
 export function validateTerrainDefinition(definition: TerrainDefinition): void {
-  assertNonEmptyString(definition.definitionId, "definitionId");
+  assertResourceId(definition.definitionId, "terrain");
   assertNonEmptyString(definition.name, "name");
   assertUniqueNonEmptyStrings(definition.tags, "tags");
 
@@ -114,3 +114,4 @@ import {
   MAX_TERRAIN_MOVEMENT_COST_MODIFIER,
   MIN_TERRAIN_MOVEMENT_COST_MODIFIER,
 } from "../map-content-config.ts";
+import { assertResourceId } from "@genesis-rift/shared";

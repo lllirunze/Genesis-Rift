@@ -12,8 +12,8 @@ import { receiveItem } from "./receive-item.ts";
 const PLAYER_ID = "player-1" as PlayerId;
 
 const DEFINITIONS = {
-  "item.coin": {
-    definitionId: "item.coin",
+  item_000001: {
+    definitionId: "item_000001",
     name: "Coin",
     category: "currency",
     quality: "common",
@@ -21,8 +21,8 @@ const DEFINITIONS = {
     height: 1,
     maximumStack: 5,
   },
-  "item.blocker": {
-    definitionId: "item.blocker",
+  item_000101: {
+    definitionId: "item_000101",
     name: "Large Blocker",
     category: "special",
     quality: "common",
@@ -37,11 +37,11 @@ describe("receiveItem", () => {
     const existingCoin = createItemInstance(
       {
         instanceId: "item-instance.existing",
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         ownerPlayerId: PLAYER_ID,
         quantity: 3,
       },
-      DEFINITIONS["item.coin"],
+      DEFINITIONS["item_000001"],
     );
     const initialInventory = createPlayerInventory(PLAYER_ID);
     const inventory = {
@@ -56,7 +56,7 @@ describe("receiveItem", () => {
     const result = receiveItem(
       inventory,
       {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 8,
         sourceId: "event.reward",
         newItemInstanceIds: ["item-instance.new-1", "item-instance.new-2"],
@@ -86,7 +86,7 @@ describe("receiveItem", () => {
     const result = receiveItem(
       inventory,
       {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 7,
         sourceId: "battle.loot",
         newItemInstanceIds: ["item-instance.coin-1", "item-instance.coin-2"],
@@ -113,7 +113,7 @@ describe("receiveItem", () => {
     const firstResult = receiveItem(
       createFullLevelOneInventory(),
       {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "event.first",
         newItemInstanceIds: ["item-instance.first"],
@@ -123,7 +123,7 @@ describe("receiveItem", () => {
     const secondResult = receiveItem(
       firstResult.inventory,
       {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "event.second",
         newItemInstanceIds: ["item-instance.second"],
@@ -143,7 +143,7 @@ describe("receiveItem", () => {
     const result = receiveItem(
       inventory,
       {
-        definitionId: "item.coin",
+        definitionId: "item_000001",
         quantity: 1,
         sourceId: "quest.reward",
         newItemInstanceIds: ["item-instance.coin"],
@@ -159,7 +159,7 @@ describe("receiveItem", () => {
       receiveItem(
         inventory,
         {
-          definitionId: "item.coin",
+          definitionId: "item_000001",
           quantity: 6,
           sourceId: "quest.reward",
           newItemInstanceIds: ["only-one-id"],
@@ -180,10 +180,10 @@ function createFullLevelOneInventory() {
   const blocker = createItemInstance(
     {
       instanceId: "item-instance.blocker",
-      definitionId: "item.blocker",
+      definitionId: "item_000101",
       ownerPlayerId: PLAYER_ID,
     },
-    DEFINITIONS["item.blocker"],
+    DEFINITIONS["item_000101"],
   );
   const inventory = createPlayerInventory(PLAYER_ID);
 

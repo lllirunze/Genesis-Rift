@@ -1,6 +1,8 @@
 import type { GameId, PlayerId } from "@genesis-rift/shared";
 import { describe, expect, it, vi } from "vitest";
 
+import { createTestHandCardId } from "./hand-card-test-helper.ts";
+
 import { createHandCardEffectExecutionContext } from "./hand-card-effect-context.ts";
 import type { HandCardEffectHandler } from "./hand-card-effect-handler.ts";
 import { HandCardEffectHandlerRegistry } from "./hand-card-effect-handler-registry.ts";
@@ -15,7 +17,7 @@ const HEALTH_RESTORE_EFFECT = {
 const CONTEXT = createHandCardEffectExecutionContext({
   executionId: "hand-card-execution-1",
   gameId: GAME_ID,
-  cardId: 1,
+  cardId: createTestHandCardId(1),
   effectIndex: 0,
   sourcePlayerId: PLAYER_ID,
   timing: "active",

@@ -13,7 +13,7 @@ import { createPlayerItemView } from "./player-item-view.ts";
 const OWNER_ID = "player-owner" as PlayerId;
 const VIEWER_ID = "player-viewer" as PlayerId;
 const OTHER_VIEWER_ID = "player-other" as PlayerId;
-const POTION_DEFINITION_ID = "item.consumable.secret-potion";
+const POTION_DEFINITION_ID = "item_000106";
 
 const ITEM_DEFINITIONS = {
   [POTION_DEFINITION_ID]: {
@@ -122,7 +122,7 @@ describe("inventory visibility", () => {
     const inventory = createInventory();
     const weapon = createEquipmentInstance({
       instanceId: "equipment-instance.public-sword",
-      definitionId: "equipment.public-sword",
+      definitionId: "equip_000105",
       ownerPlayerId: OWNER_ID,
     });
     const emptyLoadout = createEmptyEquipmentLoadout(OWNER_ID);

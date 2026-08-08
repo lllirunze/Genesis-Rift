@@ -9,7 +9,7 @@ import {
 } from "./event-reveal.ts";
 
 const BASE_DEFINITION: EventDefinition = {
-  eventId: "event.test.reveal",
+  eventId: "event_000104",
   name: "Reveal Test",
   description: "An event used to test event reveal transitions.",
   triggerCondition: null,
@@ -115,7 +115,7 @@ describe("event reveal", () => {
     ).toThrow("Unsupported event reveal action");
 
     expect(() =>
-      revealForcedEvent(PENDING_INSTANCE, { ...BASE_DEFINITION, eventId: "event.other" }, 4),
+      revealForcedEvent(PENDING_INSTANCE, { ...BASE_DEFINITION, eventId: "event_000998" }, 4),
     ).toThrow("does not match definition");
   });
 });

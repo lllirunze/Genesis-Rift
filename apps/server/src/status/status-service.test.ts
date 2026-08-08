@@ -116,8 +116,8 @@ describe("StatusService", () => {
     expect(second.outcome).toBe("stacked");
     expect(second.instance.currentStacks).toBe(2);
     expect(fixture.writer.lines).toHaveLength(2);
-    expect(fixture.writer.lines[0]).toContain("Applied status status.arcane-accumulation.");
-    expect(fixture.writer.lines[1]).toContain("Stacked status status.arcane-accumulation to 2.");
+    expect(fixture.writer.lines[0]).toContain("Applied status buff_000004.");
+    expect(fixture.writer.lines[1]).toContain("Stacked status buff_000004 to 2.");
   });
 
   it("advances statuses each owner turn and logs expiration", async () => {
@@ -137,9 +137,7 @@ describe("StatusService", () => {
     expect(secondTurn.state.instances[0]?.remainingTurns).toBe(1);
     expect(thirdTurn.expired).toHaveLength(1);
     expect(thirdTurn.state.instances).toEqual([]);
-    expect(fixture.writer.lines.some((line) => line.includes("status.wind-blessing expired"))).toBe(
-      true,
-    );
+    expect(fixture.writer.lines.some((line) => line.includes("buff_000002 expired"))).toBe(true);
   });
 
   it("supports explicit stack removal and dispel rules", async () => {
