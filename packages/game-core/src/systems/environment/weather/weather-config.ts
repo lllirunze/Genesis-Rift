@@ -65,3 +65,21 @@ export const STANDARD_WEATHER_CARD_IDS = STANDARD_WEATHER_CARDS.map((card) => ca
 export const WEATHER_DECK_VERSION = "standard-54-v1" as const;
 /** 天气牌库在随机管理器中的固定随机流作用域。 */
 export const WEATHER_DECK_SCOPE_ID = "weather-deck";
+
+/** 普通、极端与特殊天气的配置类别。 */
+export const WEATHER_CATEGORIES = ["NORMAL", "EXTREME", "SPECIAL"] as const;
+
+/** 天气状态可以覆盖的标准空间范围。 */
+export const WEATHER_SCOPE_TYPES = ["WORLD", "REGION", "TERRAIN", "TARGET_REGION"] as const;
+
+/** 新天气与相同作用范围天气之间的处理规则。 */
+export const WEATHER_COEXISTENCE_POLICIES = ["REPLACE", "COEXIST"] as const;
+
+/** 重大气候灾害固定使用的三个阶段。 */
+export const WEATHER_DISASTER_PHASES = ["WARNING", "DISASTER", "RECOVERY"] as const;
+
+/** 牌面天气与事件天气默认持续两个完整轮次。 */
+export const DEFAULT_WEATHER_DURATION_ROUNDS = 2;
+
+/** 每个昼夜阶段固定持续五个完整轮次。 */
+export const DAY_NIGHT_PHASE_DURATION_ROUNDS = 5;

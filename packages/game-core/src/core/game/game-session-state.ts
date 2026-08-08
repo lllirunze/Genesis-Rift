@@ -18,6 +18,11 @@ import type { PlayerInventoryState } from "../../systems/inventory/index.ts";
 import type { HexMap, PlayerExplorationState } from "../../systems/map/index.ts";
 import type { RandomManagerState } from "../../systems/random/index.ts";
 import type { WeatherDeckState } from "../../systems/environment/index.ts";
+import type {
+  WeatherDefinitionCatalog,
+  WeatherDisasterDefinitionCatalog,
+  WeatherRuntimeState,
+} from "../../systems/environment/index.ts";
 import type { GameStatus } from "./game-state.ts";
 import { GAME_SESSION_STATE_VERSION } from "./game-session-config.ts";
 import { validateGameSessionState } from "./validate-game-session-state.ts";
@@ -47,6 +52,7 @@ export interface WorldSessionState {
   readonly map: HexMap;
   readonly handCardDeck: HandCardDeckState;
   readonly weatherDeck: WeatherDeckState;
+  readonly weather: WeatherRuntimeState;
 }
 
 /** 表示一局游戏可被保存、校验和替换的完整权威状态。 */
@@ -82,6 +88,8 @@ export interface GameSessionValidationContext<
   readonly equipmentDefinitions: readonly EquipmentDefinition[];
   readonly handCardCatalog: HandCardCatalog;
   readonly statusDefinitions: StatusDefinitionCatalog;
+  readonly weatherDefinitions: WeatherDefinitionCatalog;
+  readonly weatherDisasterDefinitions: WeatherDisasterDefinitionCatalog;
 }
 
 /**

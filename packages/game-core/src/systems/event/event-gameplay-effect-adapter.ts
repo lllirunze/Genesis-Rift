@@ -14,6 +14,11 @@ import { receiveCoin, spendCoin } from "../economy/coin.ts";
 import { receiveItem } from "../inventory/receive-item.ts";
 import type { PlayerInventoryState } from "../inventory/player-inventory-state.ts";
 import {
+  applyWeather,
+  type WeatherDefinitionCatalog,
+  type WeatherRuntimeState,
+} from "../environment/index.ts";
+import {
   recordSuccessfulTileEntry,
   type HexMap,
   type PlayerExplorationState,
@@ -38,6 +43,7 @@ export interface EventEffectPlayerState<ResourceId extends string = string> {
 export interface EventGameplayEffectState<ResourceId extends string = string> {
   readonly map: HexMap;
   readonly players: readonly EventEffectPlayerState<ResourceId>[];
+  readonly weather: WeatherRuntimeState;
 }
 
 /** 描述事件适配器执行物品和状态效果时所需的静态定义与实例编号来源。 */
@@ -53,6 +59,8 @@ export interface EventGameplayEffectAdapterDependencies {
     targetPlayerId: string,
   ) => string;
   readonly getUpdateSequence: (context: EventEffectExecutionContext) => number;
+  readonly weatherDefinitions: WeatherDefinitionCatalog;
+  readonly createWeatherInstanceId: (context: EventEffectExecutionContext) => string;
 }
 
 /**
@@ -261,6 +269,66 @@ export class EventGameplayEffectStateAdapter<
     });
 
     return output;
+  }
+
+  /**
+   * 方法名：changeWeather
+   * 作用：通过天气运行时系统创建事件指定的全域或当前区域天气。
+   * @param effect 天气变化效果。
+   * @param context 当前事件效果执行上下文。
+   * @returns 新创建的活动天气实例。
+   */
+  changeWeather(
+    effect: EventEffectDefinitionById<"weather.change">,
+    context: EventEffectExecutionContext,
+  ): unknown {
+    const definition = this.dependencies.weatherDefinitions[effect.parameters.weatherId];
+
+    if (definition === undefined) {
+      throw new Error(`Unknown event weather definition: ${effect.parameters.weatherId}`);
+    }
+
+    const isWorldWeather = effect.targetType === "WORLD";
+    const scopeTargetId = isWorldWeather ? null : this.getTriggeringPlayerRegionId(context);
+    const weatherInstanceId = this.dependencies.createWeatherInstanceId(context);
+    const weather = applyWeather(this.state.weather, definition, {
+      instanceId: weatherInstanceId,
+      sourceType: "EVENT",
+      sourceId: context.eventId,
+      startedRound: context.resolvedAtTurn,
+      scopeType: isWorldWeather ? "WORLD" : "REGION",
+      coexistencePolicy: isWorldWeather ? "REPLACE" : "COEXIST",
+      scopeTargetId,
+      ...(effect.parameters.durationRounds === undefined
+        ? {}
+        : { durationRounds: effect.parameters.durationRounds }),
+    });
+    this.state = freezeState({ ...this.state, weather });
+
+    return weather.activeWeathers.find((instance) => instance.instanceId === weatherInstanceId);
+  }
+
+  /**
+   * 方法名：getTriggeringPlayerRegionId
+   * 作用：根据事件触发玩家当前位置解析当前区域标识。
+   * @param context 当前事件效果执行上下文。
+   * @returns 触发玩家当前地块的区域定义标识。
+   */
+  private getTriggeringPlayerRegionId(context: EventEffectExecutionContext): string {
+    const playerId = requireTriggeringPlayerId(context);
+    const player = this.state.players.find((candidate) => candidate.playerId === playerId);
+
+    if (player === undefined) {
+      throw new Error(`Event effect target player does not exist: ${playerId}`);
+    }
+
+    const tile = this.state.map.getTileById(player.currentTileId);
+
+    if (tile === undefined) {
+      throw new Error(`Event effect player tile does not exist: ${player.currentTileId}`);
+    }
+
+    return tile.regionDefinitionId;
   }
 
   /**

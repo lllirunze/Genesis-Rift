@@ -23,6 +23,7 @@ import { HexMap } from "../../systems/map/model/hex-map.ts";
 import { createHexTile } from "../../systems/map/model/hex-tile.ts";
 import type { MapContentDefinitionCatalog } from "../../systems/map/model/map-content-definition-catalog.ts";
 import { createWeatherDeck } from "../../systems/environment/weather/weather-deck.ts";
+import { createWeatherRuntimeState } from "../../systems/environment/weather/weather-runtime-state.ts";
 import { RandomManager } from "../../systems/random/core/random-manager.ts";
 import { createMasterSeed } from "../../systems/random/core/random-seed.ts";
 
@@ -97,6 +98,7 @@ function createWorldState(): { readonly world: WorldSessionState; readonly rando
       map,
       handCardDeck: createHandCardDeckState("shared-deck", [], {}),
       weatherDeck: createWeatherDeck(random.getStream("weather")),
+      weather: createWeatherRuntimeState(),
     },
     random,
   };
@@ -114,6 +116,8 @@ function createValidationContext(): GameSessionValidationContext<"health", "maxH
     equipmentDefinitions: [],
     handCardCatalog: {},
     statusDefinitions: {},
+    weatherDefinitions: {},
+    weatherDisasterDefinitions: {},
   };
 }
 
@@ -187,7 +191,7 @@ describe("game session state", () => {
     const { state } = createEmptySession();
 
     expect(state).toMatchObject({
-      version: 1,
+      version: 2,
       gameId: GAME_ID,
       status: "lobby",
       playerOrder: [],

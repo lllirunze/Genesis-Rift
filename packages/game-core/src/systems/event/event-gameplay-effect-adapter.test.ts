@@ -6,6 +6,7 @@ import { createCharacterStatusState } from "../battle/status/character-status-st
 import type { StatusDefinitionCatalog } from "../battle/status/status-definition.ts";
 import { createCharacterResourceState } from "../character/character-resource-state.ts";
 import { createPlayerInventory } from "../inventory/player-inventory-state.ts";
+import { createWeatherRuntimeState } from "../environment/weather/weather-runtime-state.ts";
 import { createPlayerExplorationState } from "../map/exploration/player-exploration-state.ts";
 import { getCubeCoordinateKey } from "../map/geometry/cube-coordinate-key.ts";
 import { generateBaseMapCoordinates } from "../map/generation/generate-base-map-coordinates.ts";
@@ -76,6 +77,21 @@ const MAP_DEFINITIONS = {
     },
   },
 } as const satisfies MapContentDefinitionCatalog;
+const WEATHER_DEFINITIONS = {
+  weather_000004: {
+    weatherId: "weather_000004",
+    name: "Blizzard",
+    description: "A regional blizzard used by the event adapter test.",
+    category: "EXTREME",
+    durationRounds: 2,
+    scopeType: "WORLD",
+    coexistencePolicy: "REPLACE",
+    tags: ["snow", "storm"],
+    hasNumericEffect: true,
+    avoidanceTypes: ["building"],
+    effectIds: ["weather.blizzard-movement"],
+  },
+} as const;
 
 /**
  * 方法名：createTestMap
@@ -131,6 +147,7 @@ describe("event gameplay effect adapter", () => {
     const adapter = new EventGameplayEffectStateAdapter(
       {
         map,
+        weather: createWeatherRuntimeState(),
         players: [
           {
             playerId: PLAYER_ID,
@@ -154,6 +171,8 @@ describe("event gameplay effect adapter", () => {
           ),
         createStatusInstanceId: (_, targetPlayerId) => `status-instance-${targetPlayerId}`,
         getUpdateSequence: () => 10,
+        weatherDefinitions: WEATHER_DEFINITIONS,
+        createWeatherInstanceId: (context) => `weather-instance-${context.effectIndex}`,
       },
     );
     const registry = createGameplayEventEffectHandlerRegistry(adapter);
@@ -196,6 +215,13 @@ describe("event gameplay effect adapter", () => {
       }),
       { ...baseContext, effectIndex: 4 },
     );
+    registry.execute(
+      createEffect("weather.change", "CURRENT_REGION", {
+        weatherId: "weather_000004",
+        durationRounds: 3,
+      }),
+      { ...baseContext, effectIndex: 5 },
+    );
 
     const player = adapter.getState().players[0]!;
     expect(player.resources.resources.health.current).toBe(70);
@@ -203,14 +229,21 @@ describe("event gameplay effect adapter", () => {
     expect(player.statuses.instances[0]).toMatchObject({ currentStacks: 2 });
     expect(player.currentTileId).toBe(destination.tileId);
     expect(player.exploration.exploredTileIds).toContain(destination.tileId);
+    expect(adapter.getState().weather.activeWeathers[0]).toMatchObject({
+      weatherId: "weather_000004",
+      scopeType: "REGION",
+      scopeTargetId: "region_000001",
+      remainingRounds: 3,
+    });
   });
 
-  it("keeps random item pools, battle and weather as deferred external instructions", () => {
+  it("keeps random item pools and battle as deferred external instructions", () => {
     const map = createTestMap();
     const origin = map.getTileAt({ x: 0, y: 0, z: 0 })!;
     const adapter = new EventGameplayEffectStateAdapter(
       {
         map,
+        weather: createWeatherRuntimeState(),
         players: [
           {
             playerId: PLAYER_ID,
@@ -230,10 +263,14 @@ describe("event gameplay effect adapter", () => {
         createItemInstanceIds: () => [],
         createStatusInstanceId: () => "status-instance",
         getUpdateSequence: () => 0,
+        weatherDefinitions: WEATHER_DEFINITIONS,
+        createWeatherInstanceId: () => "weather-instance",
       },
     );
     const result = createGameplayEventEffectHandlerRegistry(adapter).execute(
-      createEffect("weather.change", "WORLD", { weatherId: "weather_000001" }),
+      createEffect("battle.start", "TRIGGER_PLAYER", {
+        encounterDefinitionId: "encounter.test",
+      }),
       {
         instanceId: "event-instance-1",
         eventId: "event_000001",
@@ -244,6 +281,6 @@ describe("event gameplay effect adapter", () => {
       },
     );
 
-    expect(result).toMatchObject({ outcome: "DEFERRED", effectId: "weather.change" });
+    expect(result).toMatchObject({ outcome: "DEFERRED", effectId: "battle.start" });
   });
 });

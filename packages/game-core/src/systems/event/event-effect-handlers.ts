@@ -34,13 +34,16 @@ export interface GameplayEventEffectAdapter extends BasicEventEffectAdapter {
     effect: EventEffectDefinitionById<"movement.teleport">,
     context: EventEffectExecutionContext,
   ): unknown;
+  changeWeather(
+    effect: EventEffectDefinitionById<"weather.change">,
+    context: EventEffectExecutionContext,
+  ): unknown;
 }
 
 /** 当前尚未由事件核心直接执行、需要交给其他系统处理的效果标识。 */
 const DEFERRED_EVENT_EFFECT_IDS = [
   "item.obtainFromPool",
   "battle.start",
-  "weather.change",
 ] as const satisfies readonly EventEffectId[];
 
 /** 基础注册表尚未接入状态和移动时使用的额外延迟效果。 */
@@ -108,6 +111,11 @@ export function createGameplayEventEffectHandlerRegistry(
   registry.register(
     createAppliedHandler("movement.teleport", (effect, context) =>
       adapter.teleport(effect, context),
+    ),
+  );
+  registry.register(
+    createAppliedHandler("weather.change", (effect, context) =>
+      adapter.changeWeather(effect, context),
     ),
   );
 

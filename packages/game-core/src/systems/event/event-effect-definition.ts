@@ -40,6 +40,7 @@ export interface EventEffectParametersById {
   };
   readonly "weather.change": {
     readonly weatherId: string;
+    readonly durationRounds?: number;
   };
   readonly "movement.teleport": {
     readonly destinationTileId: string;
@@ -150,7 +151,24 @@ export function validateEventEffectDefinition(effect: EventEffectDefinition): vo
       validateSingleStringParameter(parameters, "encounterDefinitionId", candidate.effectId);
       return;
     case "weather.change":
-      validateSingleStringParameter(parameters, "weatherId", candidate.effectId);
+      assertAllowedParameterKeys(
+        parameters,
+        ["weatherId", "durationRounds"],
+        ["weatherId"],
+        candidate.effectId,
+      );
+      assertNonEmptyStringParameter(
+        parameters.weatherId,
+        `${candidate.effectId}.parameters.weatherId`,
+      );
+
+      if (parameters.durationRounds !== undefined) {
+        assertPositiveSafeInteger(
+          parameters.durationRounds,
+          `${candidate.effectId}.parameters.durationRounds`,
+        );
+      }
+      return;
       return;
     case "movement.teleport":
       validateSingleStringParameter(parameters, "destinationTileId", candidate.effectId);
@@ -241,6 +259,33 @@ function assertExactParameterKeys(
   ) {
     throw new Error(
       `${effectId}.parameters must contain exactly: ${sortedExpectedKeys.join(", ")}`,
+    );
+  }
+}
+
+/**
+ * 方法名：assertAllowedParameterKeys
+ * 作用：校验参数只包含允许键，并确保所有必填键存在。
+ * @param parameters 需要校验的参数对象。
+ * @param allowedKeys 允许出现的全部参数键。
+ * @param requiredKeys 必须出现的参数键。
+ * @param effectId 当前效果标识。
+ * @returns 无返回值。
+ */
+function assertAllowedParameterKeys(
+  parameters: Readonly<Record<string, unknown>>,
+  allowedKeys: readonly string[],
+  requiredKeys: readonly string[],
+  effectId: string,
+): void {
+  const actualKeys = Object.keys(parameters);
+
+  if (
+    actualKeys.some((key) => !allowedKeys.includes(key)) ||
+    requiredKeys.some((key) => !actualKeys.includes(key))
+  ) {
+    throw new Error(
+      `${effectId}.parameters may contain ${allowedKeys.join(", ")} and must contain ${requiredKeys.join(", ")}`,
     );
   }
 }

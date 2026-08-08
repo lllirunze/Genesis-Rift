@@ -1,8 +1,12 @@
 import type { SystemScaffold } from "../system-scaffold.ts";
 
 export * from "./weather/weather-config.ts";
+export * from "./weather/day-night.ts";
 export * from "./weather/weather-card.ts";
 export * from "./weather/weather-deck.ts";
+export * from "./weather/weather-definition.ts";
+export * from "./weather/weather-runtime-state.ts";
+export * from "./weather/settle-weather-round.ts";
 export * from "./weather/weather-schedule.ts";
 
 /** 当前模块对外公开的只读配置值。 */

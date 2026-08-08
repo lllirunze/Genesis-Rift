@@ -22,7 +22,12 @@ import {
   validateCharacterStatusState,
   validateStatusDefinitions,
 } from "../../systems/battle/index.ts";
-import { validateWeatherDeckState } from "../../systems/environment/index.ts";
+import {
+  validateWeatherDeckState,
+  validateWeatherDefinitionCatalog,
+  validateWeatherDisasterDefinition,
+  validateWeatherRuntimeState,
+} from "../../systems/environment/index.ts";
 
 /**
  * 方法名：validateGameSessionState
@@ -75,6 +80,11 @@ export function validateGameSessionState<
     context.handCardCatalog,
   );
   validateWeatherDeckState(state.world.weatherDeck);
+  validateWeatherRuntimeState(
+    state.world.weather,
+    context.weatherDefinitions,
+    context.weatherDisasterDefinitions,
+  );
   RandomManager.restore(state.random);
 }
 
@@ -91,6 +101,11 @@ function validateStaticDefinitions<ResourceId extends string, DerivedAttribute e
   validateItemDefinitionCatalog(context.itemDefinitions);
   validateEquipmentDefinitions(context.equipmentDefinitions);
   validateStatusDefinitions(Object.values(context.statusDefinitions));
+  validateWeatherDefinitionCatalog(context.weatherDefinitions);
+
+  for (const definition of Object.values(context.weatherDisasterDefinitions)) {
+    validateWeatherDisasterDefinition(definition);
+  }
 }
 
 /**

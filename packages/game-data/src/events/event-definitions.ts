@@ -221,6 +221,7 @@ export const BLIZZARD_EVENT_DEFINITION = {
         targetType: "CURRENT_REGION",
         parameters: {
           weatherId: "weather_000004",
+          durationRounds: 3,
         },
         failurePolicy: "STOP",
       },
