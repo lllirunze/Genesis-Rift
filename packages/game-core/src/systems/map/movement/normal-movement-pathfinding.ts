@@ -14,6 +14,7 @@ import {
 } from "../model/terrain-definition.ts";
 import { calculateNormalMovementCost } from "./movement-cost-policy.ts";
 import { getNormalMovementCandidates } from "./normal-movement.ts";
+import type { NormalMovementRuleResolver } from "./normal-movement-rule.ts";
 
 /** 描述普通移动寻路与可达区域查询共享的输入。 */
 export interface NormalMovementPathfindingInput {
@@ -22,6 +23,7 @@ export interface NormalMovementPathfindingInput {
   readonly explorationState: PlayerExplorationState;
   readonly terrainDefinitions: TerrainDefinitionCatalog;
   readonly availableMovementPoints: number;
+  readonly ruleResolver?: NormalMovementRuleResolver;
 }
 
 /** 描述查询指定普通移动目标时所需的输入。 */
@@ -41,6 +43,7 @@ export interface NormalMovementRouteStep {
   readonly baseCost: number;
   readonly terrainCost: number;
   readonly uphillCost: number;
+  readonly environmentCost: number;
   readonly movementCost: number;
   readonly accumulatedMovementCost: number;
   readonly isFirstExploration: boolean;
@@ -172,11 +175,16 @@ function searchNormalMovementRoutes(
 
     expandedTileIds.add(currentRecord.tile.tileId);
 
-    for (const candidate of getNormalMovementCandidates(input.map, currentRecord.tile.coordinate)) {
+    for (const candidate of getNormalMovementCandidates(
+      input.map,
+      currentRecord.tile.coordinate,
+      input.ruleResolver,
+    )) {
       const movementCost = calculateNormalMovementCost(
         currentRecord.tile,
         candidate.targetTile,
         input.terrainDefinitions,
+        input.ruleResolver,
       );
       const paidMovementCost = currentRecord.paidMovementCost + movementCost.totalCost;
 
@@ -211,6 +219,7 @@ function searchNormalMovementRoutes(
           baseCost: movementCost.baseCost,
           terrainCost: movementCost.terrainCost,
           uphillCost: movementCost.uphillCost,
+          environmentCost: movementCost.environmentCost,
           movementCost: movementCost.totalCost,
           accumulatedMovementCost: paidMovementCost,
           isFirstExploration,

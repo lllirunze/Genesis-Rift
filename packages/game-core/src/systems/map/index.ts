@@ -21,6 +21,7 @@ export * from "./movement/movement-config.ts";
 export * from "./movement/movement-cost-policy.ts";
 export * from "./movement/normal-movement.ts";
 export * from "./movement/normal-movement-pathfinding.ts";
+export * from "./movement/normal-movement-rule.ts";
 export * from "./movement/settle-normal-movement.ts";
 export * from "./model/hex-map.ts";
 export * from "./model/hex-tile.ts";

@@ -167,6 +167,28 @@ describe("normal movement pathfinding", () => {
     ).toBeNull();
   });
 
+  it("includes external environment costs when searching and rebuilding a route", () => {
+    const map = createMap();
+    const center = requireTile(map, { x: 0, y: 0, z: 0 });
+    const north = requireTile(map, { x: 0, y: 1, z: -1 });
+    const route = findNormalMovementRoute({
+      map,
+      terrainDefinitions: MAP_CONTENT_DEFINITIONS.terrains,
+      originTileId: center.tileId,
+      targetTileId: north.tileId,
+      explorationState: createExplorationState(center, north),
+      availableMovementPoints: 3,
+      ruleResolver: () => ({ blocked: false, additionalCost: 2 }),
+    });
+
+    expect(route).toMatchObject({
+      paidMovementCost: 3,
+      consumedMovementPoints: 3,
+      remainingMovementPoints: 0,
+      steps: [{ environmentCost: 2, movementCost: 3 }],
+    });
+  });
+
   it("returns an empty zero-cost route when the target is the origin", () => {
     const map = createMap();
     const center = requireTile(map, { x: 0, y: 0, z: 0 });

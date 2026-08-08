@@ -3,6 +3,7 @@ import {
   validateWeatherCardMappings,
   validateWeatherDefinitionCatalog,
   validateWeatherDisasterDefinition,
+  validateWeatherEffectReferences,
 } from "@genesis-rift/game-core";
 import { describe, expect, it } from "vitest";
 
@@ -13,6 +14,7 @@ import {
   WEATHER_DEFINITION_CATALOG,
   WEATHER_DISASTER_DEFINITION_CATALOG,
 } from "./weather-config.ts";
+import { WEATHER_EFFECT_DEFINITION_CATALOG } from "./weather-effect-config.ts";
 
 describe("weather configuration", () => {
   it("maps all 54 standard cards to valid weather or disaster resources", () => {
@@ -27,6 +29,28 @@ describe("weather configuration", () => {
     expect(Object.keys(WEATHER_CARD_MAPPING_CATALOG)).toHaveLength(
       STANDARD_WEATHER_CARD_IDS.length,
     );
+    expect(() =>
+      validateWeatherEffectReferences(
+        WEATHER_DEFINITION_CATALOG,
+        WEATHER_DISASTER_DEFINITION_CATALOG,
+        WEATHER_EFFECT_DEFINITION_CATALOG,
+      ),
+    ).not.toThrow();
+  });
+
+  it("configures executable map effects for heavy rain, dense fog and blizzard", () => {
+    expect(WEATHER_EFFECT_DEFINITION_CATALOG["weather.muddy-movement"]).toMatchObject({
+      effectType: "MOVEMENT_COST",
+      movementCostModifier: 1,
+    });
+    expect(WEATHER_EFFECT_DEFINITION_CATALOG["weather.vision-minus-one"]).toMatchObject({
+      effectType: "VISION_RANGE",
+      visionRangeModifier: -1,
+    });
+    expect(WEATHER_EFFECT_DEFINITION_CATALOG["weather.blizzard-movement"]).toMatchObject({
+      effectType: "MOVEMENT_COST",
+      movementCostModifier: 2,
+    });
   });
 
   it("keeps the event weather id aligned with the blizzard card configuration", () => {

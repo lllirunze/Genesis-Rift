@@ -14,6 +14,7 @@ import {
 } from "../model/terrain-definition.ts";
 import { calculateNormalMovementCost } from "./movement-cost-policy.ts";
 import { NORMAL_MOVEMENT_SETTLEMENT_OUTCOMES } from "./movement-config.ts";
+import type { NormalMovementRuleResolver } from "./normal-movement-rule.ts";
 import {
   evaluateNormalMovementDirections,
   type NormalMovementDirectionEvaluation,
@@ -30,6 +31,7 @@ export interface SettleNormalMovementInput {
   readonly terrainDefinitions: TerrainDefinitionCatalog;
   readonly availableMovementPoints: number;
   readonly directions: readonly HexDirection[];
+  readonly ruleResolver?: NormalMovementRuleResolver;
 }
 
 /** 描述玩家成功完成的一步普通移动。 */
@@ -44,6 +46,7 @@ export interface SettledNormalMovementStep {
   readonly baseCost: number;
   readonly terrainCost: number;
   readonly uphillCost: number;
+  readonly environmentCost: number;
   readonly movementCost: number;
   readonly remainingMovementPoints: number;
   readonly isFirstExploration: boolean;
@@ -99,7 +102,12 @@ export function settleNormalMovement(input: SettleNormalMovementInput): SettleNo
   const steps: SettledNormalMovementStep[] = [];
 
   for (const direction of input.directions) {
-    const evaluation = getDirectionEvaluation(input.map, currentTile.coordinate, direction);
+    const evaluation = getDirectionEvaluation(
+      input.map,
+      currentTile.coordinate,
+      direction,
+      input.ruleResolver,
+    );
 
     if (!evaluation.available) {
       return createInterruptedResult(
@@ -111,7 +119,7 @@ export function settleNormalMovement(input: SettleNormalMovementInput): SettleNo
         steps,
         {
           reason:
-            evaluation.reason === "BLOCKED"
+            evaluation.reason === "BLOCKED" || evaluation.reason === "ENVIRONMENT_BLOCKED"
               ? "blocked"
               : evaluation.reason === "ELEVATION_DIFFERENCE"
                 ? "elevation_difference"
@@ -126,6 +134,7 @@ export function settleNormalMovement(input: SettleNormalMovementInput): SettleNo
       currentTile,
       evaluation.targetTile,
       input.terrainDefinitions,
+      input.ruleResolver,
     );
 
     if (remainingMovementPoints < movementCost.totalCost) {
@@ -171,6 +180,7 @@ export function settleNormalMovement(input: SettleNormalMovementInput): SettleNo
         baseCost: movementCost.baseCost,
         terrainCost: movementCost.terrainCost,
         uphillCost: movementCost.uphillCost,
+        environmentCost: movementCost.environmentCost,
         movementCost: movementCost.totalCost,
         remainingMovementPoints,
         isFirstExploration: entry.isFirstExploration,
@@ -209,6 +219,7 @@ export function settleNormalMovement(input: SettleNormalMovementInput): SettleNo
  * @param map 当前六边形地图。
  * @param originCoordinate 当前地块的立方体坐标。
  * @param direction 玩家计划执行的移动方向。
+ * @param ruleResolver 天气、区域或状态系统提供的可选普通移动规则解析器。
  * @returns 指定方向对应的可用或不可用结果。
  * @throws 方向不属于当前六方向配置时抛出错误。
  */
@@ -216,8 +227,9 @@ function getDirectionEvaluation(
   map: HexMap,
   originCoordinate: CubeCoordinate,
   direction: HexDirection,
+  ruleResolver?: NormalMovementRuleResolver,
 ): NormalMovementDirectionEvaluation {
-  const evaluation = evaluateNormalMovementDirections(map, originCoordinate).find(
+  const evaluation = evaluateNormalMovementDirections(map, originCoordinate, ruleResolver).find(
     (candidate) => candidate.direction === direction,
   );
 

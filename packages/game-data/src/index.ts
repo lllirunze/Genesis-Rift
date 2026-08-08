@@ -22,3 +22,4 @@ export * from "./validation/validate-identity-configs.ts";
 export * from "./validation/validate-level-system-config.ts";
 export * from "./validation/validate-race-configs.ts";
 export * from "./weather/weather-config.ts";
+export * from "./weather/weather-effect-config.ts";

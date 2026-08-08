@@ -44,6 +44,7 @@ describe("normal movement cost policy", () => {
       baseCost: 1,
       terrainCost: 0,
       uphillCost: example.uphillCost,
+      environmentCost: 0,
       totalCost: example.totalCost,
     });
   });
@@ -60,7 +61,25 @@ describe("normal movement cost policy", () => {
       baseCost: 1,
       terrainCost: 0,
       uphillCost: 0,
+      environmentCost: 0,
       totalCost: 1,
+    });
+  });
+
+  it("adds a validated external environment cost without changing terrain cost", () => {
+    const result = calculateNormalMovementCost(
+      createTile("origin", 0, "terrain_000001"),
+      createTile("target", 0, "terrain_000001"),
+      TERRAIN_DEFINITIONS,
+      () => ({ blocked: false, additionalCost: 2 }),
+    );
+
+    expect(result).toMatchObject({
+      baseCost: 1,
+      terrainCost: 0,
+      uphillCost: 0,
+      environmentCost: 2,
+      totalCost: 3,
     });
   });
 

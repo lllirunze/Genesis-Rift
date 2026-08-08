@@ -5,7 +5,10 @@ export * from "./weather/day-night.ts";
 export * from "./weather/weather-card.ts";
 export * from "./weather/weather-deck.ts";
 export * from "./weather/weather-definition.ts";
+export * from "./weather/weather-effect-config.ts";
+export * from "./weather/weather-effect-definition.ts";
 export * from "./weather/weather-runtime-state.ts";
+export * from "./weather/resolve-active-weather-effects.ts";
 export * from "./weather/settle-weather-round.ts";
 export * from "./weather/weather-schedule.ts";
 

@@ -12,6 +12,10 @@ import type { HexMap } from "../model/hex-map.ts";
 import type { HexTile } from "../model/hex-tile.ts";
 import { NORMAL_MOVEMENT_UNAVAILABLE_REASONS } from "./movement-config.ts";
 import { MAX_NORMAL_MOVEMENT_ELEVATION_DIFFERENCE } from "./movement-config.ts";
+import {
+  resolveNormalMovementRuleAdjustment,
+  type NormalMovementRuleResolver,
+} from "./normal-movement-rule.ts";
 
 /** 描述当前模块对外公开的业务数据契约。 */
 export type NormalMovementUnavailableReason = (typeof NORMAL_MOVEMENT_UNAVAILABLE_REASONS)[number];
@@ -47,11 +51,14 @@ export type NormalMovementDirectionEvaluation =
 export function evaluateNormalMovementDirections(
   map: HexMap,
   originCoordinate: CubeCoordinate,
+  ruleResolver?: NormalMovementRuleResolver,
 ): readonly NormalMovementDirectionEvaluation[] {
   const originTile = requireOriginTile(map, originCoordinate);
 
   return Object.freeze(
-    HEX_DIRECTIONS.map((direction) => evaluateNormalMovementDirection(map, originTile, direction)),
+    HEX_DIRECTIONS.map((direction) =>
+      evaluateNormalMovementDirection(map, originTile, direction, ruleResolver),
+    ),
   );
 }
 
@@ -65,8 +72,9 @@ export function evaluateNormalMovementDirections(
 export function getNormalMovementCandidates(
   map: HexMap,
   originCoordinate: CubeCoordinate,
+  ruleResolver?: NormalMovementRuleResolver,
 ): readonly NormalMovementCandidate[] {
-  return evaluateNormalMovementDirections(map, originCoordinate).filter(
+  return evaluateNormalMovementDirections(map, originCoordinate, ruleResolver).filter(
     (evaluation): evaluation is NormalMovementCandidate => evaluation.available,
   );
 }
@@ -83,6 +91,7 @@ function evaluateNormalMovementDirection(
   map: HexMap,
   originTile: HexTile,
   direction: HexDirection,
+  ruleResolver?: NormalMovementRuleResolver,
 ): NormalMovementDirectionEvaluation {
   const targetCoordinate = getNeighborCoordinate(originTile.coordinate, direction);
 
@@ -120,6 +129,17 @@ function evaluateNormalMovementDirection(
       direction,
       targetCoordinate,
       reason: "ELEVATION_DIFFERENCE",
+    });
+  }
+
+  const adjustment = resolveNormalMovementRuleAdjustment(ruleResolver, { originTile, targetTile });
+
+  if (adjustment.blocked) {
+    return Object.freeze({
+      available: false,
+      direction,
+      targetCoordinate,
+      reason: "ENVIRONMENT_BLOCKED",
     });
   }
 

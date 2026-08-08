@@ -350,7 +350,7 @@ export const WEATHER_CARD_CONFIGURATIONS = [
     "EXTREME",
     "WORLD",
     ["snow", "storm", "cold"],
-    ["weather.blizzard-movement"],
+    ["weather.blizzard-movement", "weather.vision-minus-one"],
   ),
   createWeatherCardConfiguration(
     "SPADE_10",
