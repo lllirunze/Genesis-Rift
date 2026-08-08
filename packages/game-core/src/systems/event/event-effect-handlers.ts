@@ -24,12 +24,29 @@ export interface BasicEventEffectAdapter {
   ): unknown;
 }
 
+/** 描述已经接入角色状态与地图系统的完整事件效果适配接口。 */
+export interface GameplayEventEffectAdapter extends BasicEventEffectAdapter {
+  applyStatus(
+    effect: EventEffectDefinitionById<"status.add">,
+    context: EventEffectExecutionContext,
+  ): unknown;
+  teleport(
+    effect: EventEffectDefinitionById<"movement.teleport">,
+    context: EventEffectExecutionContext,
+  ): unknown;
+}
+
 /** 当前尚未由事件核心直接执行、需要交给其他系统处理的效果标识。 */
 const DEFERRED_EVENT_EFFECT_IDS = [
   "item.obtainFromPool",
-  "status.add",
   "battle.start",
   "weather.change",
+] as const satisfies readonly EventEffectId[];
+
+/** 基础注册表尚未接入状态和移动时使用的额外延迟效果。 */
+const BASIC_DEFERRED_EVENT_EFFECT_IDS = [
+  ...DEFERRED_EVENT_EFFECT_IDS,
+  "status.add",
   "movement.teleport",
 ] as const satisfies readonly EventEffectId[];
 
@@ -54,6 +71,44 @@ export function createStandardEventEffectHandlerRegistry(
   );
   registry.register(
     createAppliedHandler("item.obtain", (effect, context) => adapter.obtainItem(effect, context)),
+  );
+
+  for (const effectId of BASIC_DEFERRED_EVENT_EFFECT_IDS) {
+    registry.register(createDeferredHandler(effectId));
+  }
+
+  return registry;
+}
+
+/**
+ * 方法名：createGameplayEventEffectHandlerRegistry
+ * 作用：创建已经接入角色资源、元宝、确定物品、状态和移动能力的效果注册表。
+ * @param adapter 当前对局使用的完整事件业务适配器。
+ * @returns 仅将随机物品池、战斗和天气保留为延迟指令的处理器注册表。
+ */
+export function createGameplayEventEffectHandlerRegistry(
+  adapter: GameplayEventEffectAdapter,
+): EventEffectHandlerRegistry {
+  const registry = new EventEffectHandlerRegistry();
+
+  registry.register(
+    createAppliedHandler("characterResource.modify", (effect, context) =>
+      adapter.modifyCharacterResource(effect, context),
+    ),
+  );
+  registry.register(
+    createAppliedHandler("coin.modify", (effect, context) => adapter.modifyCoin(effect, context)),
+  );
+  registry.register(
+    createAppliedHandler("item.obtain", (effect, context) => adapter.obtainItem(effect, context)),
+  );
+  registry.register(
+    createAppliedHandler("status.add", (effect, context) => adapter.applyStatus(effect, context)),
+  );
+  registry.register(
+    createAppliedHandler("movement.teleport", (effect, context) =>
+      adapter.teleport(effect, context),
+    ),
   );
 
   for (const effectId of DEFERRED_EVENT_EFFECT_IDS) {

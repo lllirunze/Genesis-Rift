@@ -15,6 +15,8 @@ export * from "./event-effect-definition.ts";
 export * from "./event-effect-handler.ts";
 export * from "./event-effect-handler-registry.ts";
 export * from "./event-effect-handlers.ts";
+export * from "./event-flow-instruction.ts";
+export * from "./event-gameplay-effect-adapter.ts";
 export * from "./event-pool-definition.ts";
 export * from "./event-resolution-definition.ts";
 export * from "./event-runtime-config.ts";
@@ -26,6 +28,8 @@ export * from "./event-view.ts";
 export * from "./evaluate-event-condition.ts";
 export * from "./select-event-candidate.ts";
 export * from "./resolve-event.ts";
+export * from "./settle-event-flow.ts";
+export * from "./trigger-event.ts";
 
 /** 当前模块对外公开的只读配置值。 */
 export const eventSystem: SystemScaffold<"event"> = {

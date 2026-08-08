@@ -17,6 +17,13 @@ describe("event definitions", () => {
       "event_000002",
       "event_000003",
       "event_000004",
+      "event_000005",
+      "event_000006",
+      "event_000007",
+      "event_000008",
+      "event_000009",
+      "event_000010",
+      "event_000011",
     ]);
   });
 
