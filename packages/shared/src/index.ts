@@ -1,6 +1,5 @@
 export * from "./config/attribute-config.ts";
 export * from "./config/item-config.ts";
-export * from "./config/lan-security-config.ts";
 export * from "./config/protocol-config.ts";
 export * from "./config/quality-config.ts";
 export * from "./config/resource-id-config.ts";

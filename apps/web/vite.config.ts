@@ -1,8 +1,15 @@
 import { isIP } from "node:net";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-import { ALLOWED_CLIENT_IPS } from "@genesis-rift/shared";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+
+const DEFAULT_ALLOWED_CLIENT_IPS = ["127.0.0.1", "::1"] as const;
+const LOCAL_IP_WHITELIST_CONFIG_PATH = fileURLToPath(
+  new URL("../../config/allowed-client-ips.local.json", import.meta.url),
+);
+const ALLOWED_CLIENT_IPS = loadAllowedClientIps();
 
 /** 将 Vite 开发网页服务限制为与游戏服务相同的精确 IP 白名单。 */
 function ipWhitelistPlugin() {
@@ -59,6 +66,38 @@ function normalizeIpAddress(address: string | undefined): string | null {
 
   const normalized = address.startsWith("::ffff:") ? address.slice(7) : address;
   return isIP(normalized) === 0 ? null : normalized.toLowerCase();
+}
+
+/** 读取不提交至 Git 的网页开发服务器本地白名单配置。 */
+function loadAllowedClientIps(): readonly string[] {
+  if (!existsSync(LOCAL_IP_WHITELIST_CONFIG_PATH)) {
+    return DEFAULT_ALLOWED_CLIENT_IPS;
+  }
+
+  const parsed = JSON.parse(readFileSync(LOCAL_IP_WHITELIST_CONFIG_PATH, "utf-8")) as unknown;
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new TypeError("Allowed client IP configuration must be an object");
+  }
+
+  const allowedClientIps = (parsed as Record<string, unknown>).allowedClientIps;
+
+  if (
+    !Array.isArray(allowedClientIps) ||
+    allowedClientIps.some((clientIp) => typeof clientIp !== "string")
+  ) {
+    throw new TypeError("allowedClientIps must be an array of strings");
+  }
+
+  return allowedClientIps.map((clientIp) => {
+    const normalizedClientIp = normalizeIpAddress(clientIp);
+
+    if (normalizedClientIp === null) {
+      throw new TypeError(`Invalid allowed client IP: ${clientIp}`);
+    }
+
+    return normalizedClientIp;
+  });
 }
 
 export default defineConfig({

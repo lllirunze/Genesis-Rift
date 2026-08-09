@@ -2,7 +2,6 @@ import { createServer } from "node:http";
 
 import {
   PROTOCOL_VERSION,
-  ALLOWED_CLIENT_IPS,
   type ClientToServerEvents,
   type InterServerEvents,
   type ServerSocketData,
@@ -15,7 +14,11 @@ import { GameSessionManager } from "../game/game-session-manager.ts";
 import { SocketSessionManager } from "../sessions/socket-session-manager.ts";
 import { bindGameSocketEvents } from "../transport/bind-game-socket-events.ts";
 import { bindRoomSocketEvents } from "../transport/bind-room-socket-events.ts";
-import { IP_WHITELIST_REJECTION, isIpWhitelisted } from "../security/index.ts";
+import {
+  IP_WHITELIST_REJECTION,
+  isIpWhitelisted,
+  loadAllowedClientIps,
+} from "../security/index.ts";
 
 interface LanServerOptions {
   clientOrigin: string;
@@ -29,7 +32,7 @@ interface LanServerOptions {
  * @returns 本次处理得到的结果。
  */
 export function createLanServer(options: LanServerOptions) {
-  const allowedClientIps = options.allowedClientIps ?? ALLOWED_CLIENT_IPS;
+  const allowedClientIps = options.allowedClientIps ?? loadAllowedClientIps();
   const httpServer = createServer((request, response) => {
     if (!isIpWhitelisted(request.socket.remoteAddress, allowedClientIps)) {
       response.writeHead(IP_WHITELIST_REJECTION.statusCode, {
