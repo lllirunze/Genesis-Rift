@@ -5,6 +5,8 @@ type Brand<Value, Name extends string> = Value & { readonly [brand]: Name };
 
 /** 游戏对局的唯一标识。 */
 export type GameId = Brand<string, "GameId">;
+/** 局域网房间的唯一标识。 */
+export type RoomId = Brand<string, "RoomId">;
 /** 玩家在对局中的唯一标识。 */
 export type PlayerId = Brand<string, "PlayerId">;
 /** 地图地块的唯一标识。 */
