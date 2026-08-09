@@ -6,6 +6,10 @@ import {
 } from "@genesis-rift/shared";
 
 import { EQUIPMENT_TYPES } from "./equipment-config.ts";
+import {
+  type EquipmentActiveAbilityDefinition,
+  validateEquipmentActiveAbilityDefinition,
+} from "./equipment-active-ability-definition.ts";
 
 /** 描述当前模块对外公开的业务数据契约。 */
 export type EquipmentType = (typeof EQUIPMENT_TYPES)[number];
@@ -41,6 +45,7 @@ export interface EquipmentDefinition {
   readonly allowDuplicateEquipping: boolean;
   readonly weaponAttack?: number;
   readonly attributeEffects: readonly EquipmentAttributeEffect[];
+  readonly activeAbility?: EquipmentActiveAbilityDefinition;
 }
 
 /**
@@ -63,6 +68,10 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
 
   if (!EQUIPMENT_TYPES.includes(definition.type)) {
     throw new RangeError(`Unsupported equipment type: ${definition.type}`);
+  }
+
+  if (definition.activeAbility !== undefined) {
+    validateEquipmentActiveAbilityDefinition(definition.activeAbility);
   }
 
   if (!isStandardQuality(definition.quality)) {

@@ -5,6 +5,11 @@ import { grantCharacterExperience } from "../../level/grant-character-experience
 import { receiveCoin } from "../../economy/coin.ts";
 import { receiveItem } from "../../inventory/receive-item.ts";
 import type { PlayerInventoryState } from "../../inventory/player-inventory-state.ts";
+import { acquireHandCardsFromSharedDeck } from "../../hand/acquire-hand-cards.ts";
+import type { HandCardDeckState } from "../../hand/hand-card-deck-state.ts";
+import type { HandCardCatalog } from "../../hand/hand-card-definition.ts";
+import type { PlayerHandState } from "../../hand/player-hand-state.ts";
+import type { RandomStream } from "../../random/core/random-stream.ts";
 import type { BattleSettlement } from "./battle-settlement.ts";
 
 /** 描述击败目标后可以直接派发的确定物品奖励。 */
@@ -18,12 +23,23 @@ export interface BattleRewardDefinition {
   readonly experience: number;
   readonly coin: number;
   readonly items: readonly BattleItemReward[];
+  readonly handCardCount?: number;
+}
+
+/** 描述派发手牌战斗奖励时所需的共享牌库与获奖者手牌上下文。 */
+export interface BattleHandRewardContext {
+  readonly deckState: HandCardDeckState;
+  readonly playerHandState: PlayerHandState;
+  readonly handCardCatalog: HandCardCatalog;
+  readonly randomStream: RandomStream;
 }
 
 /** 描述战斗奖励派发完成后的角色与背包状态。 */
 export interface SettleBattleRewardsResult {
   readonly character: CharacterState;
   readonly inventory: PlayerInventoryState;
+  readonly deckState: HandCardDeckState | null;
+  readonly playerHandState: PlayerHandState | null;
 }
 
 /**
@@ -35,6 +51,7 @@ export interface SettleBattleRewardsResult {
  * @param reward 本次击败对应的静态奖励定义。
  * @param itemDefinitions 已加载的物品静态定义注册表。
  * @param createItemInstanceIds 为元宝和物品提供确定性实例标识的工厂。
+ * @param handRewardContext 共享牌库与获奖者手牌上下文；仅配置手牌奖励时必填。
  * @returns 奖励全部成功后的角色与背包最新状态。
  * @throws 目标未死亡、归属不一致、奖励非法或背包无法接收全部奖励时抛出错误。
  */
@@ -45,6 +62,7 @@ export function settleBattleRewards(
   reward: BattleRewardDefinition,
   itemDefinitions: ItemDefinitionCatalog,
   createItemInstanceIds: (definitionId: string, quantity: number) => readonly string[],
+  handRewardContext: BattleHandRewardContext | null = null,
 ): SettleBattleRewardsResult {
   if (settlement.defenderSurvival.status !== "DEAD") {
     throw new Error("Battle rewards require the defender to be formally dead");
@@ -59,6 +77,8 @@ export function settleBattleRewards(
 
   validateBattleRewardDefinition(reward);
   let nextInventory = inventory;
+  let deckState: HandCardDeckState | null = null;
+  let playerHandState: PlayerHandState | null = null;
 
   if (reward.coin > 0) {
     const receivedCoin = receiveCoin(
@@ -89,9 +109,38 @@ export function settleBattleRewards(
     nextInventory = receivedItem.inventory;
   }
 
+  const handCardCount = reward.handCardCount ?? 0;
+  if (handCardCount > 0) {
+    if (handRewardContext === null) {
+      throw new Error("Hand card rewards require a shared deck context");
+    }
+
+    if (handRewardContext.playerHandState.playerId !== character.playerId) {
+      throw new Error("Battle hand reward state must belong to the attacker");
+    }
+
+    const handResult = acquireHandCardsFromSharedDeck(
+      handRewardContext.deckState,
+      handRewardContext.playerHandState,
+      handRewardContext.handCardCatalog,
+      handRewardContext.randomStream,
+      { type: "boss", sourceId: settlement.settlementId },
+      handCardCount,
+    );
+
+    if (!handResult.isComplete) {
+      throw new Error("Battle reward cannot draw the configured hand card count");
+    }
+
+    deckState = handResult.deckState;
+    playerHandState = handResult.playerHandState;
+  }
+
   return Object.freeze({
     character: grantCharacterExperience(character, reward.experience),
     inventory: nextInventory,
+    deckState,
+    playerHandState,
   });
 }
 
@@ -105,6 +154,7 @@ export function settleBattleRewards(
 export function validateBattleRewardDefinition(reward: BattleRewardDefinition): void {
   assertNonNegativeSafeInteger(reward.experience, "experience");
   assertNonNegativeSafeInteger(reward.coin, "coin");
+  assertNonNegativeSafeInteger(reward.handCardCount ?? 0, "handCardCount");
   const itemIds = new Set<string>();
 
   for (const item of reward.items) {

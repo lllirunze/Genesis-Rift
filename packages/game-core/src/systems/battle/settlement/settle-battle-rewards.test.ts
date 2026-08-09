@@ -4,7 +4,13 @@ import type { ItemDefinitionCatalog, PlayerId } from "@genesis-rift/shared";
 
 import { createCharacter } from "../../character/create-character.ts";
 import { getCoinBalance } from "../../economy/coin.ts";
+import { createHandCardDeckState } from "../../hand/hand-card-deck-state.ts";
+import type { HandCardCatalog } from "../../hand/hand-card-definition.ts";
+import { createTestHandCardId } from "../../hand/hand-card-test-helper.ts";
+import { createPlayerHandState } from "../../hand/player-hand-state.ts";
 import { createPlayerInventory } from "../../inventory/player-inventory-state.ts";
+import { createRandomStreamSeed } from "../../random/core/random-seed.ts";
+import { RandomStream } from "../../random/core/random-stream.ts";
 import type { BattleSettlement } from "./battle-settlement.ts";
 import { settleBattleRewards } from "./settle-battle-rewards.ts";
 
@@ -63,6 +69,43 @@ describe("settleBattleRewards", () => {
         () => [],
       ),
     ).toThrow("formally dead");
+  });
+
+  it("moves configured hand card rewards from the shared deck into the attacker hand", () => {
+    const cardId = createTestHandCardId(1);
+    const cards: HandCardCatalog = {
+      [cardId]: {
+        cardId,
+        name: "sprint",
+        description: "Move farther.",
+        quality: "common",
+        type: "action",
+        usage: { timing: "active", responseTypes: [], conditionIds: [], targetTypes: ["player"] },
+        effects: [{ effectId: "movement.modify", parameters: { amount: 1 } }],
+        destinationAfterResolution: "discard",
+      },
+    };
+    const result = settleBattleRewards(
+      createSettlement("DEAD"),
+      createTestCharacter(),
+      createPlayerInventory("player_a" as PlayerId),
+      { experience: 0, coin: 0, items: [], handCardCount: 1 },
+      ITEMS,
+      () => [],
+      {
+        deckState: createHandCardDeckState("deck.shared", [cardId], cards),
+        playerHandState: createPlayerHandState("player_a" as PlayerId),
+        handCardCatalog: cards,
+        randomStream: RandomStream.create(
+          "deck",
+          "deck.shared",
+          createRandomStreamSeed("0123456789abcdef"),
+        ),
+      },
+    );
+
+    expect(result.playerHandState?.handCardIds).toEqual([cardId]);
+    expect(result.deckState?.drawPile).toEqual([]);
   });
 });
 
