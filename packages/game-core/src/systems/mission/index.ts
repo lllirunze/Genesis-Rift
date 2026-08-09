@@ -7,6 +7,7 @@ export * from "./reforge-mission.ts";
 export * from "./mission-candidate-selection.ts";
 export * from "./generate-mission-set.ts";
 export * from "./player-mission-state.ts";
+export * from "./replace-infeasible-mission.ts";
 export * from "./select-mission-candidate.ts";
 
 /** 当前模块对外公开的只读配置值。 */

@@ -15,6 +15,7 @@ export * from "./maps/forced-displacement-definitions.ts";
 export * from "./maps/map-content-definitions.ts";
 export * from "./maps/region-definitions.ts";
 export * from "./maps/terrain-definitions.ts";
+export * from "./missions/mission-definitions.ts";
 export * from "./races/race-config.ts";
 export * from "./races/race-configs.ts";
 export * from "./races/race-name-config.ts";
