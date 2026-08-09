@@ -8,6 +8,7 @@ import { HexMap } from "../model/hex-map.ts";
 import { createHexTile, type HexTile } from "../model/hex-tile.ts";
 import type { MapContentDefinitionCatalog } from "../model/map-content-definition-catalog.ts";
 import { calculateCurrentVision, evaluateTileVisibility } from "./calculate-current-vision.ts";
+import { createIlluminationVisionModifier } from "./vision-environment.ts";
 
 const PLAYER_ID = "vision-player" as PlayerId;
 
@@ -168,6 +169,38 @@ describe("current map vision", () => {
       visible: false,
       reason: "LINE_OF_SIGHT_BLOCKED",
     });
+  });
+
+  it("applies environmental vision modifiers and lets illumination restore night vision", () => {
+    const map = createMap();
+    const center = requireTile(map, { x: 0, y: 0, z: 0 });
+    const north = requireTile(map, { x: 0, y: 1, z: -1 });
+    const farNorth = requireTile(map, { x: 0, y: 2, z: -2 });
+    const input = {
+      map,
+      observerTileId: center.tileId,
+      explorationState: createExplorationState(center, north, farNorth),
+      visionRange: 2,
+      visionModifiers: [{ sourceId: "day-night.night", kind: "environment", offset: -1 }],
+    } as const;
+
+    expect(calculateCurrentVision(input).visionRange).toBe(1);
+    expect(evaluateTileVisibility(input, farNorth.tileId)).toMatchObject({
+      visible: false,
+      reason: "OUT_OF_RANGE",
+    });
+    expect(
+      evaluateTileVisibility(
+        {
+          ...input,
+          visionModifiers: [
+            ...input.visionModifiers,
+            createIlluminationVisionModifier("item.torch", 1),
+          ],
+        },
+        farNorth.tileId,
+      ).visible,
+    ).toBe(true);
   });
 });
 

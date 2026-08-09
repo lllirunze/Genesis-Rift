@@ -9,6 +9,7 @@ export type NpcServiceType = (typeof NPC_SERVICE_TYPES)[number];
 export interface NpcServiceDefinition {
   readonly serviceType: NpcServiceType;
   readonly requiredConditionIds: readonly string[];
+  readonly requiredEnvironmentTags: readonly string[];
   readonly shopDefinitionId?: string;
 }
 
@@ -45,7 +46,23 @@ export function validateNpcDefinition(definition: NpcDefinition): void {
 
     serviceTypes.add(service.serviceType);
     validateConditionIds(service.requiredConditionIds);
+    validateEnvironmentTags(service.requiredEnvironmentTags);
     validateServiceReferences(service);
+  }
+}
+
+/** 校验 NPC 服务要求的公开环境标签均非空且不重复。 */
+function validateEnvironmentTags(environmentTags: readonly string[]): void {
+  const tags = new Set<string>();
+
+  for (const tag of environmentTags) {
+    assertNonEmptyString(tag, "requiredEnvironmentTags");
+
+    if (tags.has(tag)) {
+      throw new Error(`Duplicate NPC service environment tag: ${tag}`);
+    }
+
+    tags.add(tag);
   }
 }
 

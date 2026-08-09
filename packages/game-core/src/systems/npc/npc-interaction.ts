@@ -16,6 +16,7 @@ export type NpcInteractionIneligibilityReason =
 export interface NpcInteractionInput {
   readonly playerTileId: TileId;
   readonly serviceType: NpcServiceType;
+  readonly environmentTags: readonly string[];
 }
 
 /** 描述玩家是否可以开始 NPC 服务交互。 */
@@ -25,10 +26,10 @@ export type NpcInteractionEligibilityResult =
 
 /**
  * 方法名：evaluateNpcInteractionEligibility
- * 作用：检查 NPC 是否可用、是否提供目标服务，以及玩家是否位于同一地块。
+ * 作用：检查 NPC 是否可用、是否提供目标服务、玩家位置及公开环境标签是否满足要求。
  * @param definition NPC 静态定义。
  * @param state NPC 当前运行时位置与可用状态。
- * @param input 玩家位置与准备使用的服务类型。
+ * @param input 玩家位置、准备使用的服务类型与当前公开环境标签。
  * @returns 允许交互或首个稳定失败原因。
  * @throws NPC 静态定义与运行时状态不匹配时抛出错误。
  */
@@ -45,7 +46,9 @@ export function evaluateNpcInteractionEligibility(
     return { allowed: false, reason: "NPC_UNAVAILABLE" };
   }
 
-  if (getNpcServiceDefinition(definition, input.serviceType) === null) {
+  const service = getNpcServiceDefinition(definition, input.serviceType);
+
+  if (service === null) {
     return { allowed: false, reason: "SERVICE_UNAVAILABLE" };
   }
 
@@ -53,5 +56,26 @@ export function evaluateNpcInteractionEligibility(
     return { allowed: false, reason: "OUT_OF_RANGE" };
   }
 
+  validateEnvironmentTags(input.environmentTags);
+  if (!service.requiredEnvironmentTags.every((tag) => input.environmentTags.includes(tag))) {
+    return { allowed: false, reason: "ENVIRONMENT_UNAVAILABLE" };
+  }
+
   return { allowed: true, reason: null };
+}
+
+/** 校验运行时公开环境标签均非空且不重复。 */
+function validateEnvironmentTags(environmentTags: readonly string[]): void {
+  const tags = new Set<string>();
+
+  for (const tag of environmentTags) {
+    if (typeof tag !== "string" || tag.trim().length === 0) {
+      throw new TypeError("environmentTags must contain non-empty strings");
+    }
+    if (tags.has(tag)) {
+      throw new Error(`environmentTags cannot contain duplicates: ${tag}`);
+    }
+
+    tags.add(tag);
+  }
 }

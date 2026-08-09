@@ -39,7 +39,14 @@ const ITEM_DEFINITIONS = {
 const MERCHANT = {
   definitionId: "npc_000002",
   name: "merchant",
-  services: [{ serviceType: "shop", requiredConditionIds: [], shopDefinitionId: "shop_000001" }],
+  services: [
+    {
+      serviceType: "shop",
+      requiredConditionIds: [],
+      requiredEnvironmentTags: ["day"],
+      shopDefinitionId: "shop_000001",
+    },
+  ],
 } as const;
 
 const SHOP_DEFINITIONS = {
@@ -70,6 +77,7 @@ describe("purchaseFromNpcShop", () => {
     ).inventory;
     const result = purchaseFromNpcShop({
       playerTileId: TOWN_TILE_ID,
+      environmentTags: ["day"],
       npcDefinition: MERCHANT,
       npcState: {
         npcId: "npc-instance-1",
@@ -104,6 +112,7 @@ describe("purchaseFromNpcShop", () => {
     const inventory = createPlayerInventory(PLAYER_ID);
     const result = purchaseFromNpcShop({
       playerTileId: TOWN_TILE_ID,
+      environmentTags: ["day"],
       npcDefinition: MERCHANT,
       npcState: {
         npcId: "npc-instance-1",

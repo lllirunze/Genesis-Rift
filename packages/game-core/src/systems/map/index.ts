@@ -31,6 +31,7 @@ export * from "./model/terrain-definition.ts";
 export * from "./model/tile-feature.ts";
 export * from "./vision/calculate-current-vision.ts";
 export * from "./vision/vision-config.ts";
+export * from "./vision/vision-environment.ts";
 
 /** 当前模块对外公开的只读配置值。 */
 export const mapSystem: SystemScaffold<"map"> = {

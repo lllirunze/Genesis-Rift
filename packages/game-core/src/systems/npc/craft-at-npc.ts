@@ -18,6 +18,7 @@ import type { NpcRuntimeState } from "./npc-runtime-state.ts";
 /** 描述在铁匠等制造 NPC 处执行图纸制造所需的完整输入。 */
 export interface CraftAtNpcInput {
   readonly playerTileId: TileId;
+  readonly environmentTags: readonly string[];
   readonly npcDefinition: NpcDefinition;
   readonly npcState: NpcRuntimeState;
   readonly inventory: PlayerInventoryState;
@@ -57,6 +58,7 @@ export function craftAtNpc(input: CraftAtNpcInput): CraftAtNpcResult {
   const interaction = evaluateNpcInteractionEligibility(input.npcDefinition, input.npcState, {
     playerTileId: input.playerTileId,
     serviceType: "crafting",
+    environmentTags: input.environmentTags,
   });
 
   if (!interaction.allowed) {

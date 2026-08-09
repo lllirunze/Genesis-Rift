@@ -5,6 +5,8 @@ export * from "./day-night/day-night-config.ts";
 export * from "./day-night/day-night-definition.ts";
 export * from "./day-night/day-night-runtime-state.ts";
 export * from "./day-night/advance-day-night-round.ts";
+export * from "./environment-runtime-state.ts";
+export * from "./settle-environment-round.ts";
 export * from "./weather/day-night.ts";
 export * from "./weather/weather-card.ts";
 export * from "./weather/weather-deck.ts";

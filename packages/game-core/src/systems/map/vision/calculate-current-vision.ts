@@ -10,6 +10,7 @@ import { getHexLineBranches } from "../geometry/hex-line.ts";
 import type { HexMap } from "../model/hex-map.ts";
 import type { HexTile } from "../model/hex-tile.ts";
 import { MAP_TILE_INFORMATION_STATES, TILE_VISIBILITY_HIDDEN_REASONS } from "./vision-config.ts";
+import { calculateEffectiveVisionRange, type VisionRangeModifier } from "./vision-environment.ts";
 
 /** 描述目标地块不可见时的标准原因。 */
 export type TileVisibilityHiddenReason = (typeof TILE_VISIBILITY_HIDDEN_REASONS)[number];
@@ -17,12 +18,13 @@ export type TileVisibilityHiddenReason = (typeof TILE_VISIBILITY_HIDDEN_REASONS)
 /** 描述地图地块在三层战争迷雾中的信息状态。 */
 export type MapTileInformationState = (typeof MAP_TILE_INFORMATION_STATES)[number];
 
-/** 描述当前视野查询使用的地图、观察位置和最终视野值。 */
+/** 描述当前视野查询使用的地图、观察位置、基础视野值与可选环境修正。 */
 export interface CalculateCurrentVisionInput {
   readonly map: HexMap;
   readonly observerTileId: TileId;
   readonly explorationState: PlayerExplorationState;
   readonly visionRange: number;
+  readonly visionModifiers?: readonly VisionRangeModifier[];
   readonly blockingTileIds?: readonly TileId[];
 }
 
@@ -64,7 +66,7 @@ export interface CurrentVisionResult {
 /**
  * 方法名：calculateCurrentVision
  * 作用：计算观察者当前能够直接看见的所有已探索地块，不修改探索或地图状态。
- * @param input 地图、观察位置、个人探索记录、最终视野范围和额外遮挡地块。
+ * @param input 地图、观察位置、个人探索记录、基础视野范围、环境修正和额外遮挡地块。
  * @returns 按距离和地块标识稳定排序的当前可见地块集合。
  * @throws 观察位置、视野范围、探索记录或遮挡地块配置非法时抛出错误。
  */
@@ -88,7 +90,7 @@ export function calculateCurrentVision(input: CalculateCurrentVisionInput): Curr
 
   return Object.freeze({
     observerTileId: input.observerTileId,
-    visionRange: input.visionRange,
+    visionRange: context.visionRange,
     visibleTiles: Object.freeze(visibleTiles),
     visibleTileIds: Object.freeze([...visibleTileIds]),
     tileInformation: Object.freeze(tileInformation),
@@ -118,7 +120,7 @@ function getMapTileInformationState(
 /**
  * 方法名：evaluateTileVisibility
  * 作用：判断指定目标是否已探索、位于视野距离内且至少拥有一条未被阻断的标准视线。
- * @param input 地图、观察位置、个人探索记录、最终视野范围和额外遮挡地块。
+ * @param input 地图、观察位置、个人探索记录、基础视野范围、环境修正和额外遮挡地块。
  * @param targetTileId 需要判断可见性的目标地块标识。
  * @returns 目标的可见路径，或不可见的标准原因。
  * @throws 观察位置、目标、视野范围、探索记录或遮挡地块配置非法时抛出错误。
@@ -141,16 +143,17 @@ interface VisionContext {
   readonly input: CalculateCurrentVisionInput;
   readonly observerTile: HexTile;
   readonly blockingTileIds: ReadonlySet<TileId>;
+  readonly visionRange: number;
 }
 
 /**
  * 方法名：createVisionContext
  * 作用：统一校验视野输入并建立可供批量目标复用的查询上下文。
- * @param input 地图、观察位置、个人探索记录、最终视野范围和额外遮挡地块。
+ * @param input 地图、观察位置、个人探索记录、基础视野范围、环境修正和额外遮挡地块。
  * @returns 已校验的观察地块与遮挡集合。
  */
 function createVisionContext(input: CalculateCurrentVisionInput): VisionContext {
-  assertNonNegativeSafeInteger(input.visionRange, "visionRange");
+  const visionRange = calculateEffectiveVisionRange(input.visionRange, input.visionModifiers);
   validatePlayerExplorationState(input.explorationState, input.map);
 
   const observerTile = input.map.getTileById(input.observerTileId);
@@ -181,6 +184,7 @@ function createVisionContext(input: CalculateCurrentVisionInput): VisionContext 
     input,
     observerTile,
     blockingTileIds,
+    visionRange,
   };
 }
 
@@ -210,7 +214,7 @@ function evaluateTileVisibilityWithContext(
     return createHiddenEvaluation(targetTileId, distance, "NOT_EXPLORED");
   }
 
-  if (distance > context.input.visionRange) {
+  if (distance > context.visionRange) {
     return createHiddenEvaluation(targetTileId, distance, "OUT_OF_RANGE");
   }
 
@@ -324,18 +328,4 @@ function compareVisibleTiles(first: VisibleTile, second: VisibleTile): number {
   const secondTileId = String(second.tileId);
 
   return firstTileId < secondTileId ? -1 : firstTileId > secondTileId ? 1 : 0;
-}
-
-/**
- * 方法名：assertNonNegativeSafeInteger
- * 作用：校验视野范围是否为可安全参与地图计算的非负整数。
- * @param value 需要校验的数值。
- * @param name 出现在错误信息中的参数名称。
- * @returns 无返回值。
- * @throws 数值不是非负安全整数时抛出错误。
- */
-function assertNonNegativeSafeInteger(value: number, name: string): void {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new RangeError(`${name} must be a non-negative safe integer`);
-  }
 }

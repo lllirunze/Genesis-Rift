@@ -8,6 +8,7 @@ export const BLACKSMITH_NPC_DEFINITION = {
     {
       serviceType: "crafting",
       requiredConditionIds: ["condition_000001"],
+      requiredEnvironmentTags: ["day"],
     },
   ],
 } as const satisfies NpcDefinition;
@@ -20,6 +21,7 @@ export const MERCHANT_NPC_DEFINITION = {
     {
       serviceType: "shop",
       requiredConditionIds: [],
+      requiredEnvironmentTags: ["day"],
       shopDefinitionId: "shop_000001",
     },
   ],

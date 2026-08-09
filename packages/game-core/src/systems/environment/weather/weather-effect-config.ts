@@ -11,3 +11,6 @@ export const MAX_SINGLE_WEATHER_MOVEMENT_COST_MODIFIER = 2;
 
 /** 多个天气同时生效时允许累计的最大移动成本。 */
 export const MAX_TOTAL_WEATHER_MOVEMENT_COST_MODIFIER = 2;
+
+/** 当前地块所有天气视野效果汇总后使用的统一修正来源标识。 */
+export const WEATHER_VISION_MODIFIER_SOURCE_ID = "weather.active-vision";

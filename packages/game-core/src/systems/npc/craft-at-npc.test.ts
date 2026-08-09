@@ -60,7 +60,13 @@ const LONG_SWORD_BLUEPRINT = {
 const BLACKSMITH = {
   definitionId: "npc_000001",
   name: "blacksmith",
-  services: [{ serviceType: "crafting", requiredConditionIds: ["condition_000001"] }],
+  services: [
+    {
+      serviceType: "crafting",
+      requiredConditionIds: ["condition_000001"],
+      requiredEnvironmentTags: ["day"],
+    },
+  ],
 } as const;
 
 const PLAYER_ID = "player-1" as PlayerId;
@@ -91,6 +97,7 @@ describe("craftAtNpc", () => {
     ).inventory;
     const result = craftAtNpc({
       playerTileId: TOWN_TILE_ID,
+      environmentTags: ["day"],
       npcDefinition: BLACKSMITH,
       npcState: {
         npcId: "npc-instance-1",
@@ -122,6 +129,7 @@ describe("craftAtNpc", () => {
     const inventory = createPlayerInventory(PLAYER_ID);
     const result = craftAtNpc({
       playerTileId: TOWN_TILE_ID,
+      environmentTags: ["day"],
       npcDefinition: BLACKSMITH,
       npcState: {
         npcId: "npc-instance-1",

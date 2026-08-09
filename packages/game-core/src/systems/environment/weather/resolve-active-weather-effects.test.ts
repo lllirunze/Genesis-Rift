@@ -4,10 +4,20 @@ import type { TileId } from "@genesis-rift/shared";
 import { calculateNormalMovementCost } from "../../map/movement/movement-cost-policy.ts";
 import type { HexTile } from "../../map/model/hex-tile.ts";
 import type { TerrainDefinitionCatalog } from "../../map/model/terrain-definition.ts";
+import {
+  calculateEffectiveVisionRange,
+  createDayNightVisionModifier,
+  createIlluminationVisionModifier,
+} from "../../map/vision/vision-environment.ts";
+import {
+  createDayNightRuntimeState,
+  getDayNightEnvironmentView,
+} from "../day-night/day-night-runtime-state.ts";
 import type { WeatherEffectDefinitionCatalog } from "./weather-effect-definition.ts";
 import type { WeatherDefinitionCatalog } from "./weather-definition.ts";
 import {
   calculateWeatherAdjustedVisionRange,
+  createWeatherVisionRangeModifier,
   createWeatherMovementRuleResolver,
   resolveActiveWeatherEffectsForTile,
 } from "./resolve-active-weather-effects.ts";
@@ -154,6 +164,40 @@ describe("active weather map effects", () => {
         DEPENDENCIES,
       ),
     ).toBe(0);
+  });
+
+  it("converts weather vision effects into a unified modifier with night and illumination", () => {
+    const state = applyWeather(createWeatherRuntimeState(), WEATHER_DEFINITIONS.weather_000101, {
+      instanceId: "weather-instance-4",
+      sourceType: "CARD",
+      sourceId: "SPADE_9",
+      startedRound: 1,
+    });
+    const weatherModifier = createWeatherVisionRangeModifier(
+      state,
+      {
+        regionDefinitionId: "region_000101",
+        terrainDefinitionId: "terrain_000101",
+        terrainTags: TERRAIN_DEFINITIONS.terrain_000101.tags,
+      },
+      DEPENDENCIES,
+    );
+    const nightModifier = createDayNightVisionModifier(
+      getDayNightEnvironmentView(createDayNightRuntimeState(6)),
+    );
+
+    expect(weatherModifier).toMatchObject({
+      sourceId: "weather.active-vision",
+      kind: "environment",
+      offset: -1,
+    });
+    expect(
+      calculateEffectiveVisionRange(3, [
+        nightModifier,
+        weatherModifier!,
+        createIlluminationVisionModifier("item.torch", 1),
+      ]),
+    ).toBe(2);
   });
 });
 

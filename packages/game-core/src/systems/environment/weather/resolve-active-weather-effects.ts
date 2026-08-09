@@ -3,7 +3,10 @@ import {
   getTerrainDefinition,
   type TerrainDefinitionCatalog,
 } from "../../map/model/terrain-definition.ts";
-import { MAX_TOTAL_WEATHER_MOVEMENT_COST_MODIFIER } from "./weather-effect-config.ts";
+import {
+  MAX_TOTAL_WEATHER_MOVEMENT_COST_MODIFIER,
+  WEATHER_VISION_MODIFIER_SOURCE_ID,
+} from "./weather-effect-config.ts";
 import {
   validateWeatherEffectDefinition,
   type WeatherEffectDefinition,
@@ -30,6 +33,13 @@ export interface ResolvedWeatherTileEffects {
   readonly movementBlocked: boolean;
   readonly appliedEffectIds: readonly string[];
   readonly deferredEffectIds: readonly string[];
+}
+
+/** 描述可直接传入地图统一视野计算的天气环境修正。 */
+export interface WeatherVisionRangeModifier {
+  readonly sourceId: string;
+  readonly kind: "environment";
+  readonly offset: number;
 }
 
 /** 描述解析天气地图效果所需的静态定义集合。 */
@@ -127,13 +137,40 @@ export function createWeatherMovementRuleResolver(
 }
 
 /**
+ * 方法名：createWeatherVisionRangeModifier
+ * 作用：将当前位置生效的全部天气视野效果汇总为地图统一视野计算可接收的一项环境修正。
+ * @param state 当前天气运行时状态。
+ * @param context 观察者当前位置所属区域、地形及地形标签。
+ * @param dependencies 天气、灾害和效果静态定义集合。
+ * @returns 存在天气视野影响时返回修正；没有影响时返回空值。
+ * @throws 天气状态、位置上下文或静态效果定义非法时抛出错误。
+ */
+export function createWeatherVisionRangeModifier(
+  state: WeatherRuntimeState,
+  context: WeatherTileEffectContext,
+  dependencies: WeatherEffectResolutionDependencies,
+): WeatherVisionRangeModifier | null {
+  const effects = resolveActiveWeatherEffectsForTile(state, context, dependencies);
+
+  if (effects.visionRangeModifier === 0) {
+    return null;
+  }
+
+  return Object.freeze({
+    sourceId: WEATHER_VISION_MODIFIER_SOURCE_ID,
+    kind: "environment",
+    offset: effects.visionRangeModifier,
+  });
+}
+
+/**
  * 方法名：calculateWeatherAdjustedVisionRange
- * 作用：将当前位置生效的天气视野修正应用于角色基础视野，并保证结果不小于零。
+ * 作用：兼容旧调用方，将天气视野修正直接应用于基础视野；新调用方应使用统一视野修正器。
  * @param baseVisionRange 角色数值系统已经计算完成的基础视野范围。
  * @param state 当前天气运行时状态。
  * @param context 观察者当前位置所属区域、地形及地形标签。
  * @param dependencies 天气、灾害和效果静态定义集合。
- * @returns 可直接传入地图视野算法的非负整数视野范围。
+ * @returns 应用天气修正后的非负整数视野范围。
  * @throws 基础视野不是非负整数或天气配置缺失时抛出错误。
  */
 export function calculateWeatherAdjustedVisionRange(
@@ -146,9 +183,9 @@ export function calculateWeatherAdjustedVisionRange(
     throw new RangeError("baseVisionRange must be a non-negative safe integer");
   }
 
-  const effects = resolveActiveWeatherEffectsForTile(state, context, dependencies);
+  const modifier = createWeatherVisionRangeModifier(state, context, dependencies);
 
-  return Math.max(0, baseVisionRange + effects.visionRangeModifier);
+  return Math.max(0, baseVisionRange + (modifier?.offset ?? 0));
 }
 
 /**

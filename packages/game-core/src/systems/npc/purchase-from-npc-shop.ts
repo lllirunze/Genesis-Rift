@@ -16,6 +16,7 @@ import { getShopItemDefinition, type ShopDefinitionCatalog } from "./shop-defini
 /** 描述玩家向 NPC 商店购买一项商品时需要提供的输入。 */
 export interface PurchaseFromNpcShopInput {
   readonly playerTileId: TileId;
+  readonly environmentTags: readonly string[];
   readonly npcDefinition: NpcDefinition;
   readonly npcState: NpcRuntimeState;
   readonly shopDefinitions: ShopDefinitionCatalog;
@@ -57,6 +58,7 @@ export function purchaseFromNpcShop(input: PurchaseFromNpcShopInput): PurchaseFr
   const interaction = evaluateNpcInteractionEligibility(input.npcDefinition, input.npcState, {
     playerTileId: input.playerTileId,
     serviceType: "shop",
+    environmentTags: input.environmentTags,
   });
 
   if (!interaction.allowed) {
