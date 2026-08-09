@@ -7,6 +7,7 @@ export const RESOURCE_ID_PREFIXES = [
   "mission",
   "equip",
   "item",
+  "blueprint",
   "card",
   "npc",
   "buff",

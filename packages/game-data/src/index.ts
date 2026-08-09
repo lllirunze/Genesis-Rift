@@ -1,6 +1,7 @@
 export * from "./attributes/derived-attribute-configs.ts";
 export * from "./attributes/primary-attribute-config.ts";
 export * from "./attributes/primary-attributes.ts";
+export * from "./blueprints/blueprint-definitions.ts";
 export * from "./catalog/game-data-catalog.ts";
 export * from "./events/event-definitions.ts";
 export * from "./events/event-pool-definitions.ts";
@@ -17,6 +18,7 @@ export * from "./races/race-config.ts";
 export * from "./races/race-configs.ts";
 export * from "./races/race-name-config.ts";
 export * from "./resources/character-resource-definitions.ts";
+export * from "./skills/skill-definitions.ts";
 export * from "./quests/quest-definitions.ts";
 export * from "./quests/quest-reward-pools.ts";
 export * from "./statuses/status-definitions.ts";
