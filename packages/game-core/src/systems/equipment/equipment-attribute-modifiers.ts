@@ -67,6 +67,39 @@ export function createEquipmentAttributeModifiers(
 }
 
 /**
+ * 方法名：getEquippedWeaponAttack
+ * 作用：读取已穿戴武器的独立攻击力，武器攻击不并入角色派生属性。
+ * @param loadout 当前角色装备栏。
+ * @param definitions 装备静态定义注册表。
+ * @returns 未装备武器时为零，否则返回武器定义的整数攻击力。
+ * @throws 武器实例缺少定义或定义类型不匹配时抛出错误。
+ */
+export function getEquippedWeaponAttack(
+  loadout: EquipmentLoadout,
+  definitions: EquipmentDefinitionCatalog,
+): number {
+  const weapon = loadout.slots.weapon;
+
+  if (weapon === null) {
+    return 0;
+  }
+
+  const definition = definitions[weapon.definitionId];
+
+  if (definition === undefined) {
+    throw new Error(`Missing equipment definition: ${weapon.definitionId}`);
+  }
+
+  validateEquipmentDefinition(definition);
+
+  if (definition.type !== "weapon") {
+    throw new Error(`Weapon slot contains a non-weapon definition: ${definition.definitionId}`);
+  }
+
+  return definition.weaponAttack ?? 0;
+}
+
+/**
  * 方法名：aggregateEquipmentAttributeModifiers
  * 作用：根据输入执行确定性计算并返回结果。
  * @param loadout 方法所需的 loadout 参数。

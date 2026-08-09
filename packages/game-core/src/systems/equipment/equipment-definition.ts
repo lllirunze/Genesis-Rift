@@ -39,6 +39,7 @@ export interface EquipmentDefinition {
   readonly quality: StandardQuality;
   readonly corePosition: string;
   readonly allowDuplicateEquipping: boolean;
+  readonly weaponAttack?: number;
   readonly attributeEffects: readonly EquipmentAttributeEffect[];
 }
 
@@ -53,6 +54,12 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
   assertResourceId(definition.definitionId, "equip");
   assertNonEmptyString(definition.name, "name");
   assertNonEmptyString(definition.corePosition, "corePosition");
+  const weaponAttack = definition.weaponAttack ?? 0;
+  assertNonNegativeSafeInteger(weaponAttack, "weaponAttack");
+
+  if (definition.type !== "weapon" && weaponAttack !== 0) {
+    throw new Error("Only weapons can define weapon attack");
+  }
 
   if (!EQUIPMENT_TYPES.includes(definition.type)) {
     throw new RangeError(`Unsupported equipment type: ${definition.type}`);
@@ -80,6 +87,13 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
     if (effect.targetType === "derived") {
       assertNonEmptyString(effect.targetAttribute, `${effect.effectId}.targetAttribute`);
     }
+  }
+}
+
+/** 校验数值为非负安全整数。 */
+function assertNonNegativeSafeInteger(value: number, field: string): void {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new RangeError(`${field} must be a non-negative safe integer`);
   }
 }
 
