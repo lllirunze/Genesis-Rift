@@ -174,7 +174,15 @@ function createSkillRuntimeEntry(definitionId: string): SkillRuntimeEntry {
  * @returns 已注册的技能定义。
  * @throws 技能定义不存在时抛出错误。
  */
-function getSkillDefinition(
+/**
+ * 方法名：getSkillDefinition
+ * 作用：从技能静态定义注册表读取指定资源，不修改运行时状态。
+ * @param definitions 已加载的技能静态定义注册表。
+ * @param definitionId 需要查询的技能资源标识。
+ * @returns 对应的技能静态定义。
+ * @throws 技能资源不存在时抛出错误。
+ */
+export function getSkillDefinition(
   definitions: SkillDefinitionCatalog,
   definitionId: string,
 ): SkillDefinition {

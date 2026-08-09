@@ -1,6 +1,12 @@
 import { assertResourceId } from "@genesis-rift/shared";
 
-import { SKILL_EFFECT_TYPES, SKILL_TARGET_TYPES, SKILL_TYPES } from "./skill-config.ts";
+import {
+  SKILL_EFFECT_TYPES,
+  SKILL_TARGET_TYPES,
+  SKILL_TRIGGER_EVENT_TYPES,
+  SKILL_TYPES,
+  type SkillTriggerEventType,
+} from "./skill-config.ts";
 
 /** 描述技能释放方式。 */
 export type SkillType = (typeof SKILL_TYPES)[number];
@@ -76,6 +82,7 @@ export interface SkillDefinition {
   readonly cooldownTurns: number;
   readonly maxUsesPerTurn: number;
   readonly conditionIds: readonly string[];
+  readonly triggerEventTypes?: readonly SkillTriggerEventType[];
   readonly effects: readonly SkillEffectDefinition[];
 }
 
@@ -106,11 +113,33 @@ export function validateSkillDefinition(definition: SkillDefinition): void {
   assertNonNegativeSafeInteger(definition.cooldownTurns, "cooldownTurns");
   assertPositiveSafeInteger(definition.maxUsesPerTurn, "maxUsesPerTurn");
   validateUniqueNonEmptyStrings(definition.conditionIds, "conditionIds");
+  validateSkillTriggerEventTypes(definition.triggerEventTypes ?? []);
   validateResourceCosts(definition.resourceCosts);
   validateSkillEffects(definition.effects);
 
   if (definition.type === "active" && definition.effects.length === 0) {
     throw new Error("Active skills must define at least one effect");
+  }
+
+  if (definition.type !== "active" && (definition.triggerEventTypes?.length ?? 0) === 0) {
+    throw new Error("Passive and triggered skills must define at least one trigger event type");
+  }
+}
+
+/** 校验技能订阅的业务时机合法且不重复。 */
+function validateSkillTriggerEventTypes(eventTypes: readonly SkillTriggerEventType[]): void {
+  const seen = new Set<SkillTriggerEventType>();
+
+  for (const eventType of eventTypes) {
+    if (!SKILL_TRIGGER_EVENT_TYPES.includes(eventType)) {
+      throw new RangeError(`Unsupported skill trigger event type: ${eventType}`);
+    }
+
+    if (seen.has(eventType)) {
+      throw new Error(`Duplicate skill trigger event type: ${eventType}`);
+    }
+
+    seen.add(eventType);
   }
 }
 

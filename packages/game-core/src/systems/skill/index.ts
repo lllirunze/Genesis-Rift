@@ -8,6 +8,7 @@ export * from "./skill-definition.ts";
 export * from "./skill-effect-handler.ts";
 export * from "./skill-eligibility.ts";
 export * from "./skill-runtime-state.ts";
+export * from "./trigger-skill-effects.ts";
 export * from "./use-active-skill.ts";
 
 /** 当前模块对外公开的只读系统骨架。 */
