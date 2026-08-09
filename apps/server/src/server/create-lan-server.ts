@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 
 import {
   PROTOCOL_VERSION,
+  ALLOWED_CLIENT_IPS,
   type ClientToServerEvents,
   type InterServerEvents,
   type ServerSocketData,
@@ -14,9 +15,11 @@ import { GameSessionManager } from "../game/game-session-manager.ts";
 import { SocketSessionManager } from "../sessions/socket-session-manager.ts";
 import { bindGameSocketEvents } from "../transport/bind-game-socket-events.ts";
 import { bindRoomSocketEvents } from "../transport/bind-room-socket-events.ts";
+import { IP_WHITELIST_REJECTION, isIpWhitelisted } from "../security/index.ts";
 
 interface LanServerOptions {
   clientOrigin: string;
+  readonly allowedClientIps?: readonly string[];
 }
 
 /**
@@ -26,7 +29,16 @@ interface LanServerOptions {
  * @returns 本次处理得到的结果。
  */
 export function createLanServer(options: LanServerOptions) {
+  const allowedClientIps = options.allowedClientIps ?? ALLOWED_CLIENT_IPS;
   const httpServer = createServer((request, response) => {
+    if (!isIpWhitelisted(request.socket.remoteAddress, allowedClientIps)) {
+      response.writeHead(IP_WHITELIST_REJECTION.statusCode, {
+        "content-type": "application/json; charset=utf-8",
+      });
+      response.end(JSON.stringify(IP_WHITELIST_REJECTION.body));
+      return;
+    }
+
     if (request.url === "/health") {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ status: "ok", protocolVersion: PROTOCOL_VERSION }));
@@ -46,6 +58,17 @@ export function createLanServer(options: LanServerOptions) {
     cors: {
       origin: options.clientOrigin,
     },
+  });
+
+  socketServer.use((socket, next) => {
+    if (isIpWhitelisted(socket.handshake.address, allowedClientIps)) {
+      next();
+      return;
+    }
+
+    const error = new Error(IP_WHITELIST_REJECTION.body.code);
+    Object.assign(error, { data: IP_WHITELIST_REJECTION });
+    next(error);
   });
   const roomManager = new RoomManager();
   const gameSessionManager = new GameSessionManager();

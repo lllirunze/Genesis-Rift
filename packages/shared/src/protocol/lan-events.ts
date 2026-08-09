@@ -43,6 +43,11 @@ export interface RequestGameSnapshot {
   readonly requestId: string;
 }
 
+/** 描述房主请求将大厅锁定并开始当前唯一对局的输入。 */
+export interface StartLanGameRequest {
+  readonly requestId: string;
+}
+
 /** 描述客户端可以提交的首批权威游戏命令。 */
 export interface SubmitGameCommandRequest {
   readonly requestId: string;
@@ -82,6 +87,7 @@ export interface LanRequestRejectedPayload {
     | "ROOM_ALREADY_EXISTS"
     | "PLAYER_ALREADY_JOINED"
     | "ROOM_NOT_JOINABLE"
+    | "NOT_ROOM_HOST"
     | "SOCKET_IDENTITY_MISMATCH"
     | "NOT_JOINED"
     | "GAME_NOT_INITIALIZED"
@@ -100,6 +106,7 @@ export interface ClientToServerEvents {
   "room:create": (payload: CreateLanRoomRequest) => void;
   "room:join": (payload: JoinLanRoomRequest) => void;
   "room:requestSnapshot": (payload: RequestLanRoomSnapshot) => void;
+  "game:start": (payload: StartLanGameRequest) => void;
   "game:requestSnapshot": (payload: RequestGameSnapshot) => void;
   "game:command": (payload: SubmitGameCommandRequest) => void;
 }
@@ -124,6 +131,10 @@ export interface ServerToClientEvents {
     readonly game: LanGameSessionSnapshot;
   }) => void;
   "game:rejected": (payload: LanRequestRejectedPayload) => void;
+  "game:started": (payload: {
+    readonly requestId: string;
+    readonly game: LanGameSessionSnapshot;
+  }) => void;
 }
 
 /** 服务端多实例之间的事件契约，当前版本暂未启用。 */

@@ -7,7 +7,11 @@ import type {
 
 /** 描述可由房间管理器识别的稳定业务错误代码。 */
 export type RoomManagerErrorCode =
-  "ROOM_NOT_FOUND" | "ROOM_ALREADY_EXISTS" | "PLAYER_ALREADY_JOINED" | "ROOM_NOT_JOINABLE";
+  | "ROOM_NOT_FOUND"
+  | "ROOM_ALREADY_EXISTS"
+  | "PLAYER_ALREADY_JOINED"
+  | "ROOM_NOT_JOINABLE"
+  | "NOT_ROOM_HOST";
 
 /** 描述房间管理器抛出的可映射网络错误。 */
 export class RoomManagerError extends Error {
@@ -115,6 +119,29 @@ export class RoomManager {
     }
 
     return current;
+  }
+
+  /**
+   * 方法名：startRoom
+   * 作用：由房主锁定大厅成员并将房间切换为运行状态。
+   * @param playerId 请求开始游戏的玩家标识。
+   * @returns 已进入运行状态的新权威房间快照。
+   * @throws 请求者不是房主或房间当前不可开始时抛出错误。
+   */
+  startRoom(playerId: PlayerId): LanRoomSnapshot {
+    const current = this.getRoom();
+
+    if (current.hostPlayerId !== playerId) {
+      throw new RoomManagerError("NOT_ROOM_HOST", "Only the room host can start the game");
+    }
+
+    if (current.status !== "lobby") {
+      throw new RoomManagerError("ROOM_NOT_JOINABLE", "The active LAN room cannot be started");
+    }
+
+    const room = freezeRoom({ ...current, status: "running", revision: current.revision + 1 });
+    this.#room = room;
+    return room;
   }
 
   /**
