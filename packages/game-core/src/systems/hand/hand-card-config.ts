@@ -6,7 +6,7 @@ export const HAND_CARD_USAGE_TIMINGS = ["active", "response"] as const;
 
 /** 当前可被手牌响应并插入结算流程的业务节点。 */
 export const HAND_CARD_RESPONSE_TYPES = [
-  "attack.beforeHit",
+  "attack.beforeEvasion",
   "damage.beforeResolution",
   "healing.beforeResolution",
   "movement.beforeResolution",
@@ -51,7 +51,7 @@ export const HAND_CARD_TARGET_TYPES = [
 
 /** 已注册或预留注册入口的手牌效果标识。 */
 export const HAND_CARD_EFFECT_IDS = [
-  "attack.modifyHit",
+  "evasion.modify",
   "damage.reduce",
   "health.restore",
   "movement.modify",

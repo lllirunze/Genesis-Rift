@@ -11,18 +11,18 @@ import {
 const DEFINITION: HandCardDefinition = {
   cardId: createTestHandCardId(1),
   name: "preciseStrike",
-  description: "Improves one attack before its hit result is resolved.",
+  description: "Reduces the target's evasion before one attack is resolved.",
   quality: "common",
   type: "combat",
   usage: {
     timing: "response",
-    responseTypes: ["attack.beforeHit"],
+    responseTypes: ["attack.beforeEvasion"],
     conditionIds: ["source.isOwnAttack"],
     targetTypes: ["action"],
   },
   effects: [
     {
-      effectId: "attack.modifyHit",
+      effectId: "evasion.modify",
       parameters: { amount: 10 },
     },
   ],
@@ -44,7 +44,7 @@ describe("hand card definition", () => {
 
   it("requires description to be a complete English sentence", () => {
     for (const description of [
-      "提高一次攻击的命中。",
+      "降低一次攻击的闪避率。",
       "improves one attack.",
       "Improves one attack",
       " Improves one attack.",
@@ -293,7 +293,7 @@ describe("hand card definition", () => {
         {
           ...DEFINITION,
           cardId: createTestHandCardId(2),
-          effects: [{ effectId: "attack.modifyHit", parameters: { amount: 20 } }],
+          effects: [{ effectId: "evasion.modify", parameters: { amount: -20 } }],
         },
       ]),
     ).toThrow("same name must have identical content");

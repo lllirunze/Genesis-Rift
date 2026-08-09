@@ -30,7 +30,7 @@ export type HandCardEffectId = (typeof HAND_CARD_EFFECT_IDS)[number];
 
 /** 描述当前模块对外公开的业务数据契约。 */
 export interface HandCardEffectParametersById {
-  readonly "attack.modifyHit": {
+  readonly "evasion.modify": {
     readonly amount: number;
   };
   readonly "damage.reduce": {
@@ -187,7 +187,7 @@ export function validateHandCardEffectDefinition(effect: HandCardEffectDefinitio
   const parameters = assertParameterRecord(candidate.parameters, candidate.effectId);
 
   switch (candidate.effectId as HandCardEffectId) {
-    case "attack.modifyHit":
+    case "evasion.modify":
     case "movement.modify":
       assertExactParameterKeys(parameters, ["amount"], candidate.effectId);
       assertNonZeroSafeInteger(parameters.amount, `${candidate.effectId}.parameters.amount`);
