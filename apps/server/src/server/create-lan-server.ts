@@ -9,6 +9,10 @@ import {
 } from "@genesis-rift/shared";
 import { Server as SocketServer } from "socket.io";
 
+import { RoomManager } from "../rooms/room-manager.ts";
+import { SocketSessionManager } from "../sessions/socket-session-manager.ts";
+import { bindRoomSocketEvents } from "../transport/bind-room-socket-events.ts";
+
 interface LanServerOptions {
   clientOrigin: string;
 }
@@ -41,10 +45,13 @@ export function createLanServer(options: LanServerOptions) {
       origin: options.clientOrigin,
     },
   });
+  const roomManager = new RoomManager();
+  const sessionManager = new SocketSessionManager();
 
   socketServer.on("connection", (socket) => {
     socket.emit("server:ready", { protocolVersion: PROTOCOL_VERSION });
+    bindRoomSocketEvents(socket, socketServer, roomManager, sessionManager);
   });
 
-  return { httpServer, socketServer };
+  return { httpServer, socketServer, roomManager, sessionManager };
 }

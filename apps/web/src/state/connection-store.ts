@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-type ConnectionStatus = "offline" | "connecting" | "connected";
+/** 描述浏览器与局域网服务端之间的连接状态。 */
+export type ConnectionStatus = "offline" | "connecting" | "connected";
 
 interface ConnectionState {
   status: ConnectionStatus;

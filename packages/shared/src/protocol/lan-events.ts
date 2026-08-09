@@ -42,7 +42,13 @@ export interface RequestLanRoomSnapshot {
 export interface LanRequestRejectedPayload {
   readonly requestId: string;
   readonly code:
-    "ROOM_NOT_FOUND" | "ROOM_ALREADY_EXISTS" | "PLAYER_ALREADY_JOINED" | "ROOM_NOT_JOINABLE";
+    | "ROOM_NOT_FOUND"
+    | "ROOM_ALREADY_EXISTS"
+    | "PLAYER_ALREADY_JOINED"
+    | "ROOM_NOT_JOINABLE"
+    | "SOCKET_IDENTITY_MISMATCH"
+    | "NOT_JOINED"
+    | "REQUEST_INVALID";
   readonly message: string;
 }
 
@@ -71,5 +77,6 @@ export interface InterServerEvents {}
 
 /** 绑定在单个网络连接上的服务端会话数据。 */
 export interface ServerSocketData {
-  playerId?: string;
+  playerId?: PlayerId;
+  roomId?: RoomId;
 }
