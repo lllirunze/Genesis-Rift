@@ -1,4 +1,8 @@
-import { CHARACTER_SURVIVAL_STATUSES, DEFAULT_DOWNED_DURATION_TURNS } from "./survival-config.ts";
+import {
+  CHARACTER_SURVIVAL_STATUSES,
+  DEFAULT_DOWNED_DURATION_TURNS,
+  DOWNED_MOVEMENT_POINT_LIMIT,
+} from "./survival-config.ts";
 
 /** 描述当前模块对外公开的角色生存状态。 */
 export type CharacterSurvivalStatus = (typeof CHARACTER_SURVIVAL_STATUSES)[number];
@@ -158,6 +162,32 @@ export function canCharacterPerformAttack(state: CharacterSurvivalState): boolea
 }
 
 /**
+ * 方法名：getCharacterMovementPointLimit
+ * 作用：根据角色生存状态返回本次行动允许使用的最大普通移动力。
+ * @param state 当前角色生存状态。
+ * @param normalMovementPointLimit 角色正常状态下可使用的移动力。
+ * @returns 正常角色使用原上限，击倒角色最多一格，死亡角色不能移动。
+ * @throws 生存状态非法或正常移动力不是非负安全整数时抛出错误。
+ */
+export function getCharacterMovementPointLimit(
+  state: CharacterSurvivalState,
+  normalMovementPointLimit: number,
+): number {
+  validateCharacterSurvivalState(state);
+  assertNonNegativeSafeInteger(normalMovementPointLimit, "normalMovementPointLimit");
+
+  if (state.status === "DEAD") {
+    return 0;
+  }
+
+  if (state.status === "DOWNED") {
+    return Math.min(normalMovementPointLimit, DOWNED_MOVEMENT_POINT_LIMIT);
+  }
+
+  return normalMovementPointLimit;
+}
+
+/**
  * 方法名：validateCharacterSurvivalState
  * 作用：校验角色生存状态、参与者标识和击倒倒计时之间的一致性。
  * @param state 需要校验的角色生存状态。
@@ -195,6 +225,13 @@ export function validateCharacterSurvivalState(state: CharacterSurvivalState): v
 function assertPositiveSafeInteger(value: number, field: string): void {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new RangeError(`${field} must be a positive safe integer`);
+  }
+}
+
+/** 校验数值为非负安全整数。 */
+function assertNonNegativeSafeInteger(value: number, field: string): void {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new RangeError(`${field} must be a non-negative safe integer`);
   }
 }
 

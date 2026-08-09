@@ -5,6 +5,7 @@ import {
   canCharacterPerformAttack,
   createActiveCharacterSurvivalState,
   enterDownedIfNeeded,
+  getCharacterMovementPointLimit,
   recoverDownedCharacter,
 } from "./character-survival-state.ts";
 
@@ -47,5 +48,20 @@ describe("character survival state", () => {
       downedTurnsRemaining: 0,
     });
     expect(() => recoverDownedCharacter(downed, 0)).toThrow("positive safe integer");
+  });
+
+  it("limits a downed character to one movement point and prevents dead movement", () => {
+    const active = createActiveCharacterSurvivalState("player.a");
+    const downed = enterDownedIfNeeded(active, true).state;
+    let dead = downed;
+
+    dead = advanceDownedStateAtTurnEnd(dead).state;
+    dead = advanceDownedStateAtTurnEnd(dead).state;
+    dead = advanceDownedStateAtTurnEnd(dead).state;
+
+    expect(getCharacterMovementPointLimit(active, 3)).toBe(3);
+    expect(getCharacterMovementPointLimit(downed, 3)).toBe(1);
+    expect(getCharacterMovementPointLimit(downed, 0)).toBe(0);
+    expect(getCharacterMovementPointLimit(dead, 3)).toBe(0);
   });
 });
