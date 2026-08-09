@@ -2,6 +2,8 @@
 export const RESOURCE_ID_PREFIXES = [
   "event",
   "quest",
+  "reward",
+  "condition",
   "mission",
   "equip",
   "item",

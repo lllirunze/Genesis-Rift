@@ -17,6 +17,8 @@ export * from "./races/race-config.ts";
 export * from "./races/race-configs.ts";
 export * from "./races/race-name-config.ts";
 export * from "./resources/character-resource-definitions.ts";
+export * from "./quests/quest-definitions.ts";
+export * from "./quests/quest-reward-pools.ts";
 export * from "./statuses/status-definitions.ts";
 export * from "./validation/validate-identity-configs.ts";
 export * from "./validation/validate-level-system-config.ts";

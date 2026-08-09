@@ -13,5 +13,6 @@ export * from "./map/index.ts";
 export * from "./mission/index.ts";
 export * from "./movement/index.ts";
 export * from "./npc/index.ts";
+export * from "./quest/index.ts";
 export * from "./random/index.ts";
 export * from "./revival/index.ts";

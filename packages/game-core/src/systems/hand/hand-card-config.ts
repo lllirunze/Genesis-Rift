@@ -76,6 +76,7 @@ export const HAND_CARD_DRAW_SOURCE_TYPES = [
   "npcReward",
   "dungeon",
   "boss",
+  "questReward",
   "shop",
   "specialLocation",
   "specialEffect",
