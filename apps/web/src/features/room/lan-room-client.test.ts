@@ -1,0 +1,92 @@
+import { describe, expect, it } from "vitest";
+
+import type { LanRoomSnapshot, PlayerId, RoomId } from "@genesis-rift/shared";
+
+import type { LanSocket } from "../../lib/socket-client.ts";
+import { LanRoomClient } from "./lan-room-client.ts";
+
+const ROOM: LanRoomSnapshot = {
+  roomId: "room-local-001" as RoomId,
+  hostPlayerId: "player-host" as PlayerId,
+  status: "lobby",
+  revision: 1,
+  players: [{ playerId: "player-host" as PlayerId, displayName: "Host" }],
+};
+
+describe("LanRoomClient", () => {
+  it("sends a protocol hello on connection and publishes authoritative room snapshots", () => {
+    const socket = new FakeLanSocket();
+    const client = new LanRoomClient(socket as unknown as LanSocket);
+    const states: unknown[] = [];
+    client.subscribe((state) => states.push(state));
+
+    client.connect();
+    socket.trigger("room:snapshot", { requestId: "server.roomUpdated", room: ROOM });
+
+    expect(socket.getEmitted("client:hello")).toEqual([{ protocolVersion: 1 }]);
+    expect(client.getState()).toMatchObject({ connectionStatus: "connected", room: ROOM });
+    expect(states).toHaveLength(4);
+  });
+
+  it("forwards create requests and stores server-side rejection information", () => {
+    const socket = new FakeLanSocket();
+    const client = new LanRoomClient(socket as unknown as LanSocket);
+    client.connect();
+    client.createRoom("request-create", ROOM.roomId, ROOM.players[0]!);
+    socket.trigger("room:rejected", {
+      requestId: "request-create",
+      code: "ROOM_ALREADY_EXISTS",
+      message: "The active LAN room already exists",
+    });
+
+    expect(socket.getEmitted("room:create")).toEqual([
+      { requestId: "request-create", roomId: ROOM.roomId, host: ROOM.players[0] },
+    ]);
+    expect(client.getState().rejection).toMatchObject({ code: "ROOM_ALREADY_EXISTS" });
+  });
+
+  it("does not send room requests before a Socket connection exists", () => {
+    const client = new LanRoomClient(new FakeLanSocket() as unknown as LanSocket);
+
+    expect(() => client.requestRoomSnapshot("request-offline")).toThrow("not connected");
+  });
+});
+
+/** 提供可触发服务端事件并记录客户端发包的内存 Socket。 */
+class FakeLanSocket {
+  connected = false;
+  readonly #listeners = new Map<string, (payload?: unknown) => void>();
+  readonly #emitted = new Map<string, unknown[]>();
+
+  connect(): void {
+    this.connected = true;
+    this.trigger("connect");
+  }
+
+  disconnect(): void {
+    this.connected = false;
+    this.trigger("disconnect");
+  }
+
+  on(event: string, listener: (payload?: unknown) => void): void {
+    this.#listeners.set(event, listener);
+  }
+
+  off(event: string): void {
+    this.#listeners.delete(event);
+  }
+
+  emit(event: string, payload: unknown): void {
+    const records = this.#emitted.get(event) ?? [];
+    records.push(payload);
+    this.#emitted.set(event, records);
+  }
+
+  trigger(event: string, payload?: unknown): void {
+    this.#listeners.get(event)?.(payload);
+  }
+
+  getEmitted(event: string): readonly unknown[] {
+    return this.#emitted.get(event) ?? [];
+  }
+}

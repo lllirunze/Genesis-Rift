@@ -1,4 +1,5 @@
 import { ARCHITECTURE_LAYERS } from "./architecture-layer-config.ts";
+import { RoomLobby } from "../features/room/room-lobby.tsx";
 
 /**
  * 方法名：App
@@ -20,6 +21,8 @@ export function App() {
           <span>多人交互待设计</span>
         </div>
       </section>
+
+      <RoomLobby />
 
       <section className="architecture-section" aria-labelledby="architecture-heading">
         <div className="section-heading">

@@ -118,6 +118,161 @@ h1 {
   padding-top: 92px;
 }
 
+.room-lobby {
+  margin-top: 48px;
+  padding: clamp(24px, 4vw, 42px);
+  background: rgba(248, 242, 223, 0.78);
+  border: 1px solid var(--line);
+  box-shadow: 12px 14px 0 rgba(30, 77, 70, 0.1);
+}
+
+.room-lobby__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.room-lobby__heading p {
+  margin-bottom: 8px;
+  color: var(--cinnabar);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.room-lobby__heading h2 {
+  margin-bottom: 0;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  font-weight: 500;
+}
+
+.connection-badge {
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  font-size: 0.76rem;
+}
+
+.connection-badge--connected {
+  color: var(--jade);
+  border-color: var(--jade);
+}
+
+.connection-badge--connecting {
+  color: #986313;
+  border-color: #986313;
+}
+
+.connection-badge--offline {
+  color: rgba(20, 43, 40, 0.62);
+}
+
+.room-lobby__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.room-lobby label {
+  display: grid;
+  gap: 8px;
+  color: var(--jade);
+  font-size: 0.82rem;
+}
+
+.room-lobby input {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.room-lobby__identity {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  color: rgba(20, 43, 40, 0.6);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.room-lobby__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 22px;
+}
+
+.room-lobby button {
+  padding: 10px 15px;
+  color: var(--paper);
+  cursor: pointer;
+  background: var(--jade);
+  border: 1px solid var(--jade);
+}
+
+.room-lobby button:nth-child(2) {
+  color: var(--ink);
+  background: transparent;
+}
+
+.room-lobby button:nth-child(3) {
+  color: var(--paper);
+  background: var(--cinnabar);
+  border-color: var(--cinnabar);
+}
+
+.room-lobby button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.room-lobby__error {
+  margin: 20px 0 0;
+  padding: 12px;
+  color: #872d20;
+  background: rgba(201, 83, 47, 0.12);
+  border-left: 3px solid var(--cinnabar);
+}
+
+.room-lobby__snapshot {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.room-lobby__snapshot > p {
+  color: rgba(20, 43, 40, 0.72);
+  line-height: 1.65;
+}
+
+.room-lobby__snapshot ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.room-lobby__snapshot li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  background: rgba(30, 77, 70, 0.06);
+}
+
+.room-lobby__snapshot li span {
+  color: var(--cinnabar);
+  font-size: 0.82rem;
+}
+
 .section-heading {
   display: grid;
   grid-template-columns: 180px 1fr;
@@ -199,6 +354,10 @@ h1 {
   .section-heading {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .room-lobby__form {
+    grid-template-columns: 1fr;
   }
 
   .layer-card,
