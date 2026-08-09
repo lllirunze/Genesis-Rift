@@ -137,6 +137,8 @@ describe("item definitions", () => {
       "equip_000001",
       "equip_000002",
       "equip_000003",
+      "equip_000004",
+      "equip_000005",
     ]);
   });
 });

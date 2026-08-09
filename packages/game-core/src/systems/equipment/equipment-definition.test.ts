@@ -55,4 +55,22 @@ describe("equipment definition validation", () => {
       validateEquipmentDefinitions([DEFINITION, { ...DEFINITION, definitionId: "equip_000104" }]),
     ).toThrow("Duplicate equipment name");
   });
+
+  it("rejects an active ability without an executable effect", () => {
+    expect(() =>
+      validateEquipmentDefinition({
+        ...DEFINITION,
+        activeAbility: {
+          abilityId: "test.empty",
+          description: "Invalid test ability.",
+          targetType: "self",
+          range: 0,
+          cooldownTurns: 0,
+          maxUsesPerTurn: 1,
+          conditionIds: [],
+          effects: [],
+        },
+      }),
+    ).toThrow("must define at least one effect");
+  });
 });

@@ -183,7 +183,9 @@ function assertOwners(
   context: EquipmentActiveEffectExecutionContext,
 ): void {
   if (abilityState.ownerId !== loadout.playerId || abilityState.ownerId !== context.ownerId) {
-    throw new Error("Equipment active ability state, loadout, and context must share the same owner");
+    throw new Error(
+      "Equipment active ability state, loadout, and context must share the same owner",
+    );
   }
 }
 

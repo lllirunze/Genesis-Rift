@@ -88,7 +88,10 @@ export function commitEquipmentActiveAbilityUse(
   state: EquipmentActiveAbilityState,
   equipmentInstanceId: string,
   ability: EquipmentActiveAbilityDefinition,
-): { readonly state: EquipmentActiveAbilityState; readonly entry: EquipmentActiveAbilityRuntimeEntry } {
+): {
+  readonly state: EquipmentActiveAbilityState;
+  readonly entry: EquipmentActiveAbilityRuntimeEntry;
+} {
   const previous = getEquipmentActiveAbilityRuntimeEntry(state, equipmentInstanceId);
 
   if (previous.abilityId !== ability.abilityId) {
@@ -110,7 +113,10 @@ export function commitEquipmentActiveAbilityUse(
     totalUses: previous.totalUses + 1,
   };
 
-  return { state: { ...state, entries: { ...state.entries, [equipmentInstanceId]: entry } }, entry };
+  return {
+    state: { ...state, entries: { ...state.entries, [equipmentInstanceId]: entry } },
+    entry,
+  };
 }
 
 /**

@@ -71,9 +71,7 @@ export const TRAVEL_BOOTS_EQUIPMENT_DEFINITION = {
     cooldownTurns: 1,
     maxUsesPerTurn: 1,
     conditionIds: [],
-    effects: [
-      { effectId: "movement", effectType: "movement_modify", parameters: { amount: 1 } },
-    ],
+    effects: [{ effectId: "movement", effectType: "movement_modify", parameters: { amount: 1 } }],
   },
 } as const satisfies EquipmentDefinition;
 
@@ -86,7 +84,9 @@ export const FORTUNE_PENDANT_EQUIPMENT_DEFINITION = {
   corePosition: "accessory",
   allowDuplicateEquipping: false,
   weaponAttack: 0,
-  attributeEffects: [{ effectId: "luck", targetType: "derived", targetAttribute: "luck", value: 1 }],
+  attributeEffects: [
+    { effectId: "luck", targetType: "derived", targetAttribute: "luck", value: 1 },
+  ],
   activeAbility: {
     abilityId: "fortunePendant.scout",
     description: "Reveal nearby map information.",
