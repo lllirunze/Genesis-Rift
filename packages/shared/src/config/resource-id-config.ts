@@ -10,6 +10,7 @@ export const RESOURCE_ID_PREFIXES = [
   "blueprint",
   "card",
   "npc",
+  "shop",
   "buff",
   "debuff",
   "terrain",
