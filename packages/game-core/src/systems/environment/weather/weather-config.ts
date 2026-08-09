@@ -80,6 +80,3 @@ export const WEATHER_DISASTER_PHASES = ["WARNING", "DISASTER", "RECOVERY"] as co
 
 /** 牌面天气与事件天气默认持续两个完整轮次。 */
 export const DEFAULT_WEATHER_DURATION_ROUNDS = 2;
-
-/** 每个昼夜阶段固定持续五个完整轮次。 */
-export const DAY_NIGHT_PHASE_DURATION_ROUNDS = 5;
