@@ -52,6 +52,15 @@ describe("RoomManager", () => {
     expectRoomManagerError(() => manager.joinRoom(HOST), "PLAYER_ALREADY_JOINED");
     expectRoomManagerError(() => new RoomManager().getRoom(), "ROOM_NOT_FOUND");
   });
+
+  it("restores an existing player without duplicating the room member list", () => {
+    const manager = new RoomManager();
+    const created = manager.createRoom(ROOM_ID, HOST);
+    const restored = manager.reconnectPlayer(HOST);
+
+    expect(restored).toBe(created);
+    expect(restored.players).toEqual([HOST]);
+  });
 });
 
 /** 断言房间管理器返回的错误类型及其稳定协议错误码。 */

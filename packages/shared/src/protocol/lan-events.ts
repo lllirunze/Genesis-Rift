@@ -38,6 +38,42 @@ export interface RequestLanRoomSnapshot {
   readonly requestId: string;
 }
 
+/** 描述客户端请求读取当前游戏公开快照的输入。 */
+export interface RequestGameSnapshot {
+  readonly requestId: string;
+}
+
+/** 描述客户端可以提交的首批权威游戏命令。 */
+export interface SubmitGameCommandRequest {
+  readonly requestId: string;
+  readonly commandId: string;
+  readonly type: "turn.end";
+}
+
+/** 描述公开游戏快照中的全局回合位置。 */
+export interface LanGameTurnSnapshot {
+  readonly globalTurn: number;
+  readonly round: number;
+  readonly activePlayerId: PlayerId | null;
+  readonly phase: string;
+}
+
+/** 描述其他玩家可见的断线恢复期限信息。 */
+export interface LanDisconnectedPlayerSnapshot {
+  readonly playerId: PlayerId;
+  readonly expiresAfterGlobalTurn: number;
+}
+
+/** 描述可安全广播给整个房间的游戏权威状态摘要。 */
+export interface LanGameSessionSnapshot {
+  readonly gameId: string;
+  readonly status: "lobby" | "running" | "finished";
+  readonly revision: number;
+  readonly turn: LanGameTurnSnapshot;
+  readonly playerOrder: readonly PlayerId[];
+  readonly disconnectedPlayers: readonly LanDisconnectedPlayerSnapshot[];
+}
+
 /** 描述服务端拒绝一项局域网请求时返回的稳定信息。 */
 export interface LanRequestRejectedPayload {
   readonly requestId: string;
@@ -48,6 +84,12 @@ export interface LanRequestRejectedPayload {
     | "ROOM_NOT_JOINABLE"
     | "SOCKET_IDENTITY_MISMATCH"
     | "NOT_JOINED"
+    | "GAME_NOT_INITIALIZED"
+    | "GAME_NOT_RUNNING"
+    | "PLAYER_NOT_IN_GAME"
+    | "NOT_ACTIVE_PLAYER"
+    | "PLAYER_DISCONNECTED"
+    | "PLAYER_NOT_DISCONNECTED"
     | "REQUEST_INVALID";
   readonly message: string;
 }
@@ -58,6 +100,8 @@ export interface ClientToServerEvents {
   "room:create": (payload: CreateLanRoomRequest) => void;
   "room:join": (payload: JoinLanRoomRequest) => void;
   "room:requestSnapshot": (payload: RequestLanRoomSnapshot) => void;
+  "game:requestSnapshot": (payload: RequestGameSnapshot) => void;
+  "game:command": (payload: SubmitGameCommandRequest) => void;
 }
 
 /** 服务端可以主动发送给客户端的事件契约。 */
@@ -70,6 +114,16 @@ export interface ServerToClientEvents {
     readonly room: LanRoomSnapshot;
   }) => void;
   "room:rejected": (payload: LanRequestRejectedPayload) => void;
+  "game:snapshot": (payload: {
+    readonly requestId: string;
+    readonly game: LanGameSessionSnapshot;
+  }) => void;
+  "game:commandAccepted": (payload: {
+    readonly requestId: string;
+    readonly commandId: string;
+    readonly game: LanGameSessionSnapshot;
+  }) => void;
+  "game:rejected": (payload: LanRequestRejectedPayload) => void;
 }
 
 /** 服务端多实例之间的事件契约，当前版本暂未启用。 */

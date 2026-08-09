@@ -10,7 +10,9 @@ import {
 import { Server as SocketServer } from "socket.io";
 
 import { RoomManager } from "../rooms/room-manager.ts";
+import { GameSessionManager } from "../game/game-session-manager.ts";
 import { SocketSessionManager } from "../sessions/socket-session-manager.ts";
+import { bindGameSocketEvents } from "../transport/bind-game-socket-events.ts";
 import { bindRoomSocketEvents } from "../transport/bind-room-socket-events.ts";
 
 interface LanServerOptions {
@@ -46,12 +48,22 @@ export function createLanServer(options: LanServerOptions) {
     },
   });
   const roomManager = new RoomManager();
+  const gameSessionManager = new GameSessionManager();
   const sessionManager = new SocketSessionManager();
 
   socketServer.on("connection", (socket) => {
     socket.emit("server:ready", { protocolVersion: PROTOCOL_VERSION });
-    bindRoomSocketEvents(socket, socketServer, roomManager, sessionManager);
+    bindGameSocketEvents(socket, socketServer, gameSessionManager, sessionManager);
+    bindRoomSocketEvents(socket, socketServer, roomManager, sessionManager, {
+      onPlayerReconnected: (playerId) => {
+        try {
+          gameSessionManager.getSession().restorePlayerConnection(playerId);
+        } catch {
+          // 大厅阶段尚未创建游戏会话，恢复大厅连接无需额外处理。
+        }
+      },
+    });
   });
 
-  return { httpServer, socketServer, roomManager, sessionManager };
+  return { httpServer, socketServer, roomManager, gameSessionManager, sessionManager };
 }

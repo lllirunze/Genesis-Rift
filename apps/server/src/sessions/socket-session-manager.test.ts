@@ -31,4 +31,15 @@ describe("SocketSessionManager", () => {
       "Socket identity cannot change",
     );
   });
+
+  it("reports whether a player identity is still occupied by an active socket", () => {
+    const manager = new SocketSessionManager();
+    manager.bindPlayer("socket-001", PLAYER_ID);
+
+    expect(manager.isPlayerConnected(PLAYER_ID)).toBe(true);
+
+    manager.removeSocket("socket-001");
+
+    expect(manager.isPlayerConnected(PLAYER_ID)).toBe(false);
+  });
 });

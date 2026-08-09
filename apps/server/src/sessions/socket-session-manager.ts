@@ -108,6 +108,17 @@ export class SocketSessionManager {
   }
 
   /**
+   * 方法名：isPlayerConnected
+   * 作用：判断指定玩家身份当前是否仍被任意活动 Socket 连接占用。
+   * @param playerId 需要检查的稳定玩家标识。
+   * @returns 玩家存在活动 Socket 会话时返回 true。
+   */
+  isPlayerConnected(playerId: PlayerId): boolean {
+    assertPlayerId(playerId);
+    return [...this.#sessions.values()].some((session) => session.playerId === playerId);
+  }
+
+  /**
    * 方法名：removeSocket
    * 作用：在连接断开时清理服务端保存的 Socket 会话信息。
    * @param socketId 已断开的 Socket 连接标识。

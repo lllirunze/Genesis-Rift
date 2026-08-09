@@ -5,6 +5,7 @@ import {
   addPlayerSessionState,
   createGameSessionState,
   getPlayerSessionState,
+  removePlayerSessionState,
   replacePlayerSessionState,
   type GameSessionState,
   type GameSessionValidationContext,
@@ -225,6 +226,19 @@ describe("game session state", () => {
     expect(getPlayerSessionState(nextState, PLAYER_ONE_ID).hand.sizeLimit).toBe(8);
     expect(getPlayerSessionState(nextState, PLAYER_TWO_ID)).toBe(secondPlayer);
     expect(getPlayerSessionState(withBothPlayers, PLAYER_ONE_ID).hand.sizeLimit).toBe(6);
+  });
+
+  it("removes a player together with its position in the session order", () => {
+    const { state, context, world } = createEmptySession();
+    const firstPlayer = createPlayerState(PLAYER_ONE_ID, world);
+    const secondPlayer = createPlayerState(PLAYER_TWO_ID, world);
+    const withFirstPlayer = addPlayerSessionState(state, firstPlayer, context);
+    const withBothPlayers = addPlayerSessionState(withFirstPlayer, secondPlayer, context);
+    const nextState = removePlayerSessionState(withBothPlayers, PLAYER_ONE_ID, context);
+
+    expect(nextState.playerOrder).toEqual([PLAYER_TWO_ID]);
+    expect(nextState.players).toEqual([secondPlayer]);
+    expect(withBothPlayers.players).toHaveLength(2);
   });
 
   it("rejects player aggregates containing state owned by another player", () => {

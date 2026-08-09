@@ -6,4 +6,5 @@ export * from "./core/game/game-session-state.ts";
 export * from "./core/game/game-state.ts";
 export * from "./core/game/validate-game-session-state.ts";
 export * from "./core/turn/turn-phase.ts";
+export * from "./core/turn/turn-state.ts";
 export * from "./systems/index.ts";

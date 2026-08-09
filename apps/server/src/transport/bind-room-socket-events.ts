@@ -3,6 +3,7 @@ import type {
   JoinLanRoomRequest,
   LanRequestRejectedPayload,
   LanRoomSnapshot,
+  PlayerId,
   RequestLanRoomSnapshot,
 } from "@genesis-rift/shared";
 
@@ -43,6 +44,11 @@ export interface RoomSnapshotBroadcaster {
   };
 }
 
+/** 描述房间恢复连接成功后可由上层补充执行的游戏会话操作。 */
+export interface RoomSocketBindingOptions {
+  readonly onPlayerReconnected?: (playerId: PlayerId) => void;
+}
+
 /**
  * 方法名：bindRoomSocketEvents
  * 作用：将创建、加入、读取快照和断开事件绑定到唯一房间与 Socket 会话管理器。
@@ -57,6 +63,7 @@ export function bindRoomSocketEvents(
   broadcaster: RoomSnapshotBroadcaster,
   roomManager: RoomManager,
   sessionManager: SocketSessionManager,
+  options: RoomSocketBindingOptions = {},
 ): void {
   socket.on("room:create", (request) => {
     handleRequest(socket, request.requestId, () => {
@@ -73,12 +80,31 @@ export function bindRoomSocketEvents(
   socket.on("room:join", (request) => {
     handleRequest(socket, request.requestId, () => {
       sessionManager.assertCanBindPlayer(socket.id, request.player.playerId);
-      const room = roomManager.joinRoom(request.player);
+      const room = roomManager.getRoom();
+      const isKnownPlayer = room.players.some(
+        (candidate) => candidate.playerId === request.player.playerId,
+      );
+
+      if (isKnownPlayer && sessionManager.isPlayerConnected(request.player.playerId)) {
+        throw new RoomManagerError(
+          "PLAYER_ALREADY_JOINED",
+          `Player already has an active connection: ${request.player.playerId}`,
+        );
+      }
+
+      const nextRoom = isKnownPlayer
+        ? roomManager.reconnectPlayer(request.player)
+        : roomManager.joinRoom(request.player);
       sessionManager.bindPlayer(socket.id, request.player.playerId);
-      sessionManager.assignRoom(socket.id, room.roomId);
-      socket.join(room.roomId);
-      socket.emit("room:joined", { requestId: request.requestId, room });
-      broadcastSnapshot(broadcaster, room);
+      sessionManager.assignRoom(socket.id, nextRoom.roomId);
+      socket.join(nextRoom.roomId);
+      socket.emit("room:joined", { requestId: request.requestId, room: nextRoom });
+
+      if (isKnownPlayer) {
+        options.onPlayerReconnected?.(request.player.playerId);
+      }
+
+      broadcastSnapshot(broadcaster, nextRoom);
     });
   });
 

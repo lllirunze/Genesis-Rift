@@ -89,6 +89,35 @@ export class RoomManager {
   }
 
   /**
+   * 方法名：reconnectPlayer
+   * 作用：为已存在于房间成员列表但已断开网络连接的玩家恢复大厅归属。
+   * @param player 请求恢复连接的公开玩家信息。
+   * @returns 不修改成员列表的当前权威房间快照。
+   * @throws 玩家不属于当前房间或显示名称与原身份不一致时抛出错误。
+   */
+  reconnectPlayer(player: LanRoomPlayerSnapshot): LanRoomSnapshot {
+    const current = this.getRoom();
+    validatePlayer(player);
+    const existing = current.players.find((candidate) => candidate.playerId === player.playerId);
+
+    if (existing === undefined) {
+      throw new RoomManagerError(
+        "ROOM_NOT_JOINABLE",
+        "Player does not belong to the active LAN room",
+      );
+    }
+
+    if (existing.displayName !== player.displayName) {
+      throw new RoomManagerError(
+        "PLAYER_ALREADY_JOINED",
+        `Player display name does not match the existing room member: ${player.playerId}`,
+      );
+    }
+
+    return current;
+  }
+
+  /**
    * 方法名：getRoom
    * 作用：读取指定房间当前权威快照，不允许调用方修改内部状态。
    * @returns 对应房间的不可变大厅快照。

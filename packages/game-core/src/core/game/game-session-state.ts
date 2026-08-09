@@ -196,3 +196,31 @@ export function replacePlayerSessionState<
   validateGameSessionState(nextState, context);
   return nextState;
 }
+
+/**
+ * 方法名：removePlayerSessionState
+ * 作用：在角色超时离席等场景下不可变移除其全部会话专属状态与行动顺序位置。
+ * @param state 当前游戏会话状态。
+ * @param playerId 需要彻底移除的玩家标识。
+ * @param context 校验移除后会话状态所需的静态定义集合。
+ * @returns 不再包含该玩家的新游戏会话状态。
+ * @throws 玩家不存在或移除后状态不满足会话约束时抛出错误。
+ */
+export function removePlayerSessionState<
+  ResourceId extends string,
+  DerivedAttribute extends string,
+>(
+  state: GameSessionState<ResourceId>,
+  playerId: PlayerId,
+  context: GameSessionValidationContext<ResourceId, DerivedAttribute>,
+): GameSessionState<ResourceId> {
+  getPlayerSessionState(state, playerId);
+  const nextState: GameSessionState<ResourceId> = {
+    ...state,
+    playerOrder: state.playerOrder.filter((candidate) => candidate !== playerId),
+    players: state.players.filter((candidate) => candidate.playerId !== playerId),
+  };
+
+  validateGameSessionState(nextState, context);
+  return nextState;
+}
