@@ -25,6 +25,27 @@ export const REINCARNATION_RECOVERY_DENOMINATOR = 100;
 /** 轮回成功后保护角色免受主动敌对行为的默认自身回合数。 */
 export const DEFAULT_REINCARNATION_PROTECTION_TURNS = 3;
 
+/** 角色正式死亡时损失元宝所用的整数分子。 */
+export const DEATH_COIN_LOSS_NUMERATOR = 20;
+
+/** 角色正式死亡时损失元宝所用的整数分母。 */
+export const DEATH_COIN_LOSS_DENOMINATOR = 100;
+
+/** 死亡元宝损失写入经济账本时使用的固定原因标识。 */
+export const DEATH_COIN_LOSS_REASON_ID = "revival.death-coin-loss";
+
+/** 死亡遗物包默认向所有玩家开放的完整全局回合数。 */
+export const DEFAULT_DEATH_RELIC_OPEN_GLOBAL_TURNS = 10;
+
+/** 单名玩家可从同一个死亡遗物包成功拾取的最大物品单位数。 */
+export const MAX_DEATH_RELIC_PICKUP_UNITS_PER_PLAYER = 2;
+
+/** 正式死亡时允许随机进入遗物包的物品品质。 */
+export const DEATH_RELIC_LOSS_QUALITIES = ["common", "excellent"] as const;
+
+/** 正式死亡时允许随机进入遗物包的常规背包物品类别。 */
+export const DEATH_RELIC_LOSS_ITEM_CATEGORIES = ["material", "consumable"] as const;
+
 /** 地图可提供给轮回系统的安全出生区域类型。 */
 export const REINCARNATION_SAFE_SETTLEMENT_TYPES = ["TOWN", "VILLAGE", "CAMP"] as const;
 
