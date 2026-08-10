@@ -5,7 +5,9 @@ import type {
   LanRoomSnapshot,
   PlayerId,
   RequestLanRoomSnapshot,
+  UpdateLanCharacterSelectionRequest,
 } from "@genesis-rift/shared";
+import { IDENTITY_CONFIGS, RACE_CONFIGS } from "@genesis-rift/game-data";
 
 import { RoomManager, RoomManagerError } from "../rooms/room-manager.ts";
 import { SocketSessionError, SocketSessionManager } from "../sessions/socket-session-manager.ts";
@@ -17,6 +19,10 @@ export interface RoomSocket {
   on(event: "room:create", listener: (payload: CreateLanRoomRequest) => void): void;
   on(event: "room:join", listener: (payload: JoinLanRoomRequest) => void): void;
   on(event: "room:requestSnapshot", listener: (payload: RequestLanRoomSnapshot) => void): void;
+  on(
+    event: "room:updateCharacterSelection",
+    listener: (payload: UpdateLanCharacterSelectionRequest) => void,
+  ): void;
   on(event: "disconnect", listener: () => void): void;
   emit(
     event: "room:created",
@@ -121,9 +127,33 @@ export function bindRoomSocketEvents(
     });
   });
 
+  socket.on("room:updateCharacterSelection", (request) => {
+    handleRequest(socket, request.requestId, () => {
+      const session = sessionManager.getJoinedSession(socket.id);
+      assertCharacterSelection(request.selection);
+      const room = roomManager.updateCharacterSelection(session.playerId, request.selection);
+      broadcastSnapshot(broadcaster, room);
+    });
+  });
+
   socket.on("disconnect", () => {
     sessionManager.removeSocket(socket.id);
   });
+}
+
+/** 校验浏览器提交的选择仍属于服务端部署的固定角色配置。 */
+function assertCharacterSelection(request: UpdateLanCharacterSelectionRequest["selection"]): void {
+  if (request.gender !== "female" && request.gender !== "male") {
+    throw new RoomManagerError("CHARACTER_SELECTION_INVALID", "Character gender is invalid");
+  }
+
+  if (!(request.identityName in IDENTITY_CONFIGS)) {
+    throw new RoomManagerError("CHARACTER_SELECTION_INVALID", "Character identity is invalid");
+  }
+
+  if (!(request.raceName in RACE_CONFIGS)) {
+    throw new RoomManagerError("CHARACTER_SELECTION_INVALID", "Character race is invalid");
+  }
 }
 
 /** 向唯一活动房间广播更新后的权威大厅快照。 */

@@ -10,7 +10,7 @@ const ROOM: LanRoomSnapshot = {
   hostPlayerId: "player-host" as PlayerId,
   status: "lobby",
   revision: 1,
-  players: [{ playerId: "player-host" as PlayerId, displayName: "Host" }],
+  players: [{ playerId: "player-host" as PlayerId, displayName: "Host", characterSelection: null }],
 };
 
 describe("LanRoomClient", () => {
@@ -43,6 +43,38 @@ describe("LanRoomClient", () => {
       { requestId: "request-create", roomId: ROOM.roomId, host: ROOM.players[0] },
     ]);
     expect(client.getState().rejection).toMatchObject({ code: "ROOM_ALREADY_EXISTS" });
+  });
+
+  it("forwards character selection and host start requests after the socket connects", () => {
+    const socket = new FakeLanSocket();
+    const client = new LanRoomClient(socket as unknown as LanSocket);
+    client.connect();
+
+    client.updateCharacterSelection("request-select", {
+      gender: "female",
+      identityName: "mage",
+      raceName: "human",
+    });
+    client.startGame("request-start");
+    client.endActivePlayerTurn("request-turn-end", "command-turn-end");
+    client.moveActivePlayer("request-map-move", "command-map-move", "NORTH");
+
+    expect(socket.getEmitted("room:updateCharacterSelection")).toEqual([
+      {
+        requestId: "request-select",
+        selection: { gender: "female", identityName: "mage", raceName: "human" },
+      },
+    ]);
+    expect(socket.getEmitted("game:start")).toEqual([{ requestId: "request-start" }]);
+    expect(socket.getEmitted("game:command")).toEqual([
+      { requestId: "request-turn-end", commandId: "command-turn-end", type: "turn.end" },
+      {
+        requestId: "request-map-move",
+        commandId: "command-map-move",
+        type: "map.move",
+        direction: "NORTH",
+      },
+    ]);
   });
 
   it("does not send room requests before a Socket connection exists", () => {

@@ -7,6 +7,7 @@ import type {
   PlayerId,
   RequestLanRoomSnapshot,
   RoomId,
+  UpdateLanCharacterSelectionRequest,
 } from "@genesis-rift/shared";
 
 import { RoomManager } from "../rooms/room-manager.ts";
@@ -34,11 +35,11 @@ describe("bindRoomSocketEvents", () => {
     host.trigger("room:create", {
       requestId: "request-create",
       roomId: ROOM_ID,
-      host: { playerId: HOST_ID, displayName: "Host" },
+      host: { playerId: HOST_ID, displayName: "Host", characterSelection: null },
     });
     guest.trigger("room:join", {
       requestId: "request-join",
-      player: { playerId: GUEST_ID, displayName: "Guest" },
+      player: { playerId: GUEST_ID, displayName: "Guest", characterSelection: null },
     });
 
     expect(host.joinedRoomIds).toEqual([ROOM_ID]);
@@ -62,11 +63,11 @@ describe("bindRoomSocketEvents", () => {
     host.trigger("room:create", {
       requestId: "request-create",
       roomId: ROOM_ID,
-      host: { playerId: HOST_ID, displayName: "Host" },
+      host: { playerId: HOST_ID, displayName: "Host", characterSelection: null },
     });
     host.trigger("room:join", {
       requestId: "request-spoof",
-      player: { playerId: GUEST_ID, displayName: "Guest" },
+      player: { playerId: GUEST_ID, displayName: "Guest", characterSelection: null },
     });
     observer.trigger("room:requestSnapshot", { requestId: "request-observer" });
 
@@ -91,7 +92,7 @@ describe("bindRoomSocketEvents", () => {
     host.trigger("room:create", {
       requestId: "request-create",
       roomId: ROOM_ID,
-      host: { playerId: HOST_ID, displayName: "Host" },
+      host: { playerId: HOST_ID, displayName: "Host", characterSelection: null },
     });
     host.trigger("disconnect");
     host.trigger("room:requestSnapshot", { requestId: "request-after-disconnect" });
@@ -99,6 +100,38 @@ describe("bindRoomSocketEvents", () => {
     expect(host.getEmitted("room:rejected")[0]).toMatchObject({
       requestId: "request-after-disconnect",
       code: "NOT_JOINED",
+    });
+  });
+
+  it("updates a joined player's valid selection and rejects invalid static configuration names", () => {
+    const rooms = new RoomManager();
+    const sessions = new SocketSessionManager();
+    const broadcaster = new FakeRoomBroadcaster();
+    const host = new FakeRoomSocket("socket-host");
+    bindRoomSocketEvents(host as unknown as RoomSocket, broadcaster, rooms, sessions);
+
+    host.trigger("room:create", {
+      requestId: "request-create",
+      roomId: ROOM_ID,
+      host: { playerId: HOST_ID, displayName: "Host", characterSelection: null },
+    });
+    host.trigger("room:updateCharacterSelection", {
+      requestId: "request-select",
+      selection: { gender: "female", identityName: "mage", raceName: "human" },
+    });
+    host.trigger("room:updateCharacterSelection", {
+      requestId: "request-invalid",
+      selection: { gender: "female", identityName: "unknown", raceName: "human" },
+    });
+
+    expect(rooms.getRoom().players[0]?.characterSelection).toEqual({
+      gender: "female",
+      identityName: "mage",
+      raceName: "human",
+    });
+    expect(host.getEmitted("room:rejected")[0]).toMatchObject({
+      requestId: "request-invalid",
+      code: "CHARACTER_SELECTION_INVALID",
     });
   });
 });
@@ -129,6 +162,10 @@ class FakeRoomSocket {
   trigger(event: "room:create", payload: CreateLanRoomRequest): void;
   trigger(event: "room:join", payload: JoinLanRoomRequest): void;
   trigger(event: "room:requestSnapshot", payload: RequestLanRoomSnapshot): void;
+  trigger(
+    event: "room:updateCharacterSelection",
+    payload: UpdateLanCharacterSelectionRequest,
+  ): void;
   trigger(event: string, payload?: unknown): void {
     this.#listeners.get(event)?.(payload);
   }

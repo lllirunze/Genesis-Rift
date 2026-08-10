@@ -15,7 +15,7 @@ describe("GameCommandService", () => {
       gameId: GAME_ID,
       status: "lobby",
       playerOrder: [PLAYER_ID],
-      players: [{ playerId: PLAYER_ID }],
+      players: [createPlayerSessionState(PLAYER_ID)],
       world: {},
       random: {},
     } as unknown as GameSessionState;
@@ -32,3 +32,17 @@ describe("GameCommandService", () => {
     expect(result.snapshot.turn.globalTurn).toBe(1);
   });
 });
+
+/** 创建仅供命令服务测试读取公开快照的最小玩家状态。 */
+function createPlayerSessionState(playerId: PlayerId) {
+  return {
+    playerId,
+    character: {
+      playerId,
+      gender: "female",
+      identityId: "identity.mage",
+      raceId: "race.human",
+    },
+    map: { currentTileId: "tile:1" },
+  };
+}

@@ -1,12 +1,24 @@
 import {
   advanceTurnState,
+  createCharacterAttributeSnapshot,
+  createEquipmentAttributeModifiers,
+  createStatusAttributeModifiers,
   createTurnState,
+  getPlayerSessionState,
   removePlayerFromTurnState,
   removePlayerSessionState,
+  replacePlayerSessionState,
+  settleNormalMovement,
   type GameSessionState,
   type GameSessionValidationContext,
+  type HexDirection,
+  type PlayerSessionState,
   type TurnState,
 } from "@genesis-rift/game-core";
+import {
+  DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+  MAP_CONTENT_DEFINITION_CATALOG,
+} from "@genesis-rift/game-data";
 import type { GameId, LanGameSessionSnapshot, PlayerId } from "@genesis-rift/shared";
 
 /** 断线玩家可恢复原角色的全局玩家回合数量。 */
@@ -18,7 +30,8 @@ export type ServerGameSessionErrorCode =
   | "PLAYER_NOT_IN_GAME"
   | "NOT_ACTIVE_PLAYER"
   | "PLAYER_DISCONNECTED"
-  | "PLAYER_NOT_DISCONNECTED";
+  | "PLAYER_NOT_DISCONNECTED"
+  | "MOVE_NOT_AVAILABLE";
 
 /** 描述服务端游戏会话抛出的可映射业务错误。 */
 export class ServerGameSessionError extends Error {
@@ -66,7 +79,19 @@ export type GameSessionEvent =
       readonly type: "player.removedAfterDisconnect";
       readonly gameId: GameId;
       readonly playerId: PlayerId;
+    }
+  | {
+      readonly type: "player.moved";
+      readonly gameId: GameId;
+      readonly playerId: PlayerId;
+      readonly originTileId: string;
+      readonly targetTileId: string;
     };
+
+/** 描述从角色最终数值解析一个新回合可用移动力的可替换规则。 */
+export type MovementPointResolver<ResourceId extends string = string> = (
+  player: PlayerSessionState<ResourceId>,
+) => number;
 
 /**
  * 管理一局游戏的权威状态、全局回合与断线恢复期限。
@@ -80,22 +105,28 @@ export class ServerGameSession<
   #state: GameSessionState<ResourceId>;
   #turn: TurnState;
   #revision = 1;
+  #remainingMovementPoints = 0;
   readonly #disconnectedPlayers = new Map<PlayerId, DisconnectedPlayerState>();
+  readonly #movementPointResolver: MovementPointResolver<ResourceId>;
 
   /**
    * 方法名：constructor
    * 作用：接管已完成完整校验的游戏会话状态，并初始化行动顺序。
    * @param state 游戏规则层创建的完整权威状态。
    * @param validationContext 后续替换或移除玩家时需要使用的静态定义集合。
+   * @param movementPointResolver 新回合读取角色最终移动力的可替换规则。
    * @returns 无返回值。
    */
   constructor(
     state: GameSessionState<ResourceId>,
     validationContext: GameSessionValidationContext<ResourceId, DerivedAttribute>,
+    movementPointResolver: MovementPointResolver<ResourceId> = (player) =>
+      resolveDefaultMovementPoints(player, validationContext),
   ) {
     this.#state = state;
     this.#validationContext = validationContext;
     this.#turn = createTurnState({ playerOrder: state.playerOrder });
+    this.#movementPointResolver = movementPointResolver;
   }
 
   /**
@@ -116,6 +147,7 @@ export class ServerGameSession<
     }
 
     this.#state = { ...this.#state, status: "running" };
+    this.resetActivePlayerMovementPoints();
     this.#revision += 1;
     return this.createResult([{ type: "game.started", gameId: this.#state.gameId }]);
   }
@@ -135,12 +167,74 @@ export class ServerGameSession<
     this.#turn = advanceTurnState(this.#turn, this.#state.playerOrder, {
       unavailablePlayerIds: [...this.#disconnectedPlayers.keys()],
     });
+    this.resetActivePlayerMovementPoints();
     this.#revision += 1;
     const events: GameSessionEvent[] = [
       { type: "turn.advanced", gameId: this.#state.gameId, turn: this.#turn },
     ];
     events.push(...this.removeExpiredDisconnectedPlayers());
     return this.createResult(events);
+  }
+
+  /**
+   * 方法名：moveActivePlayer
+   * 作用：结算当前行动玩家向指定相邻方向的一步普通移动与首次探索。
+   * @param playerId 请求移动的当前行动玩家标识。
+   * @param direction 平顶六边形地图中的目标相邻方向。
+   * @returns 移动事件与包含新位置、探索后移动力的公开快照。
+   * @throws 玩家不可行动、方向无法进入或移动力不足时抛出错误。
+   */
+  moveActivePlayer(
+    playerId: PlayerId,
+    direction: HexDirection,
+  ): {
+    readonly events: readonly GameSessionEvent[];
+    readonly snapshot: GameSessionSnapshot;
+  } {
+    this.assertActiveConnectedPlayer(playerId);
+    const player = getPlayerSessionState(this.#state, playerId);
+    const settlement = settleNormalMovement({
+      map: this.#state.world.map,
+      currentTileId: player.map.currentTileId,
+      explorationState: player.map.exploration,
+      terrainDefinitions: MAP_CONTENT_DEFINITION_CATALOG.terrains,
+      availableMovementPoints: this.#remainingMovementPoints,
+      directions: [direction],
+    });
+
+    const step = settlement.steps[0];
+
+    if (step === undefined) {
+      const reason = settlement.interruption?.reason ?? "unknown";
+      throw new ServerGameSessionError(
+        "MOVE_NOT_AVAILABLE",
+        `Unable to move player in direction ${direction}: ${reason}`,
+      );
+    }
+
+    this.#state = replacePlayerSessionState(
+      this.#state,
+      {
+        ...player,
+        map: {
+          currentTileId: settlement.finalTileId,
+          exploration: settlement.explorationState,
+        },
+      },
+      this.#validationContext,
+    );
+    this.#remainingMovementPoints = settlement.remainingMovementPoints;
+    this.#revision += 1;
+
+    return this.createResult([
+      {
+        type: "player.moved",
+        gameId: this.#state.gameId,
+        playerId,
+        originTileId: step.originTileId,
+        targetTileId: step.targetTileId,
+      },
+    ]);
   }
 
   /**
@@ -182,6 +276,7 @@ export class ServerGameSession<
 
       if (remainingOrder.length > 0) {
         this.#turn = this.skipDisconnectedActiveTurn(playerId);
+        this.resetActivePlayerMovementPoints();
         events.push({ type: "turn.advanced", gameId: this.#state.gameId, turn: this.#turn });
       }
     }
@@ -225,8 +320,19 @@ export class ServerGameSession<
       gameId: this.#state.gameId,
       status: this.#state.status,
       revision: this.#revision,
-      turn: { ...this.#turn },
+      turn: { ...this.#turn, remainingMovementPoints: this.#remainingMovementPoints },
       playerOrder: Object.freeze([...this.#state.playerOrder]),
+      players: Object.freeze(
+        this.#state.players.map((player) =>
+          Object.freeze({
+            playerId: player.playerId,
+            gender: player.character.gender ?? null,
+            identityId: player.character.identityId,
+            raceId: player.character.raceId,
+            currentTileId: player.map.currentTileId,
+          }),
+        ),
+      ),
       disconnectedPlayers: Object.freeze(
         [...this.#disconnectedPlayers.values()].map(({ playerId, expiresAfterGlobalTurn }) =>
           Object.freeze({ playerId, expiresAfterGlobalTurn }),
@@ -289,6 +395,20 @@ export class ServerGameSession<
     }
   }
 
+  /** 为当前行动玩家读取最终移动力，并在不存在行动者时清空该回合资源。 */
+  private resetActivePlayerMovementPoints(): void {
+    const playerId = this.#turn.activePlayerId;
+
+    if (playerId === null) {
+      this.#remainingMovementPoints = 0;
+      return;
+    }
+
+    this.#remainingMovementPoints = this.#movementPointResolver(
+      getPlayerSessionState(this.#state, playerId),
+    );
+  }
+
   /** 查找断线玩家之后第一名仍可行动的玩家。 */
   private findNextConnectedPlayer(playerId: PlayerId): PlayerId {
     const startIndex = this.#state.playerOrder.indexOf(playerId);
@@ -349,6 +469,43 @@ export class ServerGameSession<
       });
     }
 
+    this.resetActivePlayerMovementPoints();
+
     return events;
   }
+}
+
+/**
+ * 方法名：resolveDefaultMovementPoints
+ * 作用：使用当前基础属性公式计算新回合的默认移动力，为未来完整属性聚合服务保留替换入口。
+ * @param player 需要读取移动力的玩家完整运行时状态。
+ * @returns 不小于零的整数移动力；不完整测试壳状态返回零。
+ */
+function resolveDefaultMovementPoints(
+  player: PlayerSessionState,
+  validationContext: GameSessionValidationContext,
+): number {
+  if (player.character.currentPrimaryAttributes === undefined) {
+    return 0;
+  }
+
+  const equipmentDefinitions = Object.fromEntries(
+    validationContext.equipmentDefinitions.map((definition) => [
+      definition.definitionId,
+      definition,
+    ]),
+  );
+  const modifiers = [
+    ...createEquipmentAttributeModifiers(player.equipment, equipmentDefinitions),
+    ...createStatusAttributeModifiers(
+      player.statuses.instances,
+      validationContext.statusDefinitions,
+    ),
+  ];
+
+  return createCharacterAttributeSnapshot(
+    player.character,
+    DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+    modifiers,
+  ).derivedAttributes.movementRange;
 }

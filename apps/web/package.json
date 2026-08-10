@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@genesis-rift/game-core": "*",
+    "@genesis-rift/game-data": "*",
     "@genesis-rift/shared": "*",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

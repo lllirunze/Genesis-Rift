@@ -1,9 +1,12 @@
 import {
   PROTOCOL_VERSION,
   type LanRequestRejectedPayload,
+  type LanGameSessionSnapshot,
+  type LanCharacterSelection,
   type LanRoomPlayerSnapshot,
   type LanRoomSnapshot,
   type RoomId,
+  type LanHexDirection,
 } from "@genesis-rift/shared";
 
 import type { LanSocket } from "../../lib/socket-client.ts";
@@ -13,6 +16,7 @@ import type { ConnectionStatus } from "../../state/connection-store.ts";
 export interface LanRoomClientState {
   readonly connectionStatus: ConnectionStatus;
   readonly room: LanRoomSnapshot | null;
+  readonly game: LanGameSessionSnapshot | null;
   readonly rejection: LanRequestRejectedPayload | null;
 }
 
@@ -26,6 +30,7 @@ export class LanRoomClient {
   #state: LanRoomClientState = {
     connectionStatus: "offline",
     room: null,
+    game: null,
     rejection: null,
   };
 
@@ -44,6 +49,10 @@ export class LanRoomClient {
     socket.on("room:joined", this.handleRoomUpdated);
     socket.on("room:snapshot", this.handleRoomUpdated);
     socket.on("room:rejected", this.handleRoomRejected);
+    socket.on("game:started", this.handleGameStarted);
+    socket.on("game:snapshot", this.handleGameUpdated);
+    socket.on("game:commandAccepted", this.handleGameUpdated);
+    socket.on("game:rejected", this.handleRoomRejected);
   }
 
   /**
@@ -126,6 +135,54 @@ export class LanRoomClient {
   }
 
   /**
+   * 方法名：updateCharacterSelection
+   * 作用：向服务端提交当前玩家在大厅中的角色创建选择。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param selection 性别、职业与种族的完整选择。
+   * @returns 无返回值。
+   */
+  updateCharacterSelection(requestId: string, selection: LanCharacterSelection): void {
+    this.assertConnected();
+    this.#socket.emit("room:updateCharacterSelection", { requestId, selection });
+  }
+
+  /**
+   * 方法名：startGame
+   * 作用：由当前房主向服务端请求锁定大厅并启动唯一对局。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @returns 无返回值。
+   */
+  startGame(requestId: string): void {
+    this.assertConnected();
+    this.#socket.emit("game:start", { requestId });
+  }
+
+  /**
+   * 方法名：endActivePlayerTurn
+   * 作用：请求服务端结束当前浏览器玩家的行动回合。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param commandId 可用于幂等校验的唯一游戏命令标识。
+   * @returns 无返回值。
+   */
+  endActivePlayerTurn(requestId: string, commandId: string): void {
+    this.assertConnected();
+    this.#socket.emit("game:command", { requestId, commandId, type: "turn.end" });
+  }
+
+  /**
+   * 方法名：moveActivePlayer
+   * 作用：请求服务端将当前浏览器玩家向指定相邻六边形方向移动一步。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param commandId 可用于幂等校验的唯一游戏命令标识。
+   * @param direction 需要进入的相邻六边形方向。
+   * @returns 无返回值。
+   */
+  moveActivePlayer(requestId: string, commandId: string, direction: LanHexDirection): void {
+    this.assertConnected();
+    this.#socket.emit("game:command", { requestId, commandId, type: "map.move", direction });
+  }
+
+  /**
    * 方法名：destroy
    * 作用：移除协议监听器并释放客户端订阅，避免 React 组件卸载后继续接收事件。
    * @returns 无返回值。
@@ -138,6 +195,10 @@ export class LanRoomClient {
     this.#socket.off("room:joined", this.handleRoomUpdated);
     this.#socket.off("room:snapshot", this.handleRoomUpdated);
     this.#socket.off("room:rejected", this.handleRoomRejected);
+    this.#socket.off("game:started", this.handleGameStarted);
+    this.#socket.off("game:snapshot", this.handleGameUpdated);
+    this.#socket.off("game:commandAccepted", this.handleGameUpdated);
+    this.#socket.off("game:rejected", this.handleRoomRejected);
     this.#listeners.clear();
   }
 
@@ -163,6 +224,20 @@ export class LanRoomClient {
   /** 接收服务端对请求的稳定拒绝结果。 */
   private readonly handleRoomRejected = (payload: LanRequestRejectedPayload): void => {
     this.setState({ ...this.#state, rejection: payload });
+  };
+
+  /** 接收开局和后续广播的公开游戏快照。 */
+  private readonly handleGameStarted = (payload: {
+    readonly game: LanGameSessionSnapshot;
+  }): void => {
+    this.setState({ ...this.#state, game: payload.game, rejection: null });
+  };
+
+  /** 接收游戏运行期间的公开快照更新。 */
+  private readonly handleGameUpdated = (payload: {
+    readonly game: LanGameSessionSnapshot;
+  }): void => {
+    this.setState({ ...this.#state, game: payload.game });
   };
 
   /** 发布新的不可变状态给所有订阅者。 */

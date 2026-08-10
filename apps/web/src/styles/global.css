@@ -273,6 +273,206 @@ h1 {
   font-size: 0.82rem;
 }
 
+.character-selection {
+  display: grid;
+  gap: 16px;
+  margin-top: 26px;
+  padding: 20px;
+  background: rgba(30, 77, 70, 0.06);
+  border: 1px solid var(--line);
+}
+
+.character-selection > div:first-child p {
+  margin-bottom: 6px;
+  color: var(--cinnabar);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.character-selection h3 {
+  margin-bottom: 0;
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.character-selection__form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.character-selection label {
+  display: grid;
+  gap: 8px;
+  color: var(--jade);
+  font-size: 0.82rem;
+}
+
+.character-selection select {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.character-selection__preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 66px;
+}
+
+.character-selection__preview img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+
+.character-selection__preview p,
+.character-selection__hint {
+  margin: 0;
+  color: rgba(20, 43, 40, 0.72);
+  font-size: 0.84rem;
+}
+
+.game-session {
+  display: grid;
+  gap: 24px;
+  margin-top: 48px;
+  padding: clamp(24px, 4vw, 42px);
+  background: rgba(248, 242, 223, 0.78);
+  border: 1px solid var(--line);
+  box-shadow: 12px 14px 0 rgba(30, 77, 70, 0.1);
+}
+
+.game-session__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.game-session__heading p,
+.game-session__turn span {
+  margin-bottom: 8px;
+  color: var(--cinnabar);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-session__heading h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  font-weight: 500;
+}
+
+.game-session__status {
+  padding: 8px 11px;
+  color: var(--jade);
+  border: 1px solid var(--jade);
+  font-size: 0.76rem;
+}
+
+.game-session__turn {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+}
+
+.game-session__turn div {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+}
+
+.game-session__turn div + div {
+  border-left: 1px solid var(--line);
+}
+
+.game-session__turn span {
+  margin: 0;
+}
+
+.game-session__turn strong {
+  overflow-wrap: anywhere;
+}
+
+.game-session__players h3 {
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.game-session__players ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.game-player {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  background: rgba(30, 77, 70, 0.06);
+  border-left: 3px solid transparent;
+}
+
+.game-player--active {
+  border-left-color: var(--cinnabar);
+}
+
+.game-player p,
+.game-session__actions p {
+  margin: 5px 0 0;
+  color: rgba(20, 43, 40, 0.72);
+  font-size: 0.84rem;
+}
+
+.game-player > span {
+  color: var(--cinnabar);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.game-session__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.game-session__directions {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.game-session__actions button {
+  padding: 10px 15px;
+  color: var(--paper);
+  cursor: pointer;
+  background: var(--jade);
+  border: 1px solid var(--jade);
+}
+
+.game-session__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .section-heading {
   display: grid;
   grid-template-columns: 180px 1fr;
@@ -358,6 +558,29 @@ h1 {
 
   .room-lobby__form {
     grid-template-columns: 1fr;
+  }
+
+  .character-selection__form {
+    grid-template-columns: 1fr;
+  }
+
+  .game-session__turn {
+    grid-template-columns: 1fr;
+  }
+
+  .game-session__turn div + div {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .game-player,
+  .game-session__actions {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .game-player > span {
+    text-align: left;
   }
 
   .layer-card,

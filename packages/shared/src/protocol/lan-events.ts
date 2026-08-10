@@ -1,4 +1,18 @@
-import type { PlayerId, RoomId } from "../types/ids.ts";
+import type { PlayerId, RoomId, TileId } from "../types/ids.ts";
+
+/** 描述平顶六边形地图按照正北顺时针排列的六个移动方向。 */
+export type LanHexDirection =
+  "NORTH" | "NORTH_EAST_60" | "SOUTH_EAST_60" | "SOUTH" | "SOUTH_WEST_60" | "NORTH_WEST_60";
+
+/** 描述角色立绘与展示层使用的性别分类。 */
+export type CharacterGender = "female" | "male";
+
+/** 描述大厅阶段由玩家自主确定的角色创建选择。 */
+export interface LanCharacterSelection {
+  readonly gender: CharacterGender;
+  readonly identityName: string;
+  readonly raceName: string;
+}
 
 /** 服务端完成启动后向客户端公布的协议元数据。 */
 export interface ServerReadyPayload {
@@ -9,6 +23,7 @@ export interface ServerReadyPayload {
 export interface LanRoomPlayerSnapshot {
   readonly playerId: PlayerId;
   readonly displayName: string;
+  readonly characterSelection: LanCharacterSelection | null;
 }
 
 /** 描述服务端权威维护的房间大厅快照。 */
@@ -38,6 +53,12 @@ export interface RequestLanRoomSnapshot {
   readonly requestId: string;
 }
 
+/** 描述已加入房间的玩家更新自己角色创建选择的请求。 */
+export interface UpdateLanCharacterSelectionRequest {
+  readonly requestId: string;
+  readonly selection: LanCharacterSelection;
+}
+
 /** 描述客户端请求读取当前游戏公开快照的输入。 */
 export interface RequestGameSnapshot {
   readonly requestId: string;
@@ -48,12 +69,25 @@ export interface StartLanGameRequest {
   readonly requestId: string;
 }
 
-/** 描述客户端可以提交的首批权威游戏命令。 */
-export interface SubmitGameCommandRequest {
+/** 描述所有客户端游戏命令共有的请求与幂等标识。 */
+interface SubmitGameCommandRequestBase {
   readonly requestId: string;
   readonly commandId: string;
+}
+
+/** 描述客户端结束当前行动回合的权威命令。 */
+export interface EndTurnGameCommandRequest extends SubmitGameCommandRequestBase {
   readonly type: "turn.end";
 }
+
+/** 描述客户端请求向一个相邻六边形方向普通移动的权威命令。 */
+export interface MoveGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "map.move";
+  readonly direction: LanHexDirection;
+}
+
+/** 描述客户端可以提交的首批权威游戏命令。 */
+export type SubmitGameCommandRequest = EndTurnGameCommandRequest | MoveGameCommandRequest;
 
 /** 描述公开游戏快照中的全局回合位置。 */
 export interface LanGameTurnSnapshot {
@@ -61,12 +95,22 @@ export interface LanGameTurnSnapshot {
   readonly round: number;
   readonly activePlayerId: PlayerId | null;
   readonly phase: string;
+  readonly remainingMovementPoints: number;
 }
 
 /** 描述其他玩家可见的断线恢复期限信息。 */
 export interface LanDisconnectedPlayerSnapshot {
   readonly playerId: PlayerId;
   readonly expiresAfterGlobalTurn: number;
+}
+
+/** 描述可安全公开给房间成员的角色位置与身份摘要。 */
+export interface LanGamePlayerSnapshot {
+  readonly playerId: PlayerId;
+  readonly gender: CharacterGender | null;
+  readonly identityId: string;
+  readonly raceId: string;
+  readonly currentTileId: TileId;
 }
 
 /** 描述可安全广播给整个房间的游戏权威状态摘要。 */
@@ -76,6 +120,7 @@ export interface LanGameSessionSnapshot {
   readonly revision: number;
   readonly turn: LanGameTurnSnapshot;
   readonly playerOrder: readonly PlayerId[];
+  readonly players: readonly LanGamePlayerSnapshot[];
   readonly disconnectedPlayers: readonly LanDisconnectedPlayerSnapshot[];
 }
 
@@ -88,6 +133,8 @@ export interface LanRequestRejectedPayload {
     | "PLAYER_ALREADY_JOINED"
     | "ROOM_NOT_JOINABLE"
     | "NOT_ROOM_HOST"
+    | "CHARACTER_SELECTION_INVALID"
+    | "CHARACTER_SELECTION_INCOMPLETE"
     | "SOCKET_IDENTITY_MISMATCH"
     | "NOT_JOINED"
     | "GAME_NOT_INITIALIZED"
@@ -96,6 +143,7 @@ export interface LanRequestRejectedPayload {
     | "NOT_ACTIVE_PLAYER"
     | "PLAYER_DISCONNECTED"
     | "PLAYER_NOT_DISCONNECTED"
+    | "MOVE_NOT_AVAILABLE"
     | "REQUEST_INVALID";
   readonly message: string;
 }
@@ -106,6 +154,7 @@ export interface ClientToServerEvents {
   "room:create": (payload: CreateLanRoomRequest) => void;
   "room:join": (payload: JoinLanRoomRequest) => void;
   "room:requestSnapshot": (payload: RequestLanRoomSnapshot) => void;
+  "room:updateCharacterSelection": (payload: UpdateLanCharacterSelectionRequest) => void;
   "game:start": (payload: StartLanGameRequest) => void;
   "game:requestSnapshot": (payload: RequestGameSnapshot) => void;
   "game:command": (payload: SubmitGameCommandRequest) => void;

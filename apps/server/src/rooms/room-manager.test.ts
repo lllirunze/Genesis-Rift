@@ -8,10 +8,12 @@ const ROOM_ID = "room-local-001" as RoomId;
 const HOST = {
   playerId: "player-host" as PlayerId,
   displayName: "Host",
+  characterSelection: null,
 } satisfies LanRoomPlayerSnapshot;
 const GUEST = {
   playerId: "player-guest" as PlayerId,
   displayName: "Guest",
+  characterSelection: null,
 } satisfies LanRoomPlayerSnapshot;
 
 describe("RoomManager", () => {
@@ -60,6 +62,30 @@ describe("RoomManager", () => {
 
     expect(restored).toBe(created);
     expect(restored.players).toEqual([HOST]);
+  });
+
+  it("requires every player to select a character before the host starts the room", () => {
+    const manager = new RoomManager();
+    manager.createRoom(ROOM_ID, HOST);
+    manager.joinRoom(GUEST);
+
+    expectRoomManagerError(
+      () => manager.assertCanStartRoom(HOST.playerId),
+      "CHARACTER_SELECTION_INCOMPLETE",
+    );
+
+    manager.updateCharacterSelection(HOST.playerId, {
+      gender: "female",
+      identityName: "mage",
+      raceName: "human",
+    });
+    const updated = manager.updateCharacterSelection(GUEST.playerId, {
+      gender: "female",
+      identityName: "ranger",
+      raceName: "yokai",
+    });
+
+    expect(manager.assertCanStartRoom(HOST.playerId)).toBe(updated);
   });
 });
 

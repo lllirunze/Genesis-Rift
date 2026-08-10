@@ -6,6 +6,7 @@ export * from "./catalog/game-data-catalog.ts";
 export * from "./contracts/contract-definitions.ts";
 export * from "./events/event-definitions.ts";
 export * from "./events/event-pool-definitions.ts";
+export * from "./hand-cards/hand-card-definitions.ts";
 export * from "./equipment/equipment-definitions.ts";
 export * from "./identities/identity-config.ts";
 export * from "./identities/identity-configs.ts";

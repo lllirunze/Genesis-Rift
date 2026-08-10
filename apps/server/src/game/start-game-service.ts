@@ -1,5 +1,5 @@
 import type { GameSessionState, GameSessionValidationContext } from "@genesis-rift/game-core";
-import type { PlayerId } from "@genesis-rift/shared";
+import type { LanCharacterSelection, PlayerId } from "@genesis-rift/shared";
 
 import { RoomManager } from "../rooms/room-manager.ts";
 import { GameSessionManager } from "./game-session-manager.ts";
@@ -12,7 +12,11 @@ export interface InitialGameSessionFactory<
 > {
   create(input: {
     readonly roomId: string;
-    readonly players: readonly { readonly playerId: PlayerId; readonly displayName: string }[];
+    readonly players: readonly {
+      readonly playerId: PlayerId;
+      readonly displayName: string;
+      readonly characterSelection: LanCharacterSelection | null;
+    }[];
   }): {
     readonly state: GameSessionState<ResourceId>;
     readonly validationContext: GameSessionValidationContext<ResourceId, DerivedAttribute>;
@@ -54,8 +58,9 @@ export class StartGameService<
    * @throws 房间不可开始、初始化失败或游戏会话已存在时抛出错误。
    */
   start(playerId: PlayerId): GameSessionSnapshot {
-    const room = this.#roomManager.startRoom(playerId);
+    const room = this.#roomManager.assertCanStartRoom(playerId);
     const initialSession = this.#factory.create({ roomId: room.roomId, players: room.players });
+    this.#roomManager.startRoom(playerId);
     const session = this.#gameSessionManager.createSession(
       initialSession.state,
       initialSession.validationContext,

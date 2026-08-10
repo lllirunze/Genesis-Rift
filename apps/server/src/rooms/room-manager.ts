@@ -1,5 +1,6 @@
 import type {
   LanRoomPlayerSnapshot,
+  LanCharacterSelection,
   LanRoomSnapshot,
   PlayerId,
   RoomId,
@@ -11,7 +12,9 @@ export type RoomManagerErrorCode =
   | "ROOM_ALREADY_EXISTS"
   | "PLAYER_ALREADY_JOINED"
   | "ROOM_NOT_JOINABLE"
-  | "NOT_ROOM_HOST";
+  | "NOT_ROOM_HOST"
+  | "CHARACTER_SELECTION_INVALID"
+  | "CHARACTER_SELECTION_INCOMPLETE";
 
 /** 描述房间管理器抛出的可映射网络错误。 */
 export class RoomManagerError extends Error {
@@ -122,6 +125,39 @@ export class RoomManager {
   }
 
   /**
+   * 方法名：updateCharacterSelection
+   * 作用：在大厅阶段更新指定玩家的角色性别、职业与种族选择。
+   * @param playerId 需要更新选择的已加入玩家标识。
+   * @param selection 已由上层配置服务校验的角色创建选择。
+   * @returns 更新后的不可变权威房间快照。
+   * @throws 房间不存在、当前不可修改或玩家不属于房间时抛出错误。
+   */
+  updateCharacterSelection(playerId: PlayerId, selection: LanCharacterSelection): LanRoomSnapshot {
+    const current = this.getRoom();
+
+    if (current.status !== "lobby") {
+      throw new RoomManagerError("ROOM_NOT_JOINABLE", "Character selection is locked");
+    }
+
+    if (!current.players.some((candidate) => candidate.playerId === playerId)) {
+      throw new RoomManagerError(
+        "ROOM_NOT_JOINABLE",
+        "Player does not belong to the active LAN room",
+      );
+    }
+
+    const room = freezeRoom({
+      ...current,
+      revision: current.revision + 1,
+      players: current.players.map((player) =>
+        player.playerId === playerId ? { ...player, characterSelection: selection } : player,
+      ),
+    });
+    this.#room = room;
+    return room;
+  }
+
+  /**
    * 方法名：startRoom
    * 作用：由房主锁定大厅成员并将房间切换为运行状态。
    * @param playerId 请求开始游戏的玩家标识。
@@ -129,6 +165,21 @@ export class RoomManager {
    * @throws 请求者不是房主或房间当前不可开始时抛出错误。
    */
   startRoom(playerId: PlayerId): LanRoomSnapshot {
+    const current = this.assertCanStartRoom(playerId);
+
+    const room = freezeRoom({ ...current, status: "running", revision: current.revision + 1 });
+    this.#room = room;
+    return room;
+  }
+
+  /**
+   * 方法名：assertCanStartRoom
+   * 作用：无副作用校验请求者可启动当前大厅，供初始化流程在锁定房间前预先检查。
+   * @param playerId 请求开始游戏的玩家标识。
+   * @returns 当前仍处于大厅状态的房间快照。
+   * @throws 请求者不是房主或房间不可开始时抛出错误。
+   */
+  assertCanStartRoom(playerId: PlayerId): LanRoomSnapshot {
     const current = this.getRoom();
 
     if (current.hostPlayerId !== playerId) {
@@ -139,9 +190,14 @@ export class RoomManager {
       throw new RoomManagerError("ROOM_NOT_JOINABLE", "The active LAN room cannot be started");
     }
 
-    const room = freezeRoom({ ...current, status: "running", revision: current.revision + 1 });
-    this.#room = room;
-    return room;
+    if (current.players.some((player) => player.characterSelection === null)) {
+      throw new RoomManagerError(
+        "CHARACTER_SELECTION_INCOMPLETE",
+        "Every player must finish character selection before the game starts",
+      );
+    }
+
+    return current;
   }
 
   /**
@@ -182,6 +238,10 @@ function validatePlayer(player: LanRoomPlayerSnapshot): void {
 
   if (player.displayName.trim().length === 0) {
     throw new TypeError("displayName must be a non-empty string");
+  }
+
+  if (player.characterSelection !== null && typeof player.characterSelection !== "object") {
+    throw new TypeError("characterSelection must be null or an object");
   }
 }
 

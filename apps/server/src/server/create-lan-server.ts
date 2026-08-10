@@ -11,6 +11,8 @@ import { Server as SocketServer } from "socket.io";
 
 import { RoomManager } from "../rooms/room-manager.ts";
 import { GameSessionManager } from "../game/game-session-manager.ts";
+import { DefaultInitialGameSessionFactory } from "../game/default-initial-game-session-factory.ts";
+import { StartGameService } from "../game/start-game-service.ts";
 import { SocketSessionManager } from "../sessions/socket-session-manager.ts";
 import { bindGameSocketEvents } from "../transport/bind-game-socket-events.ts";
 import { bindRoomSocketEvents } from "../transport/bind-room-socket-events.ts";
@@ -74,12 +76,23 @@ export function createLanServer(options: LanServerOptions) {
     next(error);
   });
   const roomManager = new RoomManager();
-  const gameSessionManager = new GameSessionManager();
+  const gameSessionManager = new GameSessionManager<"health", "maxHealth">();
   const sessionManager = new SocketSessionManager();
+  const startGameService = new StartGameService(
+    roomManager,
+    gameSessionManager,
+    new DefaultInitialGameSessionFactory(),
+  );
 
   socketServer.on("connection", (socket) => {
     socket.emit("server:ready", { protocolVersion: PROTOCOL_VERSION });
-    bindGameSocketEvents(socket, socketServer, gameSessionManager, sessionManager);
+    bindGameSocketEvents(
+      socket,
+      socketServer,
+      gameSessionManager,
+      sessionManager,
+      startGameService,
+    );
     bindRoomSocketEvents(socket, socketServer, roomManager, sessionManager, {
       onPlayerReconnected: (playerId) => {
         try {

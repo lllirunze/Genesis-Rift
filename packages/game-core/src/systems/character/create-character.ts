@@ -1,4 +1,5 @@
 import {
+  type CharacterGender,
   PRIMARY_ATTRIBUTE_KEYS,
   type PlayerId,
   type PrimaryAttributes,
@@ -22,6 +23,7 @@ export interface CharacterRaceSource {
 /** 描述当前模块对外公开的业务数据契约。 */
 export interface CreateCharacterInput {
   readonly playerId: PlayerId;
+  readonly gender?: CharacterGender;
   readonly identity: CharacterIdentitySource;
   readonly race: CharacterRaceSource;
   readonly levelProgression?: LevelProgressionState;
@@ -54,6 +56,7 @@ export function createCharacter(input: CreateCharacterInput): CharacterState {
 
   return {
     playerId: input.playerId,
+    ...(input.gender === undefined ? {} : { gender: input.gender }),
     identityId: input.identity.id,
     raceId: input.race.id,
     currentPrimaryAttributes,

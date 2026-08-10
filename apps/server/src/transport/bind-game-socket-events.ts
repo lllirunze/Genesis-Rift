@@ -2,18 +2,22 @@ import type {
   LanGameSessionSnapshot,
   LanRequestRejectedPayload,
   RequestGameSnapshot,
+  StartLanGameRequest,
   SubmitGameCommandRequest,
 } from "@genesis-rift/shared";
 
 import { GameCommandService } from "../game/game-command-service.ts";
 import { GameSessionManager, GameSessionManagerError } from "../game/game-session-manager.ts";
 import { ServerGameSessionError } from "../game/game-session.ts";
+import { StartGameService } from "../game/start-game-service.ts";
+import { RoomManagerError } from "../rooms/room-manager.ts";
 import { SocketSessionError, SocketSessionManager } from "../sessions/socket-session-manager.ts";
 
 /** 描述游戏协议适配器需要使用的最小 Socket 能力。 */
 export interface GameSocket {
   readonly id: string;
   on(event: "game:requestSnapshot", listener: (payload: RequestGameSnapshot) => void): void;
+  on(event: "game:start", listener: (payload: StartLanGameRequest) => void): void;
   on(event: "game:command", listener: (payload: SubmitGameCommandRequest) => void): void;
   on(event: "disconnect", listener: () => void): void;
   emit(
@@ -29,6 +33,10 @@ export interface GameSocket {
     },
   ): void;
   emit(event: "game:rejected", payload: LanRequestRejectedPayload): void;
+  emit(
+    event: "game:started",
+    payload: { readonly requestId: string; readonly game: LanGameSessionSnapshot },
+  ): void;
 }
 
 /** 描述向 Socket.IO 房间广播最新公开游戏快照的最小服务端能力。 */
@@ -53,9 +61,22 @@ export interface GameSnapshotBroadcaster {
 export function bindGameSocketEvents(
   socket: GameSocket,
   broadcaster: GameSnapshotBroadcaster,
-  gameSessionManager: GameSessionManager,
+  gameSessionManager: GameSessionManager<"health", "maxHealth">,
   socketSessionManager: SocketSessionManager,
+  startGameService: StartGameService<"health", "maxHealth">,
 ): void {
+  socket.on("game:start", (request) => {
+    handleRequest(socket, request.requestId, () => {
+      const session = socketSessionManager.getJoinedSession(socket.id);
+      const game = startGameService.start(session.playerId);
+      socket.emit("game:started", { requestId: request.requestId, game });
+      broadcaster.to(session.roomId).emit("game:snapshot", {
+        requestId: "server.gameStarted",
+        game,
+      });
+    });
+  });
+
   socket.on("game:requestSnapshot", (request) => {
     handleRequest(socket, request.requestId, () => {
       socketSessionManager.getJoinedSession(socket.id);
@@ -69,11 +90,20 @@ export function bindGameSocketEvents(
       const session = socketSessionManager.getJoinedSession(socket.id);
       const gameSession = gameSessionManager.getSession();
 
-      const result = new GameCommandService(gameSession).execute({
-        commandId: request.commandId,
-        playerId: session.playerId,
-        type: request.type,
-      });
+      const command =
+        request.type === "map.move"
+          ? {
+              commandId: request.commandId,
+              playerId: session.playerId,
+              type: request.type,
+              direction: request.direction,
+            }
+          : {
+              commandId: request.commandId,
+              playerId: session.playerId,
+              type: request.type,
+            };
+      const result = new GameCommandService(gameSession).execute(command);
       socket.emit("game:commandAccepted", {
         requestId: request.requestId,
         commandId: result.commandId,
@@ -116,6 +146,7 @@ function createRejectedPayload(requestId: string, error: unknown): LanRequestRej
   if (
     error instanceof GameSessionManagerError ||
     error instanceof ServerGameSessionError ||
+    error instanceof RoomManagerError ||
     error instanceof SocketSessionError
   ) {
     return { requestId, code: error.code, message: error.message };

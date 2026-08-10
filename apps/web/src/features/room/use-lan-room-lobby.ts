@@ -1,6 +1,11 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
-import type { LanRoomPlayerSnapshot, RoomId } from "@genesis-rift/shared";
+import type {
+  LanHexDirection,
+  LanCharacterSelection,
+  LanRoomPlayerSnapshot,
+  RoomId,
+} from "@genesis-rift/shared";
 
 import { createLanSocket } from "../../lib/socket-client.ts";
 import { useConnectionStore } from "../../state/connection-store.ts";
@@ -14,6 +19,10 @@ export interface LanRoomLobby {
   createRoom(displayName: string): void;
   joinRoom(displayName: string): void;
   requestSnapshot(): void;
+  updateCharacterSelection(selection: LanCharacterSelection): void;
+  startGame(): void;
+  endActivePlayerTurn(): void;
+  moveActivePlayer(direction: LanHexDirection): void;
 }
 
 /**
@@ -27,6 +36,7 @@ export function useLanRoomLobby(serverUrl: string): LanRoomLobby {
   const [state, setState] = useState<LanRoomClientState>({
     connectionStatus: "offline",
     room: null,
+    game: null,
     rejection: null,
   });
   const clientRef = useRef<LanRoomClient | null>(null);
@@ -69,6 +79,18 @@ export function useLanRoomLobby(serverUrl: string): LanRoomLobby {
     requestSnapshot() {
       getClient(clientRef).requestRoomSnapshot(createRequestId());
     },
+    updateCharacterSelection(selection) {
+      getClient(clientRef).updateCharacterSelection(createRequestId(), selection);
+    },
+    startGame() {
+      getClient(clientRef).startGame(createRequestId());
+    },
+    endActivePlayerTurn() {
+      getClient(clientRef).endActivePlayerTurn(createRequestId(), createCommandId());
+    },
+    moveActivePlayer(direction) {
+      getClient(clientRef).moveActivePlayer(createRequestId(), createCommandId(), direction);
+    },
   };
 }
 
@@ -92,7 +114,11 @@ function createPlayerSnapshot(
     throw new Error("Display name must not be empty");
   }
 
-  return { playerId: identity.playerId, displayName: normalizedDisplayName };
+  return {
+    playerId: identity.playerId,
+    displayName: normalizedDisplayName,
+    characterSelection: null,
+  };
 }
 
 /** 使用浏览器安全随机标识生成可追踪的网络请求标识。 */
@@ -103,4 +129,9 @@ function createRequestId(): string {
 /** 使用浏览器安全随机标识生成本局唯一房间标识。 */
 function createRoomId(): RoomId {
   return `room_${crypto.randomUUID()}` as RoomId;
+}
+
+/** 使用浏览器安全随机标识创建服务端可去重的游戏命令编号。 */
+function createCommandId(): string {
+  return `command_${crypto.randomUUID()}`;
 }
