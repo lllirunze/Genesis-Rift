@@ -1,0 +1,36 @@
+# web-client
+
+## Responsibility
+
+浏览器端负责连接局域网服务、展示已授权快照并提交玩家操作意图。它不是规则权威，不能自行计算伤害、随机结果、移动合法性或隐藏信息。
+
+## Core Files
+
+- `apps/web/src/app/app.tsx`：顶层页面组合与当前界面入口。
+- `apps/web/src/features/room/lan-room-client.ts`：Socket.IO 客户端协议封装。
+- `apps/web/src/features/room/use-lan-room-lobby.ts`：大厅连接、事件订阅和界面状态协调。
+- `apps/web/src/features/room/room-lobby.tsx`：大厅与角色选择 UI。
+- `apps/web/src/features/game-session/game-session-panel.tsx`：运行中会话摘要展示。
+- `apps/web/src/state/connection-store.ts`：Zustand 连接状态。
+
+## Core Data
+
+`LanRoomSnapshot`、`LanGameSessionSnapshot` 与 `SubmitGameCommandRequest` 来自 shared 协议。前端本地状态只保存连接和展示状态；服务端快照才是游戏事实。
+
+## Core Flow
+
+UI 操作 → `LanRoomClient` 发出协议请求 → 服务端确认/广播快照 → Hook 或 Store 更新 → React 渲染。
+
+## Dependencies
+
+依赖 `shared-contracts` 的协议，依赖 `lan-server` 提供的事件语义。需要规则说明时优先读相应模块文档，而不是把规则搬进组件。
+
+## Important Rules
+
+- 只能渲染当前客户端收到的权限数据；不得从公开信息推导私有信息。
+- 仅提交命令，不在浏览器端决定命令是否成功。
+- 新 UI 字符串应逐步迁入资源体系，避免扩散硬编码文本。
+
+## Read Strategy
+
+修改页面先读 `app.tsx` 和目标 feature。涉及 Socket 时再读 `lan-room-client.ts`、对应 shared 协议字段和服务端 transport。只有新增游戏动作或快照字段时，才进入 `session-runtime`。

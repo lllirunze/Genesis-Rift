@@ -13,6 +13,18 @@ This repository is an npm workspace monorepo written in TypeScript.
 
 Keep definitions, runtime state, configuration, and execution logic separate. Core rules must not depend on React, server transports, or filesystem APIs.
 
+## Context Efficiency
+
+This project uses a lightweight Codex context system under `docs/codex/`. Context efficiency and token usage are important.
+
+For normal development, do not recursively scan or read the entire repository. Start with the smallest sufficient context: read `docs/codex/PROJECT_CONTEXT.md` and `docs/codex/MODULE_INDEX.md` when the task location is not already clear; then read only the relevant `docs/codex/modules/*.md`, target source files, and direct dependencies. For a small task with a known file path, read that file directly instead of mechanically loading every context document.
+
+Preferred workflow: task → context/index → target module note → target files → direct dependencies → implementation. Expand to another module only for an actual code or business dependency. Prefer searches by filename, symbol, import, reference, or module path. Do not open files "just in case".
+
+A source file should normally be opened only when it may be changed, defines a directly used symbol, contains a required business rule, or the lightweight context is insufficient. Do not scan `node_modules`, `.git`, `dist`, `build`, `coverage`, `logs`, generated output, lock files, or static media unless the task explicitly concerns them.
+
+Maintain this context incrementally: implementation-only changes need no update; business-rule or core-file changes update the relevant module note; module/path changes update `MODULE_INDEX.md`; architecture or stack changes update `ARCHITECTURE.md` or `PROJECT_CONTEXT.md`. Keep these files navigational, not copies of source code or game-design documents.
+
 ## Build, Test, and Development Commands
 
 - `npm install`: install all workspace dependencies. Requires Node 24+ and npm 11+.
