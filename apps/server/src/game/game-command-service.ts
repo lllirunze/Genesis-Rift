@@ -4,7 +4,7 @@ import type { PlayerId } from "@genesis-rift/shared";
 import type { GameSessionEvent, GameSessionSnapshot, ServerGameSession } from "./game-session.ts";
 
 /** 当前服务端已经开放执行的首批游戏命令类型。 */
-export const SERVER_GAME_COMMAND_TYPES = ["turn.end", "map.move"] as const;
+export const SERVER_GAME_COMMAND_TYPES = ["turn.end", "map.move", "battle.attack"] as const;
 
 /** 描述首批可由客户端提交的服务端游戏命令。 */
 interface ServerGameCommandBase {
@@ -23,8 +23,15 @@ export interface MoveServerGameCommand extends ServerGameCommandBase {
   readonly direction: HexDirection;
 }
 
+/** 描述普通攻击命令的服务端内部表示。 */
+export interface AttackServerGameCommand extends ServerGameCommandBase {
+  readonly type: "battle.attack";
+  readonly targetPlayerId: PlayerId;
+}
+
 /** 描述首批可由客户端提交的服务端游戏命令。 */
-export type ServerGameCommand = EndTurnServerGameCommand | MoveServerGameCommand;
+export type ServerGameCommand =
+  EndTurnServerGameCommand | MoveServerGameCommand | AttackServerGameCommand;
 
 /** 描述一次命令执行完成后的权威结果。 */
 export interface GameCommandExecutionResult {
@@ -69,6 +76,10 @@ export class GameCommandService<
       }
       case "map.move": {
         const result = this.#session.moveActivePlayer(command.playerId, command.direction);
+        return Object.freeze({ commandId: command.commandId, ...result });
+      }
+      case "battle.attack": {
+        const result = this.#session.attackActivePlayer(command.playerId, command.targetPlayerId);
         return Object.freeze({ commandId: command.commandId, ...result });
       }
     }

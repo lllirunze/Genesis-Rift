@@ -11,7 +11,7 @@ const PLAYER_ID = "player-one" as PlayerId;
 describe("GameCommandService", () => {
   it("dispatches turn.end through the authority session", () => {
     const state = {
-      version: 2,
+      version: 4,
       gameId: GAME_ID,
       status: "lobby",
       playerOrder: [PLAYER_ID],

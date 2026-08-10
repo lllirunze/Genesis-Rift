@@ -19,10 +19,13 @@ import {
 import { isTileExplored, validatePlayerExplorationState } from "../../systems/map/index.ts";
 import { RandomManager } from "../../systems/random/index.ts";
 import {
+  validateBattleSettlementLedger,
+  validateCharacterSurvivalState,
   validateCharacterStatusState,
   validateStatusDefinitions,
 } from "../../systems/battle/index.ts";
 import {
+  validateDayNightRuntimeState,
   validateWeatherDeckState,
   validateWeatherDefinitionCatalog,
   validateWeatherDisasterDefinition,
@@ -79,12 +82,14 @@ export function validateGameSessionState<
     state.players.map((player) => player.hand),
     context.handCardCatalog,
   );
-  validateWeatherDeckState(state.world.weatherDeck);
+  validateBattleSettlementLedger(state.world.battleSettlementLedger);
   validateWeatherRuntimeState(
-    state.world.weather,
+    state.world.environment.weather,
     context.weatherDefinitions,
     context.weatherDisasterDefinitions,
   );
+  validateDayNightRuntimeState(state.world.environment.dayNight);
+  validateWeatherDeckState(state.world.environment.weatherDeck);
   RandomManager.restore(state.random);
 }
 
@@ -162,6 +167,13 @@ function validatePlayerState<ResourceId extends string, DerivedAttribute extends
   assertPlayerOwnership(player);
   validateCharacterResourceState(player.resources, context.characterResourceDefinitions);
   validateCharacterStatusState(player.statuses, context.statusDefinitions);
+  validateCharacterSurvivalState(player.battle.survival);
+
+  if (!Number.isSafeInteger(player.battle.currentShield) || player.battle.currentShield < 0) {
+    throw new RangeError(
+      `Player current shield must be a non-negative safe integer: ${player.playerId}`,
+    );
+  }
   validatePlayerInventoryState(player.inventory, context.itemDefinitions);
   validatePlayerExplorationState(player.map.exploration, session.world.map);
 
@@ -249,6 +261,7 @@ function assertPlayerOwnership<ResourceId extends string>(
     player.equipment.playerId,
     player.hand.playerId,
     player.map.exploration.playerId,
+    player.battle.survival.participantId,
   ];
 
   if (ownedPlayerIds.some((playerId) => playerId !== player.playerId)) {

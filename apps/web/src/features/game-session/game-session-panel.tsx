@@ -93,6 +93,30 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
         </ul>
       </section>
 
+      {game.environment !== null ? (
+        <section
+          className="game-session__environment"
+          aria-labelledby="game-session-environment-heading"
+        >
+          <h3 id="game-session-environment-heading">世界环境</h3>
+          <p>
+            第 {game.environment.currentRound} 轮 · {game.environment.dayNight.periodId}
+          </p>
+          <p>
+            天气：
+            {game.environment.activeWeatherIds.length === 0
+              ? "无"
+              : game.environment.activeWeatherIds.join("、")}
+          </p>
+          {game.environment.activeDisaster !== null ? (
+            <p>
+              灾害：{game.environment.activeDisaster.weatherId} ·{" "}
+              {game.environment.activeDisaster.phase}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
       <div className="game-session__actions">
         <div className="game-session__directions" aria-label="六边形移动方向">
           {DIRECTION_OPTIONS.map(({ direction, label }) => (

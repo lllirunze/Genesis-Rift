@@ -1,6 +1,7 @@
 import type {
   LanGameSessionSnapshot,
   LanRequestRejectedPayload,
+  PlayerId,
   RequestGameSnapshot,
   StartLanGameRequest,
   SubmitGameCommandRequest,
@@ -90,19 +91,7 @@ export function bindGameSocketEvents(
       const session = socketSessionManager.getJoinedSession(socket.id);
       const gameSession = gameSessionManager.getSession();
 
-      const command =
-        request.type === "map.move"
-          ? {
-              commandId: request.commandId,
-              playerId: session.playerId,
-              type: request.type,
-              direction: request.direction,
-            }
-          : {
-              commandId: request.commandId,
-              playerId: session.playerId,
-              type: request.type,
-            };
+      const command = createServerGameCommand(request, session.playerId);
       const result = new GameCommandService(gameSession).execute(command);
       socket.emit("game:commandAccepted", {
         requestId: request.requestId,
@@ -130,6 +119,28 @@ export function bindGameSocketEvents(
       // 大厅阶段或尚未初始化游戏时，断线不应影响 Socket 清理流程。
     }
   });
+}
+
+/** 将共享网络请求转换为已绑定当前 Socket 身份的服务端游戏命令。 */
+function createServerGameCommand(request: SubmitGameCommandRequest, playerId: PlayerId) {
+  switch (request.type) {
+    case "turn.end":
+      return { commandId: request.commandId, playerId, type: request.type } as const;
+    case "map.move":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        direction: request.direction,
+      } as const;
+    case "battle.attack":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        targetPlayerId: request.targetPlayerId,
+      } as const;
+  }
 }
 
 /** 将已知游戏会话异常转换为统一网络拒绝消息。 */

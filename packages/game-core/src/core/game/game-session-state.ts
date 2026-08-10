@@ -6,7 +6,12 @@ import type {
   TileId,
 } from "@genesis-rift/shared";
 
-import type { CharacterStatusState, StatusDefinitionCatalog } from "../../systems/battle/index.ts";
+import type {
+  BattleSettlementLedger,
+  CharacterStatusState,
+  CharacterSurvivalState,
+  StatusDefinitionCatalog,
+} from "../../systems/battle/index.ts";
 import type { CharacterResourceState, CharacterState } from "../../systems/character/index.ts";
 import type { EquipmentDefinition, EquipmentLoadout } from "../../systems/equipment/index.ts";
 import type {
@@ -17,11 +22,10 @@ import type {
 import type { PlayerInventoryState } from "../../systems/inventory/index.ts";
 import type { HexMap, PlayerExplorationState } from "../../systems/map/index.ts";
 import type { RandomManagerState } from "../../systems/random/index.ts";
-import type { WeatherDeckState } from "../../systems/environment/index.ts";
 import type {
+  EnvironmentRuntimeState,
   WeatherDefinitionCatalog,
   WeatherDisasterDefinitionCatalog,
-  WeatherRuntimeState,
 } from "../../systems/environment/index.ts";
 import type { GameStatus } from "./game-state.ts";
 import { GAME_SESSION_STATE_VERSION } from "./game-session-config.ts";
@@ -35,6 +39,12 @@ export interface PlayerMapSessionState {
   readonly exploration: PlayerExplorationState;
 }
 
+/** 描述玩家在战斗结算中需要持续保存的生存与护盾状态。 */
+export interface PlayerBattleSessionState {
+  readonly survival: CharacterSurvivalState;
+  readonly currentShield: number;
+}
+
 /** 聚合一名玩家在一局游戏中的全部私有与公开运行时状态。 */
 export interface PlayerSessionState<ResourceId extends string = string> {
   readonly playerId: PlayerId;
@@ -45,14 +55,15 @@ export interface PlayerSessionState<ResourceId extends string = string> {
   readonly equipment: EquipmentLoadout;
   readonly hand: PlayerHandState;
   readonly map: PlayerMapSessionState;
+  readonly battle: PlayerBattleSessionState;
 }
 
-/** 聚合所有玩家共享的地图、手牌牌库与天气牌库状态。 */
+/** 聚合所有玩家共享的地图、手牌牌库与昼夜天气环境状态。 */
 export interface WorldSessionState {
   readonly map: HexMap;
   readonly handCardDeck: HandCardDeckState;
-  readonly weatherDeck: WeatherDeckState;
-  readonly weather: WeatherRuntimeState;
+  readonly environment: EnvironmentRuntimeState;
+  readonly battleSettlementLedger: BattleSettlementLedger;
 }
 
 /** 表示一局游戏可被保存、校验和替换的完整权威状态。 */

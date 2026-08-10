@@ -83,6 +83,12 @@ describe("character attribute aggregation", () => {
       maxHealth: 90,
       healthRegeneration: 1,
       movementRange: 4,
+      physicalAttack: 7,
+      physicalDefense: 7,
+      evasionRate: 11,
+      criticalRate: 10,
+      criticalDamage: 112,
+      armorPenetration: 0,
     });
   });
 

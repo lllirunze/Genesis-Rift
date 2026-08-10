@@ -86,8 +86,15 @@ export interface MoveGameCommandRequest extends SubmitGameCommandRequestBase {
   readonly direction: LanHexDirection;
 }
 
+/** 描述客户端请求当前行动角色对另一名玩家发起普通攻击的权威命令。 */
+export interface AttackGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "battle.attack";
+  readonly targetPlayerId: PlayerId;
+}
+
 /** 描述客户端可以提交的首批权威游戏命令。 */
-export type SubmitGameCommandRequest = EndTurnGameCommandRequest | MoveGameCommandRequest;
+export type SubmitGameCommandRequest =
+  EndTurnGameCommandRequest | MoveGameCommandRequest | AttackGameCommandRequest;
 
 /** 描述公开游戏快照中的全局回合位置。 */
 export interface LanGameTurnSnapshot {
@@ -96,6 +103,19 @@ export interface LanGameTurnSnapshot {
   readonly activePlayerId: PlayerId | null;
   readonly phase: string;
   readonly remainingMovementPoints: number;
+}
+
+/** 描述可安全广播给全体玩家的昼夜、天气与灾害环境摘要。 */
+export interface LanGameEnvironmentSnapshot {
+  readonly currentRound: number;
+  readonly dayNight: {
+    readonly periodId: string;
+    readonly elapsedRounds: number;
+    readonly remainingRounds: number;
+    readonly visionModifier: number;
+  };
+  readonly activeWeatherIds: readonly string[];
+  readonly activeDisaster: { readonly weatherId: string; readonly phase: string } | null;
 }
 
 /** 描述其他玩家可见的断线恢复期限信息。 */
@@ -119,6 +139,7 @@ export interface LanGameSessionSnapshot {
   readonly status: "lobby" | "running" | "finished";
   readonly revision: number;
   readonly turn: LanGameTurnSnapshot;
+  readonly environment: LanGameEnvironmentSnapshot | null;
   readonly playerOrder: readonly PlayerId[];
   readonly players: readonly LanGamePlayerSnapshot[];
   readonly disconnectedPlayers: readonly LanDisconnectedPlayerSnapshot[];
@@ -144,6 +165,7 @@ export interface LanRequestRejectedPayload {
     | "PLAYER_DISCONNECTED"
     | "PLAYER_NOT_DISCONNECTED"
     | "MOVE_NOT_AVAILABLE"
+    | "ATTACK_NOT_AVAILABLE"
     | "REQUEST_INVALID";
   readonly message: string;
 }

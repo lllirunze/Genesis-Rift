@@ -14,6 +14,10 @@ import {
 } from "./game-session-state.ts";
 import { createCharacterResourceState } from "../../systems/character/character-resource-state.ts";
 import { createCharacterStatusState } from "../../systems/battle/status/character-status-state.ts";
+import {
+  createActiveCharacterSurvivalState,
+  createBattleSettlementLedger,
+} from "../../systems/battle/index.ts";
 import { createPlayerInventory } from "../../systems/inventory/player-inventory-state.ts";
 import { createEmptyEquipmentLoadout } from "../../systems/equipment/equipment-loadout.ts";
 import { createHandCardDeckState } from "../../systems/hand/hand-card-deck-state.ts";
@@ -23,8 +27,11 @@ import { generateBaseMapCoordinates } from "../../systems/map/generation/generat
 import { HexMap } from "../../systems/map/model/hex-map.ts";
 import { createHexTile } from "../../systems/map/model/hex-tile.ts";
 import type { MapContentDefinitionCatalog } from "../../systems/map/model/map-content-definition-catalog.ts";
-import { createWeatherDeck } from "../../systems/environment/weather/weather-deck.ts";
-import { createWeatherRuntimeState } from "../../systems/environment/weather/weather-runtime-state.ts";
+import {
+  createEnvironmentRuntimeState,
+  createWeatherDeck,
+  createWeatherRuntimeState,
+} from "../../systems/environment/index.ts";
 import { RandomManager } from "../../systems/random/core/random-manager.ts";
 import { createMasterSeed } from "../../systems/random/core/random-seed.ts";
 
@@ -98,8 +105,11 @@ function createWorldState(): { readonly world: WorldSessionState; readonly rando
     world: {
       map,
       handCardDeck: createHandCardDeckState("shared-deck", [], {}),
-      weatherDeck: createWeatherDeck(random.getStream("weather")),
-      weather: createWeatherRuntimeState(),
+      environment: createEnvironmentRuntimeState(
+        createWeatherDeck(random.getStream("weather")),
+        createWeatherRuntimeState(),
+      ),
+      battleSettlementLedger: createBattleSettlementLedger(),
     },
     random,
   };
@@ -164,6 +174,10 @@ function createPlayerState(
       currentTileId: spawnTile.tileId,
       exploration: createPlayerExplorationState(playerId, spawnTile.tileId, world.map),
     },
+    battle: {
+      survival: createActiveCharacterSurvivalState(playerId),
+      currentShield: 0,
+    },
   };
 }
 
@@ -192,7 +206,7 @@ describe("game session state", () => {
     const { state } = createEmptySession();
 
     expect(state).toMatchObject({
-      version: 2,
+      version: 4,
       gameId: GAME_ID,
       status: "lobby",
       playerOrder: [],

@@ -5,7 +5,10 @@ import {
   createCharacter,
   createCharacterResourceState,
   createCharacterStatusState,
+  createActiveCharacterSurvivalState,
+  createBattleSettlementLedger,
   createEmptyEquipmentLoadout,
+  createEnvironmentRuntimeState,
   createGameSessionState,
   createHexTile,
   createPlayerExplorationState,
@@ -99,8 +102,11 @@ export class DefaultInitialGameSessionFactory implements InitialGameSessionFacto
           world: {
             map,
             handCardDeck: dealtHands.deckState,
-            weatherDeck: createWeatherDeck(random.getStream("weather")),
-            weather: createWeatherRuntimeState(),
+            environment: createEnvironmentRuntimeState(
+              createWeatherDeck(random.getStream("weather")),
+              createWeatherRuntimeState(),
+            ),
+            battleSettlementLedger: createBattleSettlementLedger(),
           },
           random: random.exportState(),
         },
@@ -177,6 +183,10 @@ function createPlayerStates(
       map: {
         currentTileId: spawnTile.tileId,
         exploration: createPlayerExplorationState(player.playerId, spawnTile.tileId, map),
+      },
+      battle: {
+        survival: createActiveCharacterSurvivalState(player.playerId),
+        currentShield: 0,
       },
     };
   });

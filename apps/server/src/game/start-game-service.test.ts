@@ -22,7 +22,7 @@ describe("StartGameService", () => {
     const service = new StartGameService(roomManager, new GameSessionManager(), {
       create: ({ players }) => ({
         state: {
-          version: 2,
+          version: 4,
           gameId: GAME_ID,
           status: "lobby",
           playerOrder: players.map((player) => player.playerId),

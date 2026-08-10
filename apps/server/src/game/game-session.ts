@@ -1,14 +1,29 @@
 import {
+  advanceCharacterStatusesAtTurnEnd,
   advanceTurnState,
+  createBattleSettlement,
+  createCombatAttributeSnapshot,
   createCharacterAttributeSnapshot,
   createEquipmentAttributeModifiers,
   createStatusAttributeModifiers,
+  createWeatherMovementRuleResolver,
+  advanceEnvironmentRound,
   createTurnState,
+  getEnvironmentPublicView,
+  getCubeCoordinateDistance,
+  getEquippedWeaponAttack,
+  isTileExplored,
+  recordBattleSettlement,
   getPlayerSessionState,
   removePlayerFromTurnState,
   removePlayerSessionState,
+  RandomManager,
   replacePlayerSessionState,
+  resolveAttack,
+  settleCharacterDamage,
   settleNormalMovement,
+  evaluateAttackEligibility,
+  canCharacterPerformAttack,
   type GameSessionState,
   type GameSessionValidationContext,
   type HexDirection,
@@ -18,6 +33,8 @@ import {
 import {
   DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
   MAP_CONTENT_DEFINITION_CATALOG,
+  WEATHER_CARD_MAPPING_CATALOG,
+  WEATHER_EFFECT_DEFINITION_CATALOG,
 } from "@genesis-rift/game-data";
 import type { GameId, LanGameSessionSnapshot, PlayerId } from "@genesis-rift/shared";
 
@@ -31,7 +48,8 @@ export type ServerGameSessionErrorCode =
   | "NOT_ACTIVE_PLAYER"
   | "PLAYER_DISCONNECTED"
   | "PLAYER_NOT_DISCONNECTED"
-  | "MOVE_NOT_AVAILABLE";
+  | "MOVE_NOT_AVAILABLE"
+  | "ATTACK_NOT_AVAILABLE";
 
 /** 描述服务端游戏会话抛出的可映射业务错误。 */
 export class ServerGameSessionError extends Error {
@@ -86,6 +104,18 @@ export type GameSessionEvent =
       readonly playerId: PlayerId;
       readonly originTileId: string;
       readonly targetTileId: string;
+    }
+  | {
+      readonly type: "battle.attackResolved";
+      readonly gameId: GameId;
+      readonly attackId: string;
+      readonly attackerId: PlayerId;
+      readonly defenderId: PlayerId;
+      readonly outcome: "RESOLVED" | "EVADED";
+      readonly finalDamage: number;
+      readonly defenderHealth: number;
+      readonly defenderShield: number;
+      readonly defenderSurvivalStatus: string;
     };
 
 /** 描述从角色最终数值解析一个新回合可用移动力的可替换规则。 */
@@ -106,6 +136,7 @@ export class ServerGameSession<
   #turn: TurnState;
   #revision = 1;
   #remainingMovementPoints = 0;
+  #activePlayerHasPrimaryAction = true;
   readonly #disconnectedPlayers = new Map<PlayerId, DisconnectedPlayerState>();
   readonly #movementPointResolver: MovementPointResolver<ResourceId>;
 
@@ -164,9 +195,12 @@ export class ServerGameSession<
     readonly snapshot: GameSessionSnapshot;
   } {
     this.assertActiveConnectedPlayer(playerId);
+    this.advanceActivePlayerStatusesAtTurnEnd(playerId);
+    const previousRound = this.#turn.round;
     this.#turn = advanceTurnState(this.#turn, this.#state.playerOrder, {
       unavailablePlayerIds: [...this.#disconnectedPlayers.keys()],
     });
+    this.advanceEnvironmentAtRoundBoundary(previousRound);
     this.resetActivePlayerMovementPoints();
     this.#revision += 1;
     const events: GameSessionEvent[] = [
@@ -174,6 +208,173 @@ export class ServerGameSession<
     ];
     events.push(...this.removeExpiredDisconnectedPlayers());
     return this.createResult(events);
+  }
+
+  /**
+   * 方法名：attackActivePlayer
+   * 作用：结算当前行动玩家对另一名相邻且可见玩家发起的一次普通物理攻击。
+   * @param playerId 请求攻击的当前行动玩家标识。
+   * @param targetPlayerId 被攻击的目标玩家标识。
+   * @returns 攻击公开结果事件与最新权威会话快照。
+   * @throws 攻击者不是当前行动者、目标不合法或攻击条件不满足时抛出错误。
+   */
+  attackActivePlayer(
+    playerId: PlayerId,
+    targetPlayerId: PlayerId,
+  ): {
+    readonly events: readonly GameSessionEvent[];
+    readonly snapshot: GameSessionSnapshot;
+  } {
+    this.assertActiveConnectedPlayer(playerId);
+    const attacker = getPlayerSessionState(this.#state, playerId);
+    const defender = getPlayerSessionState(this.#state, targetPlayerId);
+    const healthResourceId = "health" as ResourceId;
+    const attackerTile = this.#state.world.map.getTileById(attacker.map.currentTileId);
+    const defenderTile = this.#state.world.map.getTileById(defender.map.currentTileId);
+
+    if (attackerTile === undefined || defenderTile === undefined) {
+      throw new ServerGameSessionError(
+        "ATTACK_NOT_AVAILABLE",
+        "Attack participants must occupy map tiles",
+      );
+    }
+
+    const eligibility = evaluateAttackEligibility({
+      hasActionPermission: this.#activePlayerHasPrimaryAction,
+      attackerCanAttack: canCharacterPerformAttack(attacker.battle.survival),
+      targetIsAttackable: playerId !== targetPlayerId && defender.battle.survival.status !== "DEAD",
+      targetIsVisible: isTileExplored(attacker.map.exploration, defender.map.currentTileId),
+      targetIsInRange:
+        getCubeCoordinateDistance(attackerTile.coordinate, defenderTile.coordinate) <= 1,
+      resourcesAreSufficient: true,
+      mapAllowsAttack: true,
+    });
+
+    if (!eligibility.allowed) {
+      throw new ServerGameSessionError(
+        "ATTACK_NOT_AVAILABLE",
+        `Normal attack is not available: ${eligibility.reason}`,
+      );
+    }
+
+    const equipmentDefinitions = Object.fromEntries(
+      this.#validationContext.equipmentDefinitions.map((definition) => [
+        definition.definitionId,
+        definition,
+      ]),
+    );
+    const attackerAttributes = createCombatAttributeSnapshot({
+      character: attacker.character,
+      equipment: attacker.equipment,
+      equipmentDefinitions,
+      statuses: attacker.statuses,
+      statusDefinitions: this.#validationContext.statusDefinitions,
+      derivedAttributeConfigs: DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+    }).attributes.derivedAttributes;
+    const defenderAttributes = createCombatAttributeSnapshot({
+      character: defender.character,
+      equipment: defender.equipment,
+      equipmentDefinitions,
+      statuses: defender.statuses,
+      statusDefinitions: this.#validationContext.statusDefinitions,
+      derivedAttributeConfigs: DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+    }).attributes.derivedAttributes;
+    const attackId = `attack:${this.#state.gameId}:${this.#revision}`;
+    const random = RandomManager.restore(this.#state.random);
+    const resolution = resolveAttack(random.getStream("combat"), {
+      context: {
+        attackId,
+        parentFlowId: null,
+        attackerId: playerId,
+        defenderId: targetPlayerId,
+        sourceType: "normal",
+        sourceId: null,
+        damageType: "PHYSICAL",
+        actionConsumed: true,
+        movementPointsConsumed: this.#remainingMovementPoints,
+      },
+      defense: { cancelled: false },
+      targetEvasionRate: defenderAttributes.evasionRate,
+      sourceCriticalRate: attackerAttributes.criticalRate,
+      damage: {
+        damageType: "PHYSICAL",
+        characterAttack: attackerAttributes.physicalAttack,
+        weaponAttack: getEquippedWeaponAttack(attacker.equipment, equipmentDefinitions),
+        attackModifier: 0,
+        targetDefense: defenderAttributes.physicalDefense,
+        penetration: attackerAttributes.armorPenetration,
+        minimumDamageEnabled: true,
+        critical: {
+          enabled: true,
+          triggered: false,
+          damagePercent: attackerAttributes.criticalDamage,
+        },
+      },
+      targetVitals: {
+        currentShield: defender.battle.currentShield,
+        currentHealth: defender.resources.resources[healthResourceId].current,
+        shieldCanAbsorb: true,
+      },
+    });
+    const settlement = createBattleSettlement(
+      `settlement:${attackId}`,
+      resolution,
+      defender.battle.survival,
+    );
+    const recorded = recordBattleSettlement(this.#state.world.battleSettlementLedger, settlement);
+
+    if (recorded.outcome === "DUPLICATE") {
+      throw new ServerGameSessionError("ATTACK_NOT_AVAILABLE", "Attack has already been settled");
+    }
+
+    let nextDefender = defender;
+
+    if (resolution.vitals !== null) {
+      const damage = settleCharacterDamage({
+        resources: defender.resources,
+        healthResourceId,
+        currentShield: defender.battle.currentShield,
+        survival: defender.battle.survival,
+        damage: {
+          damageType: resolution.vitals.damageType,
+          finalDamage: resolution.vitals.finalDamage,
+          shieldCanAbsorb: true,
+        },
+      });
+      nextDefender = {
+        ...defender,
+        resources: damage.resources,
+        battle: {
+          currentShield: damage.currentShield,
+          survival: damage.survival,
+        },
+      };
+    }
+
+    this.#state = replacePlayerSessionState(this.#state, nextDefender, this.#validationContext);
+    this.#state = {
+      ...this.#state,
+      world: { ...this.#state.world, battleSettlementLedger: recorded.ledger },
+      random: random.exportState(),
+    };
+    this.#remainingMovementPoints = 0;
+    this.#activePlayerHasPrimaryAction = false;
+    this.#revision += 1;
+
+    return this.createResult([
+      {
+        type: "battle.attackResolved",
+        gameId: this.#state.gameId,
+        attackId,
+        attackerId: playerId,
+        defenderId: targetPlayerId,
+        outcome: resolution.outcome === "EVADED" ? "EVADED" : "RESOLVED",
+        finalDamage: resolution.damage?.finalDamage ?? 0,
+        defenderHealth: nextDefender.resources.resources[healthResourceId].current,
+        defenderShield: nextDefender.battle.currentShield,
+        defenderSurvivalStatus: nextDefender.battle.survival.status,
+      },
+    ]);
   }
 
   /**
@@ -200,6 +401,15 @@ export class ServerGameSession<
       terrainDefinitions: MAP_CONTENT_DEFINITION_CATALOG.terrains,
       availableMovementPoints: this.#remainingMovementPoints,
       directions: [direction],
+      ruleResolver: createWeatherMovementRuleResolver(
+        this.#state.world.environment.weather,
+        MAP_CONTENT_DEFINITION_CATALOG.terrains,
+        {
+          weatherDefinitions: this.#validationContext.weatherDefinitions,
+          disasterDefinitions: this.#validationContext.weatherDisasterDefinitions,
+          effectDefinitions: WEATHER_EFFECT_DEFINITION_CATALOG,
+        },
+      ),
     });
 
     const step = settlement.steps[0];
@@ -321,6 +531,7 @@ export class ServerGameSession<
       status: this.#state.status,
       revision: this.#revision,
       turn: { ...this.#turn, remainingMovementPoints: this.#remainingMovementPoints },
+      environment: this.createEnvironmentSnapshot(),
       playerOrder: Object.freeze([...this.#state.playerOrder]),
       players: Object.freeze(
         this.#state.players.map((player) =>
@@ -407,6 +618,80 @@ export class ServerGameSession<
     this.#remainingMovementPoints = this.#movementPointResolver(
       getPlayerSessionState(this.#state, playerId),
     );
+    this.#activePlayerHasPrimaryAction = true;
+  }
+
+  /** 在完整轮次切换时推进昼夜、天气持续时间及下一轮应抽取的天气牌。 */
+  private advanceEnvironmentAtRoundBoundary(previousRound: number): void {
+    if (this.#turn.round <= previousRound || this.#state.world.environment === undefined) {
+      return;
+    }
+
+    const random = RandomManager.restore(this.#state.random);
+    const result = advanceEnvironmentRound({
+      state: this.#state.world.environment,
+      randomStream: random.getStream("weather"),
+      weatherMappings: WEATHER_CARD_MAPPING_CATALOG,
+      weatherDefinitions: this.#validationContext.weatherDefinitions,
+      weatherDisasterDefinitions: this.#validationContext.weatherDisasterDefinitions,
+      createWeatherInstanceId: (cardId, round) => `weather-instance:${round}:${cardId}`,
+      resolveWeatherScopeTargetId: (weatherId) => this.resolveWeatherScopeTargetId(weatherId),
+    });
+
+    this.#state = {
+      ...this.#state,
+      world: { ...this.#state.world, environment: result.state },
+      random: random.exportState(),
+    };
+  }
+
+  /** 为非全域天气选择当前地图中稳定排序后的第一个区域作为默认作用范围。 */
+  private resolveWeatherScopeTargetId(weatherId: string): string | null {
+    const definition =
+      this.#validationContext.weatherDefinitions[weatherId] ??
+      this.#validationContext.weatherDisasterDefinitions[weatherId];
+
+    if (definition === undefined) {
+      throw new Error(`Unknown weather or disaster definition: ${weatherId}`);
+    }
+
+    if (definition.scopeType === "WORLD") {
+      return null;
+    }
+
+    const regionId = [
+      ...new Set(this.#state.world.map.tiles.map((tile) => tile.regionDefinitionId)),
+    ].sort()[0];
+
+    if (regionId === undefined) {
+      throw new Error("Cannot resolve a regional weather scope without map regions");
+    }
+
+    return regionId;
+  }
+
+  /** 生成不包含天气牌顺序和随机状态的公开环境摘要。 */
+  private createEnvironmentSnapshot(): GameSessionSnapshot["environment"] {
+    if (this.#state.world.environment === undefined) {
+      return null;
+    }
+
+    const environment = getEnvironmentPublicView(this.#state.world.environment);
+
+    return Object.freeze({
+      currentRound: environment.currentRound,
+      dayNight: Object.freeze({
+        periodId: environment.dayNight.periodId,
+        elapsedRounds: environment.dayNight.elapsedRounds,
+        remainingRounds: environment.dayNight.remainingRounds,
+        visionModifier: environment.dayNight.visionModifier,
+      }),
+      activeWeatherIds: Object.freeze([...environment.activeWeatherIds]),
+      activeDisaster:
+        environment.activeDisaster === null
+          ? null
+          : Object.freeze({ ...environment.activeDisaster }),
+    });
   }
 
   /** 查找断线玩家之后第一名仍可行动的玩家。 */
@@ -472,6 +757,39 @@ export class ServerGameSession<
     this.resetActivePlayerMovementPoints();
 
     return events;
+  }
+
+  /**
+   * 方法名：advanceActivePlayerStatusesAtTurnEnd
+   * 作用：在当前玩家结束自身回合时递减其状态持续时间，并移除已经到期的状态。
+   * @param playerId 当前结束回合的玩家标识。
+   * @returns 无返回值。
+   */
+  private advanceActivePlayerStatusesAtTurnEnd(playerId: PlayerId): void {
+    const player = getPlayerSessionState(this.#state, playerId);
+
+    // 测试使用的最小会话壳不包含完整角色状态，因此不参与状态生命周期结算。
+    if (player.statuses === undefined) {
+      return;
+    }
+
+    const result = advanceCharacterStatusesAtTurnEnd(
+      player.statuses,
+      this.#validationContext.statusDefinitions,
+    );
+
+    if (result.ticked.length === 0 && result.expired.length === 0) {
+      return;
+    }
+
+    this.#state = replacePlayerSessionState(
+      this.#state,
+      {
+        ...player,
+        statuses: result.state,
+      },
+      this.#validationContext,
+    );
   }
 }
 

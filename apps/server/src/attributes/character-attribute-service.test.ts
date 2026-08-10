@@ -208,6 +208,12 @@ describe("CharacterAttributeService", () => {
       maxHealth: 98,
       healthRegeneration: 3,
       movementRange: 4,
+      physicalAttack: 18,
+      physicalDefense: 12,
+      evasionRate: 18,
+      criticalRate: 11,
+      criticalDamage: 111,
+      armorPenetration: 0,
     });
     expect(fixture.writer.lines[0]).toContain("Generated unified character attribute snapshot.");
   });
