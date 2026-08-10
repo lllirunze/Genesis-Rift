@@ -158,6 +158,17 @@ describe("ServerGameSession", () => {
 
     expect(firstView.viewer).toMatchObject({
       playerId: PLAYER_ONE,
+      character: {
+        level: 1,
+        experience: 0,
+        currentPrimaryAttributes: expect.any(Object),
+        effectivePrimaryAttributes: expect.any(Object),
+        derivedAttributes: expect.any(Object),
+        resources: {
+          health: expect.objectContaining({ current: expect.any(Number) }),
+        },
+        statuses: [],
+      },
       inventory: {
         backpack: {
           entries: [
@@ -172,10 +183,109 @@ describe("ServerGameSession", () => {
       handCardIds: expect.any(Array),
     });
     expect(secondView.viewer?.playerId).toBe(PLAYER_TWO);
+    expect(secondView.viewer?.character).toMatchObject({
+      level: 1,
+      resources: { health: expect.any(Object) },
+    });
     expect(secondView.viewer?.inventory.backpack.entries).toEqual([]);
     expect(JSON.stringify(secondView)).not.toContain("item-instance-private-001");
     expect(secondView.viewer?.handCardIds).not.toContain(firstView.viewer?.handCardIds[0]);
     expect(secondView.players[0]?.backpack.occupiedCells).not.toHaveLength(0);
+    expect(JSON.stringify(firstView.players)).not.toContain("derivedAttributes");
+    expect(JSON.stringify(firstView.players)).not.toContain("currentPrimaryAttributes");
+  });
+
+  it("updates backpack layout and equipped slots through authority session item operations", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-item-operations",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const player = initial.state.players[0]!;
+    const inventoryWithPotion = receiveItem(
+      player.inventory,
+      {
+        definitionId: "item_000005",
+        quantity: 1,
+        sourceId: "test.item-operations",
+        newItemInstanceIds: ["item-instance-potion-001"],
+      },
+      initial.validationContext.itemDefinitions,
+    ).inventory;
+    const inventory = receiveItem(
+      inventoryWithPotion,
+      {
+        definitionId: "equip_000002",
+        quantity: 1,
+        sourceId: "test.item-operations",
+        newItemInstanceIds: ["item-instance-sword-001"],
+      },
+      initial.validationContext.itemDefinitions,
+    ).inventory;
+    const session = new ServerGameSession(
+      { ...initial.state, players: [{ ...player, inventory }] },
+      initial.validationContext,
+    );
+    session.start();
+
+    session.moveInventoryItem(PLAYER_ONE, "item-instance-potion-001", { x: 3, y: 0 });
+    session.equipInventoryItem(PLAYER_ONE, "item-instance-sword-001", "weapon");
+    const snapshot = session.getSnapshotForPlayer(PLAYER_ONE);
+
+    expect(snapshot.players[0]?.equipment.weapon).toBe("equip_000002");
+    expect(snapshot.viewer?.inventory.backpack.entries).toEqual([
+      expect.objectContaining({
+        instanceId: "item-instance-potion-001",
+        position: { x: 3, y: 0 },
+      }),
+    ]);
+  });
+
+  it("uses a configured consumable by atomically updating health and inventory", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-use-consumable",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const player = initial.state.players[0]!;
+    const inventory = receiveItem(
+      player.inventory,
+      {
+        definitionId: "item_000005",
+        quantity: 1,
+        sourceId: "test.use-consumable",
+        newItemInstanceIds: ["item-instance-potion-002"],
+      },
+      initial.validationContext.itemDefinitions,
+    ).inventory;
+    const resources = {
+      ...player.resources,
+      resources: {
+        ...player.resources.resources,
+        health: { ...player.resources.resources.health, current: 1 },
+      },
+    };
+    const session = new ServerGameSession(
+      { ...initial.state, players: [{ ...player, inventory, resources }] },
+      initial.validationContext,
+    );
+    session.start();
+
+    session.useConsumableItem(PLAYER_ONE, "item_000005");
+    const updated = session.getStateForServer().players[0]!;
+
+    expect(updated.resources.resources.health.current).toBe(26);
+    expect(updated.inventory.backpack.entries).toEqual([]);
   });
 
   it("settles one normal move through the authority session and records first exploration", () => {

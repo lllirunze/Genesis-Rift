@@ -31,6 +31,7 @@ import {
   HAND_CARD_CATALOG,
   IDENTITY_CONFIGS,
   MAP_CONTENT_DEFINITION_CATALOG,
+  ITEM_DEFINITION_CATALOG,
   RACE_CONFIGS,
   STATUS_DEFINITION_CATALOG,
   WEATHER_DEFINITION_CATALOG,
@@ -44,7 +45,7 @@ import type { InitialGameSessionFactory } from "./start-game-service.ts";
 /** 根据正式静态资源创建并校验完整游戏会话时使用的定义集合。 */
 const VALIDATION_CONTEXT: GameSessionValidationContext<"health", "maxHealth"> = {
   characterResourceDefinitions: CHARACTER_RESOURCE_DEFINITIONS,
-  itemDefinitions: {},
+  itemDefinitions: ITEM_DEFINITION_CATALOG,
   equipmentDefinitions: Object.values(EQUIPMENT_DEFINITION_CATALOG),
   handCardCatalog: HAND_CARD_CATALOG,
   statusDefinitions: STATUS_DEFINITION_CATALOG,

@@ -97,12 +97,82 @@ export interface AttemptReincarnationGameCommandRequest extends SubmitGameComman
   readonly type: "revival.attemptReincarnation";
 }
 
+/** 描述客户端整理背包中单个物品位置的命令。 */
+export interface MoveInventoryItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "inventory.move";
+  readonly itemInstanceId: string;
+  readonly targetPosition: { readonly x: number; readonly y: number };
+}
+
+/** 描述客户端合并两个同类背包物品堆叠的命令。 */
+export interface MergeInventoryItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "inventory.merge";
+  readonly sourceItemInstanceId: string;
+  readonly targetItemInstanceId: string;
+}
+
+/** 描述客户端拆分一个可叠加背包物品的命令。 */
+export interface SplitInventoryItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "inventory.split";
+  readonly sourceItemInstanceId: string;
+  readonly splitQuantity: number;
+  readonly newItemInstanceId: string;
+  readonly targetPosition: { readonly x: number; readonly y: number };
+}
+
+/** 描述客户端主动丢弃一件背包物品的命令。 */
+export interface DiscardInventoryItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "inventory.discard";
+  readonly itemInstanceId: string;
+}
+
+/** 描述客户端将临时拾取区物品放入背包的命令。 */
+export interface StoreTemporaryPickupGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "temporaryPickup.store";
+  readonly targetPosition?: { readonly x: number; readonly y: number };
+}
+
+/** 描述客户端主动放弃临时拾取区物品的命令。 */
+export interface AbandonTemporaryPickupGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "temporaryPickup.abandon";
+}
+
+/** 描述客户端从背包穿戴一件装备的命令。 */
+export interface EquipItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "equipment.equip";
+  readonly itemInstanceId: string;
+  readonly slot: "weapon" | "armor" | "shoes" | "accessory1" | "accessory2" | "special";
+  readonly replacedEquipmentPosition?: { readonly x: number; readonly y: number };
+}
+
+/** 描述客户端将一件已穿戴装备卸回背包的命令。 */
+export interface UnequipItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "equipment.unequip";
+  readonly slot: "weapon" | "armor" | "shoes" | "accessory1" | "accessory2" | "special";
+  readonly targetPosition: { readonly x: number; readonly y: number };
+}
+
+/** 描述客户端使用一件配置了消耗品效果的物品命令。 */
+export interface UseConsumableItemGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "item.use";
+  readonly itemDefinitionId: string;
+}
+
 /** 描述客户端可以提交的首批权威游戏命令。 */
 export type SubmitGameCommandRequest =
   | EndTurnGameCommandRequest
   | MoveGameCommandRequest
   | AttackGameCommandRequest
-  | AttemptReincarnationGameCommandRequest;
+  | AttemptReincarnationGameCommandRequest
+  | MoveInventoryItemGameCommandRequest
+  | MergeInventoryItemGameCommandRequest
+  | SplitInventoryItemGameCommandRequest
+  | DiscardInventoryItemGameCommandRequest
+  | StoreTemporaryPickupGameCommandRequest
+  | AbandonTemporaryPickupGameCommandRequest
+  | EquipItemGameCommandRequest
+  | UnequipItemGameCommandRequest
+  | UseConsumableItemGameCommandRequest;
 
 /** 描述公开游戏快照中的全局回合位置。 */
 export interface LanGameTurnSnapshot {
@@ -183,9 +253,35 @@ export interface LanGamePrivateInventorySnapshot {
   } | null;
 }
 
+/** 描述仅允许当前查看者读取的角色数值、资源与状态信息。 */
+export interface LanGamePrivateCharacterSnapshot {
+  readonly level: number;
+  readonly experience: number;
+  readonly currentPrimaryAttributes: Readonly<Record<string, number>>;
+  readonly effectivePrimaryAttributes: Readonly<Record<string, number>>;
+  readonly derivedAttributes: Readonly<Record<string, number>>;
+  readonly resources: Readonly<
+    Record<
+      string,
+      {
+        readonly current: number;
+        readonly minimum: number;
+        readonly maximum: number;
+      }
+    >
+  >;
+  readonly statuses: readonly {
+    readonly instanceId: string;
+    readonly definitionId: string;
+    readonly currentStacks: number;
+    readonly remainingTurns: number;
+  }[];
+}
+
 /** 描述仅允许当前查看者读取的手牌、背包等私有运行时信息。 */
 export interface LanGameViewerSnapshot {
   readonly playerId: PlayerId;
+  readonly character: LanGamePrivateCharacterSnapshot;
   readonly inventory: LanGamePrivateInventorySnapshot;
   readonly handCardIds: readonly string[];
 }
@@ -265,6 +361,7 @@ export interface LanRequestRejectedPayload {
     | "MOVE_NOT_AVAILABLE"
     | "ATTACK_NOT_AVAILABLE"
     | "REINCARNATION_NOT_AVAILABLE"
+    | "ITEM_NOT_AVAILABLE"
     | "REQUEST_INVALID";
   readonly message: string;
 }

@@ -11,6 +11,15 @@ export const SERVER_GAME_COMMAND_TYPES = [
   "map.move",
   "battle.attack",
   "revival.attemptReincarnation",
+  "inventory.move",
+  "inventory.merge",
+  "inventory.split",
+  "inventory.discard",
+  "temporaryPickup.store",
+  "temporaryPickup.abandon",
+  "equipment.equip",
+  "equipment.unequip",
+  "item.use",
 ] as const;
 
 /** 描述首批可由客户端提交的服务端游戏命令。 */
@@ -41,12 +50,88 @@ export interface AttemptReincarnationServerGameCommand extends ServerGameCommand
   readonly type: "revival.attemptReincarnation";
 }
 
+/** 描述背包整理命令共享的位置参数。 */
+interface InventoryPosition {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** 描述移动背包物品的服务端内部命令。 */
+export interface MoveInventoryItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "inventory.move";
+  readonly itemInstanceId: string;
+  readonly targetPosition: InventoryPosition;
+}
+
+/** 描述合并背包物品堆叠的服务端内部命令。 */
+export interface MergeInventoryItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "inventory.merge";
+  readonly sourceItemInstanceId: string;
+  readonly targetItemInstanceId: string;
+}
+
+/** 描述拆分背包物品堆叠的服务端内部命令。 */
+export interface SplitInventoryItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "inventory.split";
+  readonly sourceItemInstanceId: string;
+  readonly splitQuantity: number;
+  readonly newItemInstanceId: string;
+  readonly targetPosition: InventoryPosition;
+}
+
+/** 描述丢弃背包物品的服务端内部命令。 */
+export interface DiscardInventoryItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "inventory.discard";
+  readonly itemInstanceId: string;
+}
+
+/** 描述存入临时拾取区物品的服务端内部命令。 */
+export interface StoreTemporaryPickupServerGameCommand extends ServerGameCommandBase {
+  readonly type: "temporaryPickup.store";
+  readonly targetPosition?: InventoryPosition;
+}
+
+/** 描述放弃临时拾取区物品的服务端内部命令。 */
+export interface AbandonTemporaryPickupServerGameCommand extends ServerGameCommandBase {
+  readonly type: "temporaryPickup.abandon";
+}
+
+/** 描述从背包穿戴装备的服务端内部命令。 */
+export interface EquipItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "equipment.equip";
+  readonly itemInstanceId: string;
+  readonly slot: "weapon" | "armor" | "shoes" | "accessory1" | "accessory2" | "special";
+  readonly replacedEquipmentPosition?: InventoryPosition;
+}
+
+/** 描述将装备卸回背包的服务端内部命令。 */
+export interface UnequipItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "equipment.unequip";
+  readonly slot: "weapon" | "armor" | "shoes" | "accessory1" | "accessory2" | "special";
+  readonly targetPosition: InventoryPosition;
+}
+
+/** 描述使用消耗品的服务端内部命令。 */
+export interface UseConsumableItemServerGameCommand extends ServerGameCommandBase {
+  readonly type: "item.use";
+  readonly itemDefinitionId: string;
+}
+
 /** 描述首批可由客户端提交的服务端游戏命令。 */
 export type ServerGameCommand =
   | EndTurnServerGameCommand
   | MoveServerGameCommand
   | AttackServerGameCommand
-  | AttemptReincarnationServerGameCommand;
+  | AttemptReincarnationServerGameCommand
+  | MoveInventoryItemServerGameCommand
+  | MergeInventoryItemServerGameCommand
+  | SplitInventoryItemServerGameCommand
+  | DiscardInventoryItemServerGameCommand
+  | StoreTemporaryPickupServerGameCommand
+  | AbandonTemporaryPickupServerGameCommand
+  | EquipItemServerGameCommand
+  | UnequipItemServerGameCommand
+  | UseConsumableItemServerGameCommand;
 
 /** 描述一次命令执行完成后的权威结果。 */
 export interface GameCommandExecutionResult {
@@ -106,6 +191,83 @@ export class GameCommandService<
         const result = this.#session.attemptActivePlayerReincarnation(command.playerId);
         return this.createExecutionResult(command.commandId, result);
       }
+      case "inventory.move":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.moveInventoryItem(
+            command.playerId,
+            command.itemInstanceId,
+            command.targetPosition,
+          ),
+        );
+      case "inventory.merge":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.mergeInventoryItemStacks(
+            command.playerId,
+            command.sourceItemInstanceId,
+            command.targetItemInstanceId,
+          ),
+        );
+      case "inventory.split":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.splitInventoryItemStack(
+            command.playerId,
+            command.sourceItemInstanceId,
+            command.splitQuantity,
+            command.newItemInstanceId,
+            command.targetPosition,
+          ),
+        );
+      case "inventory.discard":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.discardInventoryItem(command.playerId, command.itemInstanceId),
+        );
+      case "temporaryPickup.store":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.storeTemporaryPickup(command.playerId, command.targetPosition),
+        );
+      case "temporaryPickup.abandon":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.abandonTemporaryPickup(command.playerId),
+        );
+      case "equipment.equip":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.equipInventoryItem(
+            command.playerId,
+            command.itemInstanceId,
+            command.slot,
+            command.replacedEquipmentPosition,
+          ),
+        );
+      case "equipment.unequip":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.unequipInventoryItem(
+            command.playerId,
+            command.slot,
+            command.targetPosition,
+          ),
+        );
+      case "item.use":
+        return this.createItemExecutionResult(
+          command,
+          command.commandId,
+          this.#session.useConsumableItem(command.playerId, command.itemDefinitionId),
+        );
     }
   }
 
@@ -159,5 +321,38 @@ export class GameCommandService<
     }
 
     return Object.freeze({ commandId, ...result });
+  }
+
+  /** 记录成功物品操作，并统一封装对应的权威会话结果。 */
+  private createItemExecutionResult(
+    command:
+      | MoveInventoryItemServerGameCommand
+      | MergeInventoryItemServerGameCommand
+      | SplitInventoryItemServerGameCommand
+      | DiscardInventoryItemServerGameCommand
+      | StoreTemporaryPickupServerGameCommand
+      | AbandonTemporaryPickupServerGameCommand
+      | EquipItemServerGameCommand
+      | UnequipItemServerGameCommand
+      | UseConsumableItemServerGameCommand,
+    commandId: string,
+    result: Omit<GameCommandExecutionResult, "commandId">,
+  ): GameCommandExecutionResult {
+    const execution = this.createExecutionResult(commandId, result);
+    const action = command.type.startsWith("equipment.") ? "Equip" : "Item";
+
+    this.#logger?.info({
+      action,
+      module: "GameCommandService",
+      message: `Player completed ${command.type} command successfully.`,
+      target: {
+        kind: "player",
+        playerId: command.playerId,
+        displayName: command.playerId,
+      },
+      context: { commandId, commandType: command.type },
+    });
+
+    return execution;
   }
 }

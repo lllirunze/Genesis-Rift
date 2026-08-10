@@ -1,5 +1,6 @@
 import {
   acquireHandCardsFromSharedDeck,
+  abandonTemporaryPickup,
   advanceCharacterStatusesAtTurnEnd,
   advanceDownedStateAtTurnEnd,
   advanceReincarnationProtectionAtTurnEnd,
@@ -13,11 +14,13 @@ import {
   completeMidGameJoin,
   createActiveCharacterSurvivalState,
   createBattleSettlement,
+  createCoreConsumableEffectHandlerRegistry,
   createCombatAttributeSnapshot,
   createCharacterAttributeSnapshot,
   createEquipmentAttributeModifiers,
   createStatusAttributeModifiers,
   createWeatherMovementRuleResolver,
+  equipItemFromBackpack,
   advanceEnvironmentRound,
   createTurnState,
   getEnvironmentPublicView,
@@ -28,6 +31,9 @@ import {
   recordBattleSettlement,
   recordSuccessfulTileEntry,
   getPlayerSessionState,
+  mergeBackpackItemStacks,
+  moveBackpackItem,
+  removeBackpackItem,
   removePlayerFromTurnState,
   removePlayerSessionState,
   RandomManager,
@@ -35,17 +41,24 @@ import {
   resolveAttack,
   settleCharacterDamage,
   settleNormalMovement,
+  splitBackpackItemStack,
+  storeTemporaryPickupInBackpack,
+  unequipItemToBackpack,
+  useConsumableItem,
   evaluateAttackEligibility,
   canCharacterPerformAttack,
   createSoulStateFromDeath,
   createSoulStateForMidGameJoin,
   type GameSessionState,
   type GameSessionValidationContext,
+  type BackpackPosition,
+  type EquipmentSlot,
   type HexDirection,
   type PlayerSessionState,
   type TurnState,
 } from "@genesis-rift/game-core";
 import {
+  CONSUMABLE_USAGE_CATALOG,
   DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
   MAP_CONTENT_DEFINITION_CATALOG,
   WEATHER_CARD_MAPPING_CATALOG,
@@ -73,7 +86,8 @@ export type ServerGameSessionErrorCode =
   | "PLAYER_NOT_DISCONNECTED"
   | "MOVE_NOT_AVAILABLE"
   | "ATTACK_NOT_AVAILABLE"
-  | "REINCARNATION_NOT_AVAILABLE";
+  | "REINCARNATION_NOT_AVAILABLE"
+  | "ITEM_NOT_AVAILABLE";
 
 /** 描述服务端游戏会话抛出的可映射业务错误。 */
 export class ServerGameSessionError extends Error {
@@ -696,6 +710,230 @@ export class ServerGameSession<
   }
 
   /**
+   * 方法名：moveInventoryItem
+   * 作用：移动本人背包中的单个物品，不消耗回合行动或移动力。
+   * @param playerId 请求整理背包的在线玩家标识。
+   * @param itemInstanceId 需要移动的物品实例标识。
+   * @param targetPosition 物品左上角需要放置的目标坐标。
+   * @returns 更新背包后的公开会话结果。
+   */
+  moveInventoryItem(playerId: PlayerId, itemInstanceId: string, targetPosition: BackpackPosition) {
+    return this.updatePlayerItemState(playerId, (player) => ({
+      ...player,
+      inventory: {
+        ...player.inventory,
+        backpack: moveBackpackItem(
+          player.inventory.backpack,
+          itemInstanceId,
+          targetPosition,
+          this.#validationContext.itemDefinitions,
+        ),
+      },
+    }));
+  }
+
+  /**
+   * 方法名：mergeInventoryItemStacks
+   * 作用：将同类且可兼容的两个背包堆叠合并，不消耗回合行动或移动力。
+   * @param playerId 请求合并物品的在线玩家标识。
+   * @param sourceItemInstanceId 提供数量的来源物品实例标识。
+   * @param targetItemInstanceId 接收数量的目标物品实例标识。
+   * @returns 更新背包后的公开会话结果。
+   */
+  mergeInventoryItemStacks(
+    playerId: PlayerId,
+    sourceItemInstanceId: string,
+    targetItemInstanceId: string,
+  ) {
+    return this.updatePlayerItemState(playerId, (player) => {
+      const result = mergeBackpackItemStacks(
+        player.inventory.backpack,
+        sourceItemInstanceId,
+        targetItemInstanceId,
+        this.#validationContext.itemDefinitions,
+      );
+
+      return { ...player, inventory: { ...player.inventory, backpack: result.backpack } };
+    });
+  }
+
+  /**
+   * 方法名：splitInventoryItemStack
+   * 作用：拆分一组可叠加物品到新的实例与指定背包位置，不消耗回合行动或移动力。
+   * @param playerId 请求拆分物品的在线玩家标识。
+   * @param sourceItemInstanceId 被拆分的来源物品实例标识。
+   * @param splitQuantity 新堆叠需要包含的物品数量。
+   * @param newItemInstanceId 新生成物品堆叠的唯一实例标识。
+   * @param targetPosition 新堆叠的左上角背包坐标。
+   * @returns 更新背包后的公开会话结果。
+   */
+  splitInventoryItemStack(
+    playerId: PlayerId,
+    sourceItemInstanceId: string,
+    splitQuantity: number,
+    newItemInstanceId: string,
+    targetPosition: BackpackPosition,
+  ) {
+    return this.updatePlayerItemState(playerId, (player) => ({
+      ...player,
+      inventory: {
+        ...player.inventory,
+        backpack: splitBackpackItemStack(
+          player.inventory.backpack,
+          sourceItemInstanceId,
+          splitQuantity,
+          newItemInstanceId,
+          targetPosition,
+          this.#validationContext.itemDefinitions,
+        ),
+      },
+    }));
+  }
+
+  /**
+   * 方法名：discardInventoryItem
+   * 作用：主动移除本人背包中的一个物品实例，不自动替换或影响其他物品。
+   * @param playerId 请求丢弃物品的在线玩家标识。
+   * @param itemInstanceId 需要丢弃的物品实例标识。
+   * @returns 更新背包后的公开会话结果。
+   */
+  discardInventoryItem(playerId: PlayerId, itemInstanceId: string) {
+    return this.updatePlayerItemState(playerId, (player) => {
+      const result = removeBackpackItem(player.inventory.backpack, itemInstanceId);
+      return { ...player, inventory: { ...player.inventory, backpack: result.backpack } };
+    });
+  }
+
+  /**
+   * 方法名：storeTemporaryPickup
+   * 作用：将临时拾取区中唯一的新获得物品放入合法背包位置。
+   * @param playerId 请求处理临时拾取物的在线玩家标识。
+   * @param targetPosition 可选的目标左上角背包坐标，未提供时自动寻找合法位置。
+   * @returns 更新临时拾取区与背包后的公开会话结果。
+   */
+  storeTemporaryPickup(playerId: PlayerId, targetPosition?: BackpackPosition) {
+    return this.updatePlayerItemState(playerId, (player) => ({
+      ...player,
+      inventory: storeTemporaryPickupInBackpack(
+        player.inventory,
+        this.#validationContext.itemDefinitions,
+        targetPosition,
+      ),
+    }));
+  }
+
+  /**
+   * 方法名：abandonTemporaryPickup
+   * 作用：主动放弃临时拾取区中唯一的新获得物品，禁止将背包原有物品移入该区域。
+   * @param playerId 请求放弃临时拾取物的在线玩家标识。
+   * @returns 清空临时拾取区后的公开会话结果。
+   */
+  abandonTemporaryPickup(playerId: PlayerId) {
+    return this.updatePlayerItemState(playerId, (player) => ({
+      ...player,
+      inventory: abandonTemporaryPickup(player.inventory).inventory,
+    }));
+  }
+
+  /**
+   * 方法名：equipInventoryItem
+   * 作用：将本人背包中的装备穿戴到指定兼容栏位，并在替换时原子放回旧装备。
+   * @param playerId 请求穿戴装备的在线玩家标识。
+   * @param itemInstanceId 背包中待穿戴装备的物品实例标识。
+   * @param slot 目标装备栏位。
+   * @param replacedEquipmentPosition 替换已有装备时旧装备需要放回的背包位置。
+   * @returns 更新背包与公开装备栏后的会话结果。
+   */
+  equipInventoryItem(
+    playerId: PlayerId,
+    itemInstanceId: string,
+    slot: EquipmentSlot,
+    replacedEquipmentPosition?: BackpackPosition,
+  ) {
+    return this.updatePlayerItemState(playerId, (player) => {
+      const equipmentDefinitions = Object.fromEntries(
+        this.#validationContext.equipmentDefinitions.map((definition) => [
+          definition.definitionId,
+          definition,
+        ]),
+      );
+      const state = equipItemFromBackpack(
+        { inventory: player.inventory, loadout: player.equipment },
+        {
+          itemInstanceId,
+          slot,
+          ...(replacedEquipmentPosition === undefined ? {} : { replacedEquipmentPosition }),
+        },
+        this.#validationContext.itemDefinitions,
+        equipmentDefinitions,
+      );
+
+      return { ...player, inventory: state.inventory, equipment: state.loadout };
+    });
+  }
+
+  /**
+   * 方法名：unequipInventoryItem
+   * 作用：将本人已穿戴装备放回指定合法背包位置。
+   * @param playerId 请求卸下装备的在线玩家标识。
+   * @param slot 需要卸下的装备栏位。
+   * @param targetPosition 装备在背包中的目标左上角坐标。
+   * @returns 更新背包与公开装备栏后的会话结果。
+   */
+  unequipInventoryItem(playerId: PlayerId, slot: EquipmentSlot, targetPosition: BackpackPosition) {
+    return this.updatePlayerItemState(playerId, (player) => {
+      const equipmentDefinitions = Object.fromEntries(
+        this.#validationContext.equipmentDefinitions.map((definition) => [
+          definition.definitionId,
+          definition,
+        ]),
+      );
+      const state = unequipItemToBackpack(
+        { inventory: player.inventory, loadout: player.equipment },
+        { slot, targetPosition },
+        this.#validationContext.itemDefinitions,
+        equipmentDefinitions,
+      );
+
+      return { ...player, inventory: state.inventory, equipment: state.loadout };
+    });
+  }
+
+  /**
+   * 方法名：useConsumableItem
+   * 作用：使用本人背包中已经配置效果的消耗品，并原子更新资源、状态与物品数量。
+   * @param playerId 请求使用物品的在线玩家标识。
+   * @param itemDefinitionId 需要使用的消耗品定义编号。
+   * @returns 更新资源、状态与背包后的公开会话结果。
+   */
+  useConsumableItem(playerId: PlayerId, itemDefinitionId: string) {
+    return this.updatePlayerItemState(playerId, (player) => {
+      const result = useConsumableItem(
+        player.inventory,
+        player.resources,
+        player.statuses,
+        this.#validationContext.itemDefinitions,
+        CONSUMABLE_USAGE_CATALOG,
+        createCoreConsumableEffectHandlerRegistry(this.#validationContext.statusDefinitions),
+        {
+          playerId,
+          itemDefinitionId,
+          createdAtSequence: this.#revision + 1,
+          createStatusInstanceId: (effectIndex, statusDefinitionId) =>
+            `status:${playerId}:${this.#revision + 1}:${effectIndex}:${statusDefinitionId}`,
+        },
+      );
+
+      return {
+        ...player,
+        inventory: result.inventory,
+        resources: result.resourceState as PlayerSessionState<ResourceId>["resources"],
+        statuses: result.statusState,
+      };
+    });
+  }
+
+  /**
    * 方法名：markPlayerDisconnected
    * 作用：登记断线恢复期限；断线者若正在行动则立即跳过其未完成回合，避免阻塞对局。
    * @param playerId 已失去网络连接的玩家标识。
@@ -794,7 +1032,10 @@ export class ServerGameSession<
     const viewer =
       viewerPlayerId === null
         ? null
-        : createViewerSnapshot(getPlayerSessionState(this.#state, viewerPlayerId));
+        : createViewerSnapshot(
+            getPlayerSessionState(this.#state, viewerPlayerId),
+            this.#validationContext,
+          );
 
     return Object.freeze({
       gameId: this.#state.gameId,
@@ -845,6 +1086,32 @@ export class ServerGameSession<
     return this.#state;
   }
 
+  /** 在物品规则成功后原子替换本人状态，并将底层规则异常映射为稳定业务错误。 */
+  private updatePlayerItemState(
+    playerId: PlayerId,
+    operation: (player: PlayerSessionState<ResourceId>) => PlayerSessionState<ResourceId>,
+  ): {
+    readonly events: readonly GameSessionEvent[];
+    readonly snapshot: GameSessionSnapshot;
+  } {
+    this.assertConnectedPlayer(playerId);
+    const player = getPlayerSessionState(this.#state, playerId);
+
+    try {
+      this.#state = replacePlayerSessionState(
+        this.#state,
+        operation(player),
+        this.#validationContext,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Item operation failed";
+      throw new ServerGameSessionError("ITEM_NOT_AVAILABLE", message);
+    }
+
+    this.#revision += 1;
+    return this.createResult([]);
+  }
+
   /** 统一封装状态变更后的事件和不可变公开快照。 */
   private createResult(events: readonly GameSessionEvent[]): {
     readonly events: readonly GameSessionEvent[];
@@ -869,6 +1136,19 @@ export class ServerGameSession<
       throw new ServerGameSessionError(
         "NOT_ACTIVE_PLAYER",
         `Player is not the active player: ${playerId}`,
+      );
+    }
+  }
+
+  /** 断言玩家属于运行中会话且当前连接有效，不要求其位于行动顺序。 */
+  private assertConnectedPlayer(playerId: PlayerId): void {
+    this.assertRunning();
+    this.assertPlayerExists(playerId);
+
+    if (this.#disconnectedPlayers.has(playerId)) {
+      throw new ServerGameSessionError(
+        "PLAYER_DISCONNECTED",
+        `Disconnected player cannot manage items: ${playerId}`,
       );
     }
   }
@@ -1185,12 +1465,59 @@ export class ServerGameSession<
   }
 }
 
-/** 为拥有者生成完整背包与手牌私有视图，绝不用于房间公共广播。 */
-function createViewerSnapshot(player: PlayerSessionState) {
+/** 为拥有者生成完整角色、背包与手牌私有视图，绝不用于房间公共广播。 */
+function createViewerSnapshot(
+  player: PlayerSessionState,
+  validationContext: GameSessionValidationContext,
+) {
   const temporaryPickup = player.inventory.temporaryPickup;
+  const equipmentDefinitions = Object.fromEntries(
+    validationContext.equipmentDefinitions.map((definition) => [
+      definition.definitionId,
+      definition,
+    ]),
+  );
+  const attributeSnapshot = createCharacterAttributeSnapshot(
+    player.character,
+    DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+    [
+      ...createEquipmentAttributeModifiers(player.equipment, equipmentDefinitions),
+      ...createStatusAttributeModifiers(
+        player.statuses.instances,
+        validationContext.statusDefinitions,
+      ),
+    ],
+  );
 
   return Object.freeze({
     playerId: player.playerId,
+    character: Object.freeze({
+      level: player.character.levelProgression.currentLevel,
+      experience: player.character.levelProgression.currentExperience,
+      currentPrimaryAttributes: Object.freeze({ ...attributeSnapshot.currentPrimaryAttributes }),
+      effectivePrimaryAttributes: Object.freeze({
+        ...attributeSnapshot.effectivePrimaryAttributes,
+      }),
+      derivedAttributes: Object.freeze({ ...attributeSnapshot.derivedAttributes }),
+      resources: Object.freeze(
+        Object.fromEntries(
+          Object.entries(player.resources.resources).map(([resourceId, value]) => [
+            resourceId,
+            Object.freeze({ ...value }),
+          ]),
+        ),
+      ),
+      statuses: Object.freeze(
+        player.statuses.instances.map((instance) =>
+          Object.freeze({
+            instanceId: instance.instanceId,
+            definitionId: instance.definitionId,
+            currentStacks: instance.currentStacks,
+            remainingTurns: instance.remainingTurns,
+          }),
+        ),
+      ),
+    }),
     inventory: Object.freeze({
       backpack: Object.freeze({
         level: player.inventory.backpack.level,

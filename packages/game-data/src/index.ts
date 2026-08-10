@@ -30,6 +30,7 @@ export * from "./quests/quest-reward-pools.ts";
 export * from "./statuses/status-definitions.ts";
 export * from "./validation/validate-identity-configs.ts";
 export * from "./validation/validate-level-system-config.ts";
+export * from "./validation/validate-game-data.ts";
 export * from "./validation/validate-race-configs.ts";
 export * from "./weather/weather-config.ts";
 export * from "./weather/weather-effect-config.ts";

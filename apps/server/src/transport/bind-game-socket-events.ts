@@ -198,6 +198,74 @@ function createServerGameCommand(request: SubmitGameCommandRequest, playerId: Pl
       } as const;
     case "revival.attemptReincarnation":
       return { commandId: request.commandId, playerId, type: request.type } as const;
+    case "inventory.move":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        itemInstanceId: request.itemInstanceId,
+        targetPosition: request.targetPosition,
+      } as const;
+    case "inventory.merge":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        sourceItemInstanceId: request.sourceItemInstanceId,
+        targetItemInstanceId: request.targetItemInstanceId,
+      } as const;
+    case "inventory.split":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        sourceItemInstanceId: request.sourceItemInstanceId,
+        splitQuantity: request.splitQuantity,
+        newItemInstanceId: request.newItemInstanceId,
+        targetPosition: request.targetPosition,
+      } as const;
+    case "inventory.discard":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        itemInstanceId: request.itemInstanceId,
+      } as const;
+    case "temporaryPickup.store":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        ...(request.targetPosition === undefined ? {} : { targetPosition: request.targetPosition }),
+      } as const;
+    case "temporaryPickup.abandon":
+      return { commandId: request.commandId, playerId, type: request.type } as const;
+    case "equipment.equip":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        itemInstanceId: request.itemInstanceId,
+        slot: request.slot,
+        ...(request.replacedEquipmentPosition === undefined
+          ? {}
+          : { replacedEquipmentPosition: request.replacedEquipmentPosition }),
+      } as const;
+    case "equipment.unequip":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        slot: request.slot,
+        targetPosition: request.targetPosition,
+      } as const;
+    case "item.use":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        itemDefinitionId: request.itemDefinitionId,
+      } as const;
   }
 }
 

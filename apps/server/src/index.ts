@@ -1,5 +1,7 @@
 import { fileURLToPath } from "node:url";
 
+import { validateGameData } from "@genesis-rift/game-data";
+
 import { createServerLogger } from "./logging/index.ts";
 import { createLanServer } from "./server/create-lan-server.ts";
 
@@ -8,6 +10,7 @@ const port = Number(process.env.PORT ?? 3000);
 const clientOrigin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
 const logDirectory = fileURLToPath(new URL("../../../logs/", import.meta.url));
 
+validateGameData();
 const logger = await createServerLogger({ directory: logDirectory });
 const lanServer = createLanServer({ clientOrigin, logger });
 let shuttingDown = false;

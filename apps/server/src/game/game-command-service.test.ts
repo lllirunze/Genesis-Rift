@@ -71,6 +71,28 @@ describe("GameCommandService", () => {
       "Player player-one attacked player-two with resolved outcome.",
     );
   });
+
+  it("writes an Item log entry after a successful inventory command", async () => {
+    const writer = new MemoryLogWriter();
+    const logger = new Logger({ writer });
+    const session = {
+      moveInventoryItem: () => ({ events: [], snapshot: {} as never }),
+    } as unknown as ServerGameSession;
+    const service = new GameCommandService(session, logger);
+
+    service.execute({
+      commandId: "command-item-001",
+      playerId: PLAYER_ID,
+      type: "inventory.move",
+      itemInstanceId: "item-instance-001",
+      targetPosition: { x: 1, y: 2 },
+    });
+    await logger.flush();
+
+    expect(writer.lines).toHaveLength(1);
+    expect(writer.lines[0]).toContain("[Item    ][GameCommandService]");
+    expect(writer.lines[0]).toContain("Player completed inventory.move command successfully.");
+  });
 });
 
 /** 提供仅用于命令服务日志断言的内存日志写入器。 */
