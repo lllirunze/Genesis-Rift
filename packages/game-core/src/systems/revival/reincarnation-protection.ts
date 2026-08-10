@@ -83,7 +83,14 @@ export function canBeTargetedByHostileAction(
 }
 
 /** 校验轮回保护的角色标识与剩余持续回合数。 */
-function validateReincarnationProtection(protection: ReincarnationProtectionState): void {
+/**
+ * 方法名：validateReincarnationProtection
+ * 作用：校验轮回保护的角色标识与剩余持续回合数。
+ * @param protection 需要校验的轮回保护状态。
+ * @returns 无返回值。
+ * @throws 角色标识或剩余回合数不符合规则时抛出错误。
+ */
+export function validateReincarnationProtection(protection: ReincarnationProtectionState): void {
   assertNonEmptyString(protection.participantId, "participantId");
   assertPositiveSafeInteger(protection.remainingTurns, "remainingTurns");
 }

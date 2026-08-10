@@ -27,6 +27,7 @@ import type {
   WeatherDefinitionCatalog,
   WeatherDisasterDefinitionCatalog,
 } from "../../systems/environment/index.ts";
+import type { ReincarnationProtectionState, SoulState } from "../../systems/revival/index.ts";
 import type { GameStatus } from "./game-state.ts";
 import { GAME_SESSION_STATE_VERSION } from "./game-session-config.ts";
 import { validateGameSessionState } from "./validate-game-session-state.ts";
@@ -45,6 +46,13 @@ export interface PlayerBattleSessionState {
   readonly currentShield: number;
 }
 
+/** 描述玩家死亡后等待轮回及重新入场保护所需的运行时状态。 */
+export interface PlayerRevivalSessionState {
+  readonly soul: SoulState | null;
+  readonly protection: ReincarnationProtectionState | null;
+  readonly isMidGameJoin: boolean;
+}
+
 /** 聚合一名玩家在一局游戏中的全部私有与公开运行时状态。 */
 export interface PlayerSessionState<ResourceId extends string = string> {
   readonly playerId: PlayerId;
@@ -56,6 +64,7 @@ export interface PlayerSessionState<ResourceId extends string = string> {
   readonly hand: PlayerHandState;
   readonly map: PlayerMapSessionState;
   readonly battle: PlayerBattleSessionState;
+  readonly revival: PlayerRevivalSessionState;
 }
 
 /** 聚合所有玩家共享的地图、手牌牌库与昼夜天气环境状态。 */

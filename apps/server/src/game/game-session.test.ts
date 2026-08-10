@@ -5,10 +5,14 @@ import {
   evaluateNormalMovementDirections,
   getCubeCoordinateDistance,
   HEX_DIRECTIONS,
+  receiveItem,
   type GameSessionState,
   type GameSessionValidationContext,
 } from "@genesis-rift/game-core";
-import { WEATHER_DEFINITION_CATALOG } from "@genesis-rift/game-data";
+import {
+  MAP_CONTENT_DEFINITION_CATALOG,
+  WEATHER_DEFINITION_CATALOG,
+} from "@genesis-rift/game-data";
 import type { GameId, PlayerId } from "@genesis-rift/shared";
 
 import { ServerGameSession, ServerGameSessionError } from "./game-session.ts";
@@ -81,13 +85,14 @@ describe("ServerGameSession", () => {
   it("publishes only the selected identity and current position needed by the game interface", () => {
     const session = new ServerGameSession(createSessionState(), createValidationContext());
 
-    expect(session.getSnapshot().players).toEqual([
+    expect(session.getSnapshot().players).toMatchObject([
       {
         playerId: PLAYER_ONE,
         gender: "female",
         identityId: "identity.mage",
         raceId: "race.human",
         currentTileId: "tile:1",
+        survivalStatus: null,
       },
       {
         playerId: PLAYER_TWO,
@@ -95,8 +100,82 @@ describe("ServerGameSession", () => {
         identityId: "identity.ranger",
         raceId: "race.yokai",
         currentTileId: "tile:2",
+        survivalStatus: null,
       },
     ]);
+    expect(session.getSnapshot().viewer).toBeNull();
+  });
+
+  it("projects private inventory and hand data only for the viewing player", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-private-view",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+        {
+          playerId: PLAYER_TWO,
+          displayName: "Player Two",
+          characterSelection: { gender: "male", identityName: "ranger", raceName: "yokai" },
+        },
+      ],
+    });
+    const firstPlayer = initial.state.players[0]!;
+    const itemDefinitions = {
+      item_000002: {
+        definitionId: "item_000002",
+        name: "Linen Cloth",
+        category: "material",
+        quality: "common",
+        width: 1,
+        height: 1,
+        maximumStack: 5,
+      },
+    } as const;
+    const validationContext = { ...initial.validationContext, itemDefinitions };
+    const inventory = receiveItem(
+      firstPlayer.inventory,
+      {
+        definitionId: "item_000002",
+        quantity: 1,
+        sourceId: "test.private-view",
+        newItemInstanceIds: ["item-instance-private-001"],
+      },
+      itemDefinitions,
+    ).inventory;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [{ ...firstPlayer, inventory }, initial.state.players[1]!],
+      },
+      validationContext,
+    );
+
+    const firstView = session.getSnapshotForPlayer(PLAYER_ONE);
+    const secondView = session.getSnapshotForPlayer(PLAYER_TWO);
+
+    expect(firstView.viewer).toMatchObject({
+      playerId: PLAYER_ONE,
+      inventory: {
+        backpack: {
+          entries: [
+            {
+              instanceId: "item-instance-private-001",
+              definitionId: "item_000002",
+              quantity: 1,
+            },
+          ],
+        },
+      },
+      handCardIds: expect.any(Array),
+    });
+    expect(secondView.viewer?.playerId).toBe(PLAYER_TWO);
+    expect(secondView.viewer?.inventory.backpack.entries).toEqual([]);
+    expect(JSON.stringify(secondView)).not.toContain("item-instance-private-001");
+    expect(secondView.viewer?.handCardIds).not.toContain(firstView.viewer?.handCardIds[0]);
+    expect(secondView.players[0]?.backpack.occupiedCells).not.toHaveLength(0);
   });
 
   it("settles one normal move through the authority session and records first exploration", () => {
@@ -248,6 +327,299 @@ describe("ServerGameSession", () => {
     expect(() => session.attackActivePlayer(PLAYER_ONE, PLAYER_TWO)).toThrow(
       ServerGameSessionError,
     );
+  });
+
+  it("limits downed movement and converts a downed player to dead after own turn countdown", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-downed-lifecycle",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const player = initial.state.players[0]!;
+    const state = {
+      ...initial.state,
+      players: [
+        {
+          ...player,
+          battle: {
+            ...player.battle,
+            survival: {
+              participantId: PLAYER_ONE,
+              status: "DOWNED" as const,
+              downedTurnsRemaining: 2,
+            },
+          },
+        },
+      ],
+    };
+    const session = new ServerGameSession(state, initial.validationContext);
+    session.start();
+
+    expect(session.getSnapshot().turn.remainingMovementPoints).toBe(1);
+
+    const firstTurnEnd = session.endActivePlayerTurn(PLAYER_ONE);
+
+    expect(firstTurnEnd.events[0]).toMatchObject({
+      type: "player.survivalChanged",
+      playerId: PLAYER_ONE,
+      status: "DOWNED",
+      downedTurnsRemaining: 1,
+    });
+    expect(session.getStateForServer().players[0]!.battle.survival).toMatchObject({
+      status: "DOWNED",
+      downedTurnsRemaining: 1,
+    });
+
+    const secondTurnEnd = session.endActivePlayerTurn(PLAYER_ONE);
+
+    expect(secondTurnEnd.events[0]).toMatchObject({
+      type: "player.survivalChanged",
+      playerId: PLAYER_ONE,
+      status: "DEAD",
+      downedTurnsRemaining: 0,
+    });
+    expect(secondTurnEnd.snapshot.players[0]).toMatchObject({ survivalStatus: "DEAD" });
+    expect(secondTurnEnd.snapshot.turn.remainingMovementPoints).toBe(0);
+  });
+
+  it("creates a waiting soul after death and opens reincarnation after three owner turns", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-soul-wait",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const player = initial.state.players[0]!;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [
+          {
+            ...player,
+            battle: {
+              ...player.battle,
+              survival: {
+                ...player.battle.survival,
+                status: "DOWNED" as const,
+                downedTurnsRemaining: 1,
+              },
+            },
+          },
+        ],
+      },
+      initial.validationContext,
+    );
+    session.start();
+
+    session.endActivePlayerTurn(PLAYER_ONE);
+    expect(session.getStateForServer().players[0]!.revival.soul).toMatchObject({
+      status: "WAITING",
+      remainingWaitTurns: 3,
+    });
+
+    session.endActivePlayerTurn(PLAYER_ONE);
+    session.endActivePlayerTurn(PLAYER_ONE);
+    session.endActivePlayerTurn(PLAYER_ONE);
+    expect(session.getStateForServer().players[0]!.revival.soul).toMatchObject({
+      status: "READY",
+      remainingWaitTurns: 0,
+    });
+  });
+
+  it("reincarnates a ready soul at a safe tile and grants three-turn protection", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-reincarnation-success",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const player = initial.state.players[0]!;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [
+          {
+            ...player,
+            resources: {
+              ...player.resources,
+              resources: {
+                health: { ...player.resources.resources.health, current: 0 },
+              },
+            },
+            battle: {
+              ...player.battle,
+              survival: { ...player.battle.survival, status: "DEAD" as const },
+            },
+            revival: {
+              soul: {
+                participantId: PLAYER_ONE,
+                status: "READY" as const,
+                remainingWaitTurns: 0,
+                failedAttemptCount: 5,
+                lastAttemptTurn: null,
+              },
+              protection: null,
+              isMidGameJoin: false,
+            },
+          },
+        ],
+      },
+      initial.validationContext,
+    );
+    session.start();
+
+    const result = session.attemptActivePlayerReincarnation(PLAYER_ONE);
+    const reincarnated = session.getStateForServer().players[0]!;
+    const spawnTile = session
+      .getStateForServer()
+      .world.map.getTileById(reincarnated.map.currentTileId)!;
+
+    expect(result.events[0]).toMatchObject({
+      type: "player.reincarnationResolved",
+      outcome: "SUCCEEDED",
+      protectionTurns: 3,
+    });
+    expect(reincarnated.battle.survival.status).toBe("ACTIVE");
+    expect(reincarnated.resources.resources.health.current).toBeGreaterThan(0);
+    expect(reincarnated.revival).toMatchObject({ soul: null, protection: { remainingTurns: 3 } });
+    expect(
+      MAP_CONTENT_DEFINITION_CATALOG.regions[spawnTile.regionDefinitionId as "region_000002"]?.tags,
+    ).toContain("safe-area");
+  });
+
+  it("rejects attacks against a player protected by reincarnation", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-reincarnation-protection",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+        {
+          playerId: PLAYER_TWO,
+          displayName: "Player Two",
+          characterSelection: { gender: "male", identityName: "ranger", raceName: "yokai" },
+        },
+      ],
+    });
+    const attacker = initial.state.players[0]!;
+    const defender = initial.state.players[1]!;
+    const attackerTile = initial.state.world.map.getTileById(attacker.map.currentTileId)!;
+    const defenderTile = initial.state.world.map.tiles.find(
+      (tile) => getCubeCoordinateDistance(attackerTile.coordinate, tile.coordinate) === 1,
+    )!;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [
+          {
+            ...attacker,
+            map: {
+              currentTileId: attackerTile.tileId,
+              exploration: {
+                ...attacker.map.exploration,
+                exploredTileIds: [...attacker.map.exploration.exploredTileIds, defenderTile.tileId],
+              },
+            },
+          },
+          {
+            ...defender,
+            map: {
+              currentTileId: defenderTile.tileId,
+              exploration: { ...defender.map.exploration, exploredTileIds: [defenderTile.tileId] },
+            },
+            revival: {
+              soul: null,
+              protection: { participantId: PLAYER_TWO, remainingTurns: 3 },
+              isMidGameJoin: false,
+            },
+          },
+        ],
+      },
+      initial.validationContext,
+    );
+    session.start();
+
+    expect(() => session.attackActivePlayer(PLAYER_ONE, PLAYER_TWO)).toThrow(
+      ServerGameSessionError,
+    );
+  });
+
+  it("adds a mid-game player through the reincarnation entry and activates them after success", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-mid-game-join",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const session = new ServerGameSession(initial.state, initial.validationContext);
+    session.start();
+    session.addMidGamePlayer({
+      playerId: PLAYER_TWO,
+      characterSelection: { gender: "male", identityName: "ranger", raceName: "yokai" },
+    });
+
+    expect(session.getStateForServer().players[1]!.revival).toMatchObject({
+      soul: { status: "READY" },
+      isMidGameJoin: true,
+    });
+
+    session.endActivePlayerTurn(PLAYER_ONE);
+    let result: ReturnType<
+      ServerGameSession<"health", "maxHealth">["attemptActivePlayerReincarnation"]
+    > | null = null;
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      result = session.attemptActivePlayerReincarnation(PLAYER_TWO);
+
+      if (
+        result.events[0]?.type === "player.reincarnationResolved" &&
+        result.events[0].outcome === "SUCCEEDED"
+      ) {
+        break;
+      }
+
+      session.endActivePlayerTurn(PLAYER_TWO);
+      session.endActivePlayerTurn(PLAYER_ONE);
+    }
+
+    const joined = session
+      .getStateForServer()
+      .players.find((player) => player.playerId === PLAYER_TWO)!;
+
+    expect(result?.events[0]).toMatchObject({
+      type: "player.reincarnationResolved",
+      outcome: "SUCCEEDED",
+      protectionTurns: 3,
+    });
+    expect(joined.battle.survival.status).toBe("ACTIVE");
+    expect(joined.resources.resources.health.current).toBe(
+      joined.resources.resources.health.maximum,
+    );
+    expect(joined.hand.handCardIds).toHaveLength(2);
+    expect(joined.revival).toMatchObject({
+      isMidGameJoin: false,
+      protection: { remainingTurns: 3 },
+    });
+    expect(session.getSnapshot().turn.remainingMovementPoints).toBe(0);
   });
 
   it("advances public environment state only when a complete player round ends", () => {

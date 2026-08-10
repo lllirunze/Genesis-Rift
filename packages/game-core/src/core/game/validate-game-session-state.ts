@@ -31,6 +31,7 @@ import {
   validateWeatherDisasterDefinition,
   validateWeatherRuntimeState,
 } from "../../systems/environment/index.ts";
+import { validateReincarnationProtection, validateSoulState } from "../../systems/revival/index.ts";
 
 /**
  * 方法名：validateGameSessionState
@@ -168,6 +169,7 @@ function validatePlayerState<ResourceId extends string, DerivedAttribute extends
   validateCharacterResourceState(player.resources, context.characterResourceDefinitions);
   validateCharacterStatusState(player.statuses, context.statusDefinitions);
   validateCharacterSurvivalState(player.battle.survival);
+  validatePlayerRevivalState(player);
 
   if (!Number.isSafeInteger(player.battle.currentShield) || player.battle.currentShield < 0) {
     throw new RangeError(
@@ -241,6 +243,45 @@ function validatePlayerState<ResourceId extends string, DerivedAttribute extends
 
   for (const instance of player.statuses.instances) {
     registerUniqueId(statusInstanceIds, instance.instanceId, "status instance");
+  }
+}
+
+/** 校验灵魂、轮回保护与玩家归属、生存状态之间的一致性。 */
+function validatePlayerRevivalState<ResourceId extends string>(
+  player: PlayerSessionState<ResourceId>,
+): void {
+  if (typeof player.revival.isMidGameJoin !== "boolean") {
+    throw new TypeError(`Mid-game join flag must be boolean: ${player.playerId}`);
+  }
+
+  if (player.revival.soul !== null) {
+    validateSoulState(player.revival.soul);
+
+    if (player.revival.soul.participantId !== player.playerId) {
+      throw new Error(`Soul state must belong to player: ${player.playerId}`);
+    }
+
+    if (player.battle.survival.status !== "DEAD") {
+      throw new Error(`Only dead players can retain a soul state: ${player.playerId}`);
+    }
+  }
+
+  if (player.revival.isMidGameJoin && player.revival.soul === null) {
+    throw new Error(`Mid-game join player must retain a pending soul state: ${player.playerId}`);
+  }
+
+  if (player.revival.protection !== null) {
+    validateReincarnationProtection(player.revival.protection);
+
+    if (player.revival.protection.participantId !== player.playerId) {
+      throw new Error(`Reincarnation protection must belong to player: ${player.playerId}`);
+    }
+
+    if (player.battle.survival.status !== "ACTIVE") {
+      throw new Error(
+        `Only active players can retain reincarnation protection: ${player.playerId}`,
+      );
+    }
   }
 }
 

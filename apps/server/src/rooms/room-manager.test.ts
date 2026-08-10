@@ -87,6 +87,28 @@ describe("RoomManager", () => {
 
     expect(manager.assertCanStartRoom(HOST.playerId)).toBe(updated);
   });
+
+  it("allows a fully configured player to join a running room", () => {
+    const manager = new RoomManager();
+    manager.createRoom(ROOM_ID, {
+      ...HOST,
+      characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+    });
+    manager.startRoom(HOST.playerId);
+
+    expectRoomManagerError(() => manager.joinRoom(GUEST), "CHARACTER_SELECTION_INCOMPLETE");
+
+    const joined = manager.joinRoom({
+      ...GUEST,
+      characterSelection: { gender: "male", identityName: "ranger", raceName: "yokai" },
+    });
+
+    expect(joined.status).toBe("running");
+    expect(joined.players.map((player) => player.playerId)).toEqual([
+      HOST.playerId,
+      GUEST.playerId,
+    ]);
+  });
 });
 
 /** 断言房间管理器返回的错误类型及其稳定协议错误码。 */

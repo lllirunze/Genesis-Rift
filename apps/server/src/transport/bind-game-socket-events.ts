@@ -1,7 +1,9 @@
 import type {
   LanGameSessionSnapshot,
+  LanGameEvent,
   LanRequestRejectedPayload,
   PlayerId,
+  RoomId,
   RequestGameSnapshot,
   StartLanGameRequest,
   SubmitGameCommandRequest,
@@ -11,6 +13,7 @@ import { GameCommandService } from "../game/game-command-service.ts";
 import { GameSessionManager, GameSessionManagerError } from "../game/game-session-manager.ts";
 import { ServerGameSessionError } from "../game/game-session.ts";
 import { StartGameService } from "../game/start-game-service.ts";
+import type { Logger } from "../logging/index.ts";
 import { RoomManagerError } from "../rooms/room-manager.ts";
 import { SocketSessionError, SocketSessionManager } from "../sessions/socket-session-manager.ts";
 
@@ -25,6 +28,7 @@ export interface GameSocket {
     event: "game:snapshot",
     payload: { readonly requestId: string; readonly game: LanGameSessionSnapshot },
   ): void;
+  emit(event: "game:event", payload: { readonly event: LanGameEvent }): void;
   emit(
     event: "game:commandAccepted",
     payload: {
@@ -47,6 +51,7 @@ export interface GameSnapshotBroadcaster {
       event: "game:snapshot",
       payload: { readonly requestId: string; readonly game: LanGameSessionSnapshot },
     ): void;
+    emit(event: "game:event", payload: { readonly event: LanGameEvent }): void;
   };
 }
 
@@ -65,23 +70,32 @@ export function bindGameSocketEvents(
   gameSessionManager: GameSessionManager<"health", "maxHealth">,
   socketSessionManager: SocketSessionManager,
   startGameService: StartGameService<"health", "maxHealth">,
+  logger: Logger | null = null,
 ): void {
   socket.on("game:start", (request) => {
     handleRequest(socket, request.requestId, () => {
       const session = socketSessionManager.getJoinedSession(socket.id);
-      const game = startGameService.start(session.playerId);
-      socket.emit("game:started", { requestId: request.requestId, game });
-      broadcaster.to(session.roomId).emit("game:snapshot", {
-        requestId: "server.gameStarted",
-        game,
+      startGameService.start(session.playerId);
+      socket.emit("game:started", {
+        requestId: request.requestId,
+        game: gameSessionManager.getSession().getSnapshotForPlayer(session.playerId),
       });
+      broadcastViewerSnapshots(
+        broadcaster,
+        socketSessionManager,
+        gameSessionManager.getSession(),
+        session.roomId,
+        "server.gameStarted",
+      );
     });
   });
 
   socket.on("game:requestSnapshot", (request) => {
     handleRequest(socket, request.requestId, () => {
       socketSessionManager.getJoinedSession(socket.id);
-      const game = gameSessionManager.getSession().getSnapshot();
+      const game = gameSessionManager
+        .getSession()
+        .getSnapshotForPlayer(socketSessionManager.getJoinedSession(socket.id).playerId);
       socket.emit("game:snapshot", { requestId: request.requestId, game });
     });
   });
@@ -92,16 +106,20 @@ export function bindGameSocketEvents(
       const gameSession = gameSessionManager.getSession();
 
       const command = createServerGameCommand(request, session.playerId);
-      const result = new GameCommandService(gameSession).execute(command);
+      const result = new GameCommandService(gameSession, logger).execute(command);
       socket.emit("game:commandAccepted", {
         requestId: request.requestId,
         commandId: result.commandId,
-        game: result.snapshot,
+        game: gameSession.getSnapshotForPlayer(session.playerId),
       });
-      broadcaster.to(session.roomId).emit("game:snapshot", {
-        requestId: "server.gameUpdated",
-        game: result.snapshot,
-      });
+      broadcastPublicGameEvents(broadcaster, session.roomId, result.events);
+      broadcastViewerSnapshots(
+        broadcaster,
+        socketSessionManager,
+        gameSession,
+        session.roomId,
+        "server.gameUpdated",
+      );
     });
   });
 
@@ -110,15 +128,53 @@ export function bindGameSocketEvents(
       const socketSession = socketSessionManager.getJoinedSession(socket.id);
       const gameSession = gameSessionManager.getSession();
 
-      const result = gameSession.markPlayerDisconnected(socketSession.playerId);
-      broadcaster.to(socketSession.roomId).emit("game:snapshot", {
-        requestId: "server.playerDisconnected",
-        game: result.snapshot,
-      });
+      gameSession.markPlayerDisconnected(socketSession.playerId);
+      broadcastViewerSnapshots(
+        broadcaster,
+        socketSessionManager,
+        gameSession,
+        socketSession.roomId,
+        "server.playerDisconnected",
+      );
     } catch {
       // 大厅阶段或尚未初始化游戏时，断线不应影响 Socket 清理流程。
     }
   });
+}
+
+/** 逐 Socket 生成游戏快照，避免将任何玩家私有状态广播给整个房间。 */
+function broadcastViewerSnapshots(
+  broadcaster: GameSnapshotBroadcaster,
+  socketSessionManager: SocketSessionManager,
+  gameSession: ReturnType<GameSessionManager<"health", "maxHealth">["getSession"]>,
+  roomId: RoomId,
+  requestId: string,
+): void {
+  for (const session of socketSessionManager.getJoinedSessionsInRoom(roomId)) {
+    broadcaster.to(session.socketId).emit("game:snapshot", {
+      requestId,
+      game: gameSession.getSnapshotForPlayer(session.playerId),
+    });
+  }
+}
+
+/** 将服务端内部领域事件过滤并转换为可安全发送给房间成员的协议事件。 */
+function broadcastPublicGameEvents(
+  broadcaster: GameSnapshotBroadcaster,
+  roomId: string,
+  events: readonly import("../game/game-session.ts").GameSessionEvent[],
+): void {
+  for (const event of events) {
+    if (
+      event.type !== "battle.attackResolved" &&
+      event.type !== "player.survivalChanged" &&
+      event.type !== "player.reincarnationResolved"
+    ) {
+      continue;
+    }
+
+    broadcaster.to(roomId).emit("game:event", { event });
+  }
 }
 
 /** 将共享网络请求转换为已绑定当前 Socket 身份的服务端游戏命令。 */
@@ -140,6 +196,8 @@ function createServerGameCommand(request: SubmitGameCommandRequest, playerId: Pl
         type: request.type,
         targetPlayerId: request.targetPlayerId,
       } as const;
+    case "revival.attemptReincarnation":
+      return { commandId: request.commandId, playerId, type: request.type } as const;
   }
 }
 

@@ -178,6 +178,11 @@ function createPlayerState(
       survival: createActiveCharacterSurvivalState(playerId),
       currentShield: 0,
     },
+    revival: {
+      soul: null,
+      protection: null,
+      isMidGameJoin: false,
+    },
   };
 }
 
@@ -206,7 +211,7 @@ describe("game session state", () => {
     const { state } = createEmptySession();
 
     expect(state).toMatchObject({
-      version: 4,
+      version: 5,
       gameId: GAME_ID,
       status: "lobby",
       playerOrder: [],

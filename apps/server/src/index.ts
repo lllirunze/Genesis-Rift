@@ -9,7 +9,7 @@ const clientOrigin = process.env.CLIENT_ORIGIN ?? "http://localhost:5173";
 const logDirectory = fileURLToPath(new URL("../../../logs/", import.meta.url));
 
 const logger = await createServerLogger({ directory: logDirectory });
-const lanServer = createLanServer({ clientOrigin });
+const lanServer = createLanServer({ clientOrigin, logger });
 let shuttingDown = false;
 
 lanServer.httpServer.listen(port, host, () => {

@@ -1,10 +1,17 @@
 import type { HexDirection } from "@genesis-rift/game-core";
 import type { PlayerId } from "@genesis-rift/shared";
 
+import type { Logger } from "../logging/index.ts";
+
 import type { GameSessionEvent, GameSessionSnapshot, ServerGameSession } from "./game-session.ts";
 
 /** 当前服务端已经开放执行的首批游戏命令类型。 */
-export const SERVER_GAME_COMMAND_TYPES = ["turn.end", "map.move", "battle.attack"] as const;
+export const SERVER_GAME_COMMAND_TYPES = [
+  "turn.end",
+  "map.move",
+  "battle.attack",
+  "revival.attemptReincarnation",
+] as const;
 
 /** 描述首批可由客户端提交的服务端游戏命令。 */
 interface ServerGameCommandBase {
@@ -29,9 +36,17 @@ export interface AttackServerGameCommand extends ServerGameCommandBase {
   readonly targetPlayerId: PlayerId;
 }
 
+/** 描述当前行动灵魂申请一次轮回判定的服务端内部命令。 */
+export interface AttemptReincarnationServerGameCommand extends ServerGameCommandBase {
+  readonly type: "revival.attemptReincarnation";
+}
+
 /** 描述首批可由客户端提交的服务端游戏命令。 */
 export type ServerGameCommand =
-  EndTurnServerGameCommand | MoveServerGameCommand | AttackServerGameCommand;
+  | EndTurnServerGameCommand
+  | MoveServerGameCommand
+  | AttackServerGameCommand
+  | AttemptReincarnationServerGameCommand;
 
 /** 描述一次命令执行完成后的权威结果。 */
 export interface GameCommandExecutionResult {
@@ -46,6 +61,7 @@ export class GameCommandService<
   DerivedAttribute extends string = string,
 > {
   readonly #session: ServerGameSession<ResourceId, DerivedAttribute>;
+  readonly #logger: Logger | null;
 
   /**
    * 方法名：constructor
@@ -53,8 +69,12 @@ export class GameCommandService<
    * @param session 当前房间唯一的服务端游戏会话。
    * @returns 无返回值。
    */
-  constructor(session: ServerGameSession<ResourceId, DerivedAttribute>) {
+  constructor(
+    session: ServerGameSession<ResourceId, DerivedAttribute>,
+    logger: Logger | null = null,
+  ) {
     this.#session = session;
+    this.#logger = logger;
   }
 
   /**
@@ -72,16 +92,72 @@ export class GameCommandService<
     switch (command.type) {
       case "turn.end": {
         const result = this.#session.endActivePlayerTurn(command.playerId);
-        return Object.freeze({ commandId: command.commandId, ...result });
+        return this.createExecutionResult(command.commandId, result);
       }
       case "map.move": {
         const result = this.#session.moveActivePlayer(command.playerId, command.direction);
-        return Object.freeze({ commandId: command.commandId, ...result });
+        return this.createExecutionResult(command.commandId, result);
       }
       case "battle.attack": {
         const result = this.#session.attackActivePlayer(command.playerId, command.targetPlayerId);
-        return Object.freeze({ commandId: command.commandId, ...result });
+        return this.createExecutionResult(command.commandId, result);
+      }
+      case "revival.attemptReincarnation": {
+        const result = this.#session.attemptActivePlayerReincarnation(command.playerId);
+        return this.createExecutionResult(command.commandId, result);
       }
     }
+  }
+
+  /**
+   * 方法名：createExecutionResult
+   * 作用：统一封装命令执行结果，并记录其中可公开的战斗结算事件。
+   * @param commandId 客户端提交的幂等命令标识。
+   * @param result 服务端会话完成规则结算后的事件与快照。
+   * @returns 包含原命令标识的不可变执行结果。
+   */
+  private createExecutionResult(
+    commandId: string,
+    result: Omit<GameCommandExecutionResult, "commandId">,
+  ): GameCommandExecutionResult {
+    for (const event of result.events) {
+      if (event.type === "battle.attackResolved") {
+        this.#logger?.info({
+          action: "Battle",
+          module: "GameCommandService",
+          message: `Player ${event.attackerId} attacked ${event.defenderId} with ${event.outcome.toLowerCase()} outcome.`,
+          gameId: event.gameId,
+          context: {
+            attackId: event.attackId,
+            attackerId: event.attackerId,
+            defenderId: event.defenderId,
+            outcome: event.outcome,
+            finalDamage: event.finalDamage,
+            defenderHealth: event.defenderHealth,
+            defenderShield: event.defenderShield,
+            defenderSurvivalStatus: event.defenderSurvivalStatus,
+          },
+        });
+        continue;
+      }
+
+      if (event.type === "player.reincarnationResolved") {
+        this.#logger?.info({
+          action: "Player",
+          module: "GameCommandService",
+          message: `Player ${event.playerId} reincarnation attempt ${event.outcome.toLowerCase()}.`,
+          gameId: event.gameId,
+          context: {
+            playerId: event.playerId,
+            outcome: event.outcome,
+            rolls: event.rolls,
+            spawnTileId: event.spawnTileId,
+            protectionTurns: event.protectionTurns,
+          },
+        });
+      }
+    }
+
+    return Object.freeze({ commandId, ...result });
   }
 }

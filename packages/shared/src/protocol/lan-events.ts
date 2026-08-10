@@ -92,9 +92,17 @@ export interface AttackGameCommandRequest extends SubmitGameCommandRequestBase {
   readonly targetPlayerId: PlayerId;
 }
 
+/** 描述客户端请求为已准备灵魂执行一次 D20 轮回判定的权威命令。 */
+export interface AttemptReincarnationGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "revival.attemptReincarnation";
+}
+
 /** 描述客户端可以提交的首批权威游戏命令。 */
 export type SubmitGameCommandRequest =
-  EndTurnGameCommandRequest | MoveGameCommandRequest | AttackGameCommandRequest;
+  | EndTurnGameCommandRequest
+  | MoveGameCommandRequest
+  | AttackGameCommandRequest
+  | AttemptReincarnationGameCommandRequest;
 
 /** 描述公开游戏快照中的全局回合位置。 */
 export interface LanGameTurnSnapshot {
@@ -131,6 +139,55 @@ export interface LanGamePlayerSnapshot {
   readonly identityId: string;
   readonly raceId: string;
   readonly currentTileId: TileId;
+  readonly survivalStatus: string | null;
+  readonly currentHealth: number | null;
+  readonly maximumHealth: number | null;
+  readonly currentShield: number;
+  readonly equipment: LanGameEquipmentSnapshot;
+  readonly backpack: LanGameBackpackMaskSnapshot;
+}
+
+/** 描述可公开查看的装备栏位，仅保留穿戴装备的静态定义编号。 */
+export interface LanGameEquipmentSnapshot {
+  readonly weapon: string | null;
+  readonly armor: string | null;
+  readonly shoes: string | null;
+  readonly accessory1: string | null;
+  readonly accessory2: string | null;
+  readonly special: string | null;
+}
+
+/** 描述其他玩家背包中被遮罩的物品占格范围。 */
+export interface LanGameBackpackMaskSnapshot {
+  readonly level: number;
+  readonly occupiedCells: readonly { readonly x: number; readonly y: number }[];
+}
+
+/** 描述仅允许当前查看者读取的完整背包物品信息。 */
+export interface LanGamePrivateInventorySnapshot {
+  readonly backpack: {
+    readonly level: number;
+    readonly entries: readonly {
+      readonly instanceId: string;
+      readonly definitionId: string;
+      readonly quantity: number;
+      readonly position: { readonly x: number; readonly y: number };
+    }[];
+  };
+  readonly temporaryPickup: {
+    readonly instanceId: string;
+    readonly definitionId: string;
+    readonly quantity: number;
+    readonly sourceId: string;
+    readonly remainingOwnerTurns: number;
+  } | null;
+}
+
+/** 描述仅允许当前查看者读取的手牌、背包等私有运行时信息。 */
+export interface LanGameViewerSnapshot {
+  readonly playerId: PlayerId;
+  readonly inventory: LanGamePrivateInventorySnapshot;
+  readonly handCardIds: readonly string[];
 }
 
 /** 描述可安全广播给整个房间的游戏权威状态摘要。 */
@@ -143,7 +200,48 @@ export interface LanGameSessionSnapshot {
   readonly playerOrder: readonly PlayerId[];
   readonly players: readonly LanGamePlayerSnapshot[];
   readonly disconnectedPlayers: readonly LanDisconnectedPlayerSnapshot[];
+  readonly viewer: LanGameViewerSnapshot | null;
 }
+
+/** 描述可安全广播给房间成员的一次普通攻击结算结果。 */
+export interface LanBattleAttackResolvedEvent {
+  readonly type: "battle.attackResolved";
+  readonly gameId: string;
+  readonly attackId: string;
+  readonly attackerId: PlayerId;
+  readonly defenderId: PlayerId;
+  readonly outcome: "RESOLVED" | "EVADED";
+  readonly finalDamage: number;
+  readonly defenderHealth: number;
+  readonly defenderShield: number;
+  readonly defenderSurvivalStatus: string;
+}
+
+/** 描述角色在击倒倒计时或死亡后发生的公开生存状态变化。 */
+export interface LanPlayerSurvivalChangedEvent {
+  readonly type: "player.survivalChanged";
+  readonly gameId: string;
+  readonly playerId: PlayerId;
+  readonly status: string;
+  readonly downedTurnsRemaining: number;
+}
+
+/** 描述灵魂轮回判定的公开结果，成功时包含重新进入地图的安全位置。 */
+export interface LanPlayerReincarnationResolvedEvent {
+  readonly type: "player.reincarnationResolved";
+  readonly gameId: string;
+  readonly playerId: PlayerId;
+  readonly outcome: "FAILED" | "SUCCEEDED";
+  readonly rolls: readonly number[];
+  readonly spawnTileId: TileId | null;
+  readonly protectionTurns: number;
+}
+
+/** 描述当前阶段可公开广播的游戏领域事件。 */
+export type LanGameEvent =
+  | LanBattleAttackResolvedEvent
+  | LanPlayerSurvivalChangedEvent
+  | LanPlayerReincarnationResolvedEvent;
 
 /** 描述服务端拒绝一项局域网请求时返回的稳定信息。 */
 export interface LanRequestRejectedPayload {
@@ -166,6 +264,7 @@ export interface LanRequestRejectedPayload {
     | "PLAYER_NOT_DISCONNECTED"
     | "MOVE_NOT_AVAILABLE"
     | "ATTACK_NOT_AVAILABLE"
+    | "REINCARNATION_NOT_AVAILABLE"
     | "REQUEST_INVALID";
   readonly message: string;
 }
@@ -201,6 +300,7 @@ export interface ServerToClientEvents {
     readonly commandId: string;
     readonly game: LanGameSessionSnapshot;
   }) => void;
+  "game:event": (payload: { readonly event: LanGameEvent }) => void;
   "game:rejected": (payload: LanRequestRejectedPayload) => void;
   "game:started": (payload: {
     readonly requestId: string;

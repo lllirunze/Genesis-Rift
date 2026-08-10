@@ -126,7 +126,8 @@ function createDefaultMap(): HexMap {
         coordinate,
         elevation: 0,
         terrainDefinitionId: "terrain_000001",
-        regionDefinitionId: "region_000001",
+        // 默认地图预留三个文明安全区，作为轮回角色的随机重新入场位置。
+        regionDefinitionId: index < 3 ? "region_000002" : "region_000001",
         passability: "passable",
       },
       MAP_CONTENT_DEFINITION_CATALOG,
@@ -156,40 +157,65 @@ function createPlayerStates(
 
   return players.map((player, index) => {
     const selection = getRequiredCharacterSelection(player);
-    const character = createCharacter({
-      playerId: player.playerId,
-      gender: selection.gender,
-      identity: getIdentityConfig(selection),
-      race: getRaceConfig(selection),
-    });
-    const derivedAttributes = calculateDerivedAttributes({
-      currentPrimaryAttributes: character.currentPrimaryAttributes,
-      configs: { maxHealth: DERIVED_ATTRIBUTE_FORMULA_CONFIGS.maxHealth },
-    });
     const spawnTile = spawnTiles[index]!;
-
-    return {
+    return createDefaultPlayerSessionState({
       playerId: player.playerId,
-      character,
-      resources: createCharacterResourceState(
-        player.playerId,
-        CHARACTER_RESOURCE_DEFINITIONS,
-        derivedAttributes,
-      ),
-      statuses: createCharacterStatusState(player.playerId),
-      inventory: createPlayerInventory(player.playerId),
-      equipment: createEmptyEquipmentLoadout(player.playerId),
-      hand: createPlayerHandState(player.playerId),
-      map: {
-        currentTileId: spawnTile.tileId,
-        exploration: createPlayerExplorationState(player.playerId, spawnTile.tileId, map),
-      },
-      battle: {
-        survival: createActiveCharacterSurvivalState(player.playerId),
-        currentShield: 0,
-      },
-    };
+      selection,
+      map,
+      spawnTileId: spawnTile.tileId,
+    });
   });
+}
+
+/**
+ * 方法名：createDefaultPlayerSessionState
+ * 作用：根据已确认的角色选择与地图出生格创建一名拥有正常初始资源的完整玩家状态。
+ * @param input 玩家标识、角色选择、世界地图与初始出生格。
+ * @returns 可用于开局或中途加入流程的完整玩家会话状态。
+ */
+export function createDefaultPlayerSessionState(input: {
+  readonly playerId: PlayerId;
+  readonly selection: LanCharacterSelection;
+  readonly map: HexMap;
+  readonly spawnTileId: TileId;
+}): PlayerSessionState<"health"> {
+  const character = createCharacter({
+    playerId: input.playerId,
+    gender: input.selection.gender,
+    identity: getIdentityConfig(input.selection),
+    race: getRaceConfig(input.selection),
+  });
+  const derivedAttributes = calculateDerivedAttributes({
+    currentPrimaryAttributes: character.currentPrimaryAttributes,
+    configs: { maxHealth: DERIVED_ATTRIBUTE_FORMULA_CONFIGS.maxHealth },
+  });
+
+  return {
+    playerId: input.playerId,
+    character,
+    resources: createCharacterResourceState(
+      input.playerId,
+      CHARACTER_RESOURCE_DEFINITIONS,
+      derivedAttributes,
+    ),
+    statuses: createCharacterStatusState(input.playerId),
+    inventory: createPlayerInventory(input.playerId),
+    equipment: createEmptyEquipmentLoadout(input.playerId),
+    hand: createPlayerHandState(input.playerId),
+    map: {
+      currentTileId: input.spawnTileId,
+      exploration: createPlayerExplorationState(input.playerId, input.spawnTileId, input.map),
+    },
+    battle: {
+      survival: createActiveCharacterSurvivalState(input.playerId),
+      currentShield: 0,
+    },
+    revival: {
+      soul: null,
+      protection: null,
+      isMidGameJoin: false,
+    },
+  };
 }
 
 /** 读取已在大厅锁定前完成校验的角色选择，拒绝任何不完整初始化请求。 */

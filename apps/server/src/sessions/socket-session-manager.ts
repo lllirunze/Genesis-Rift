@@ -119,6 +119,27 @@ export class SocketSessionManager {
   }
 
   /**
+   * 方法名：getJoinedSessionsInRoom
+   * 作用：读取指定房间内全部已完成身份与房间绑定的活动 Socket 会话。
+   * @param roomId 需要读取连接的唯一局域网房间标识。
+   * @returns 按 Socket 标识稳定排序的只读会话集合。
+   */
+  getJoinedSessionsInRoom(
+    roomId: RoomId,
+  ): readonly (SocketPlayerSession & { readonly roomId: RoomId })[] {
+    assertRoomId(roomId);
+
+    return Object.freeze(
+      [...this.#sessions.values()]
+        .filter(
+          (session): session is SocketPlayerSession & { readonly roomId: RoomId } =>
+            session.roomId === roomId,
+        )
+        .sort((first, second) => first.socketId.localeCompare(second.socketId)),
+    );
+  }
+
+  /**
    * 方法名：removeSocket
    * 作用：在连接断开时清理服务端保存的 Socket 会话信息。
    * @param socketId 已断开的 Socket 连接标识。

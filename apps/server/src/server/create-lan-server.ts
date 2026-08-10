@@ -10,6 +10,7 @@ import {
 import { Server as SocketServer } from "socket.io";
 
 import { RoomManager } from "../rooms/room-manager.ts";
+import { Logger, NoopLogWriter } from "../logging/index.ts";
 import { GameSessionManager } from "../game/game-session-manager.ts";
 import { DefaultInitialGameSessionFactory } from "../game/default-initial-game-session-factory.ts";
 import { StartGameService } from "../game/start-game-service.ts";
@@ -25,6 +26,7 @@ import {
 interface LanServerOptions {
   clientOrigin: string;
   readonly allowedClientIps?: readonly string[];
+  readonly logger?: Logger;
 }
 
 /**
@@ -35,6 +37,7 @@ interface LanServerOptions {
  */
 export function createLanServer(options: LanServerOptions) {
   const allowedClientIps = options.allowedClientIps ?? loadAllowedClientIps();
+  const logger = options.logger ?? new Logger({ writer: new NoopLogWriter() });
   const httpServer = createServer((request, response) => {
     if (!isIpWhitelisted(request.socket.remoteAddress, allowedClientIps)) {
       response.writeHead(IP_WHITELIST_REJECTION.statusCode, {
@@ -92,6 +95,7 @@ export function createLanServer(options: LanServerOptions) {
       gameSessionManager,
       sessionManager,
       startGameService,
+      logger,
     );
     bindRoomSocketEvents(socket, socketServer, roomManager, sessionManager, {
       onPlayerReconnected: (playerId) => {
@@ -100,6 +104,15 @@ export function createLanServer(options: LanServerOptions) {
         } catch {
           // 大厅阶段尚未创建游戏会话，恢复大厅连接无需额外处理。
         }
+      },
+      onPlayerJoinedDuringGame: (player) => {
+        if (player.characterSelection === null) {
+          throw new Error("Mid-game player character selection is missing");
+        }
+        gameSessionManager.getSession().addMidGamePlayer({
+          playerId: player.playerId,
+          characterSelection: player.characterSelection,
+        });
       },
     });
   });

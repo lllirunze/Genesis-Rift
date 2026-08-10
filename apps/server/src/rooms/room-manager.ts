@@ -66,7 +66,7 @@ export class RoomManager {
 
   /**
    * 方法名：joinRoom
-   * 作用：将新玩家加入仍处于大厅状态的房间并提升快照版本。
+   * 作用：将新玩家加入大厅或运行中的房间并提升快照版本。
    * @param player 加入者的公开大厅信息。
    * @returns 加入成功后的最新权威房间快照。
    * @throws 房间不存在、状态不可加入或玩家已存在时抛出错误。
@@ -75,8 +75,15 @@ export class RoomManager {
     const current = this.getRoom();
     validatePlayer(player);
 
-    if (current.status !== "lobby") {
+    if (current.status !== "lobby" && current.status !== "running") {
       throw new RoomManagerError("ROOM_NOT_JOINABLE", "The active LAN room is not joinable");
+    }
+
+    if (current.status === "running" && player.characterSelection === null) {
+      throw new RoomManagerError(
+        "CHARACTER_SELECTION_INCOMPLETE",
+        "Mid-game players must finish character selection before joining",
+      );
     }
 
     if (current.players.some((candidate) => candidate.playerId === player.playerId)) {

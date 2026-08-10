@@ -2,6 +2,7 @@ import type {
   CreateLanRoomRequest,
   JoinLanRoomRequest,
   LanRequestRejectedPayload,
+  LanRoomPlayerSnapshot,
   LanRoomSnapshot,
   PlayerId,
   RequestLanRoomSnapshot,
@@ -53,6 +54,7 @@ export interface RoomSnapshotBroadcaster {
 /** 描述房间恢复连接成功后可由上层补充执行的游戏会话操作。 */
 export interface RoomSocketBindingOptions {
   readonly onPlayerReconnected?: (playerId: PlayerId) => void;
+  readonly onPlayerJoinedDuringGame?: (player: LanRoomPlayerSnapshot) => void;
 }
 
 /**
@@ -98,6 +100,16 @@ export function bindRoomSocketEvents(
         );
       }
 
+      if (!isKnownPlayer && room.status === "running") {
+        if (request.player.characterSelection === null) {
+          throw new RoomManagerError(
+            "CHARACTER_SELECTION_INCOMPLETE",
+            "Mid-game players must finish character selection before joining",
+          );
+        }
+        assertCharacterSelection(request.player.characterSelection);
+      }
+
       const nextRoom = isKnownPlayer
         ? roomManager.reconnectPlayer(request.player)
         : roomManager.joinRoom(request.player);
@@ -108,6 +120,8 @@ export function bindRoomSocketEvents(
 
       if (isKnownPlayer) {
         options.onPlayerReconnected?.(request.player.playerId);
+      } else if (room.status === "running") {
+        options.onPlayerJoinedDuringGame?.(request.player);
       }
 
       broadcastSnapshot(broadcaster, nextRoom);

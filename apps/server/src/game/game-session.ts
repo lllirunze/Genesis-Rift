@@ -1,6 +1,17 @@
 import {
+  acquireHandCardsFromSharedDeck,
   advanceCharacterStatusesAtTurnEnd,
+  advanceDownedStateAtTurnEnd,
+  advanceReincarnationProtectionAtTurnEnd,
+  advanceSoulWaitAtOwnerTurnEnd,
   advanceTurnState,
+  addPlayerSessionState,
+  attemptReincarnation,
+  breakReincarnationProtectionForHostileAction,
+  canBeTargetedByHostileAction,
+  completeReincarnation,
+  completeMidGameJoin,
+  createActiveCharacterSurvivalState,
   createBattleSettlement,
   createCombatAttributeSnapshot,
   createCharacterAttributeSnapshot,
@@ -10,10 +21,12 @@ import {
   advanceEnvironmentRound,
   createTurnState,
   getEnvironmentPublicView,
+  getCharacterMovementPointLimit,
   getCubeCoordinateDistance,
   getEquippedWeaponAttack,
   isTileExplored,
   recordBattleSettlement,
+  recordSuccessfulTileEntry,
   getPlayerSessionState,
   removePlayerFromTurnState,
   removePlayerSessionState,
@@ -24,6 +37,8 @@ import {
   settleNormalMovement,
   evaluateAttackEligibility,
   canCharacterPerformAttack,
+  createSoulStateFromDeath,
+  createSoulStateForMidGameJoin,
   type GameSessionState,
   type GameSessionValidationContext,
   type HexDirection,
@@ -36,8 +51,16 @@ import {
   WEATHER_CARD_MAPPING_CATALOG,
   WEATHER_EFFECT_DEFINITION_CATALOG,
 } from "@genesis-rift/game-data";
-import type { GameId, LanGameSessionSnapshot, PlayerId } from "@genesis-rift/shared";
+import type {
+  GameId,
+  LanCharacterSelection,
+  LanGameSessionSnapshot,
+  ItemDefinitionCatalog,
+  PlayerId,
+  TileId,
+} from "@genesis-rift/shared";
 
+import { createDefaultPlayerSessionState } from "./default-initial-game-session-factory.ts";
 /** 断线玩家可恢复原角色的全局玩家回合数量。 */
 export const DISCONNECTED_PLAYER_RECOVERY_TURN_LIMIT = 10;
 
@@ -49,7 +72,8 @@ export type ServerGameSessionErrorCode =
   | "PLAYER_DISCONNECTED"
   | "PLAYER_NOT_DISCONNECTED"
   | "MOVE_NOT_AVAILABLE"
-  | "ATTACK_NOT_AVAILABLE";
+  | "ATTACK_NOT_AVAILABLE"
+  | "REINCARNATION_NOT_AVAILABLE";
 
 /** 描述服务端游戏会话抛出的可映射业务错误。 */
 export class ServerGameSessionError extends Error {
@@ -73,6 +97,12 @@ export interface DisconnectedPlayerState {
   readonly playerId: PlayerId;
   readonly disconnectedAtGlobalTurn: number;
   readonly expiresAfterGlobalTurn: number;
+}
+
+/** 描述运行中房间中途加入者完成角色选择后提交给游戏会话的基础信息。 */
+export interface MidGamePlayerJoinInput {
+  readonly playerId: PlayerId;
+  readonly characterSelection: LanCharacterSelection;
 }
 
 /** 描述可安全广播给房间全部成员的游戏会话摘要。 */
@@ -116,6 +146,22 @@ export type GameSessionEvent =
       readonly defenderHealth: number;
       readonly defenderShield: number;
       readonly defenderSurvivalStatus: string;
+    }
+  | {
+      readonly type: "player.survivalChanged";
+      readonly gameId: GameId;
+      readonly playerId: PlayerId;
+      readonly status: string;
+      readonly downedTurnsRemaining: number;
+    }
+  | {
+      readonly type: "player.reincarnationResolved";
+      readonly gameId: GameId;
+      readonly playerId: PlayerId;
+      readonly outcome: "FAILED" | "SUCCEEDED";
+      readonly rolls: readonly number[];
+      readonly spawnTileId: TileId | null;
+      readonly protectionTurns: number;
     };
 
 /** 描述从角色最终数值解析一个新回合可用移动力的可替换规则。 */
@@ -196,6 +242,8 @@ export class ServerGameSession<
   } {
     this.assertActiveConnectedPlayer(playerId);
     this.advanceActivePlayerStatusesAtTurnEnd(playerId);
+    const survivalEvent = this.advanceActivePlayerSurvivalAtTurnEnd(playerId);
+    this.advanceActivePlayerRevivalAtTurnEnd(playerId, survivalEvent !== null);
     const previousRound = this.#turn.round;
     this.#turn = advanceTurnState(this.#turn, this.#state.playerOrder, {
       unavailablePlayerIds: [...this.#disconnectedPlayers.keys()],
@@ -206,6 +254,9 @@ export class ServerGameSession<
     const events: GameSessionEvent[] = [
       { type: "turn.advanced", gameId: this.#state.gameId, turn: this.#turn },
     ];
+    if (survivalEvent !== null) {
+      events.unshift(survivalEvent);
+    }
     events.push(...this.removeExpiredDisconnectedPlayers());
     return this.createResult(events);
   }
@@ -242,7 +293,10 @@ export class ServerGameSession<
     const eligibility = evaluateAttackEligibility({
       hasActionPermission: this.#activePlayerHasPrimaryAction,
       attackerCanAttack: canCharacterPerformAttack(attacker.battle.survival),
-      targetIsAttackable: playerId !== targetPlayerId && defender.battle.survival.status !== "DEAD",
+      targetIsAttackable:
+        playerId !== targetPlayerId &&
+        defender.battle.survival.status !== "DEAD" &&
+        canBeTargetedByHostileAction(defender.revival.protection),
       targetIsVisible: isTileExplored(attacker.map.exploration, defender.map.currentTileId),
       targetIsInRange:
         getCubeCoordinateDistance(attackerTile.coordinate, defenderTile.coordinate) <= 1,
@@ -351,7 +405,18 @@ export class ServerGameSession<
       };
     }
 
+    const nextAttacker =
+      attacker.revival.protection === null
+        ? attacker
+        : {
+            ...attacker,
+            revival: {
+              ...attacker.revival,
+              protection: breakReincarnationProtectionForHostileAction(attacker.revival.protection),
+            },
+          };
     this.#state = replacePlayerSessionState(this.#state, nextDefender, this.#validationContext);
+    this.#state = replacePlayerSessionState(this.#state, nextAttacker, this.#validationContext);
     this.#state = {
       ...this.#state,
       world: { ...this.#state.world, battleSettlementLedger: recorded.ledger },
@@ -375,6 +440,189 @@ export class ServerGameSession<
         defenderSurvivalStatus: nextDefender.battle.survival.status,
       },
     ]);
+  }
+
+  /**
+   * 方法名：attemptActivePlayerReincarnation
+   * 作用：为当前行动位中已完成等待的灵魂执行一次 D20 轮回判定，并在成功后重新进入地图。
+   * @param playerId 请求轮回判定的当前行动玩家标识。
+   * @returns 轮回成功或失败的公开结果与最新权威快照。
+   * @throws 玩家未处于可申请轮回的灵魂状态或安全出生点不可用时抛出错误。
+   */
+  attemptActivePlayerReincarnation(playerId: PlayerId): {
+    readonly events: readonly GameSessionEvent[];
+    readonly snapshot: GameSessionSnapshot;
+  } {
+    this.assertActiveConnectedPlayer(playerId);
+    const player = getPlayerSessionState(this.#state, playerId);
+
+    if (player.revival.soul === null) {
+      throw new ServerGameSessionError(
+        "REINCARNATION_NOT_AVAILABLE",
+        "Player is not awaiting reincarnation",
+      );
+    }
+
+    const random = RandomManager.restore(this.#state.random);
+    let attempt;
+
+    try {
+      attempt = attemptReincarnation(
+        player.revival.soul,
+        random.getStream("reincarnation"),
+        this.#turn.globalTurn,
+      );
+    } catch (error) {
+      throw new ServerGameSessionError(
+        "REINCARNATION_NOT_AVAILABLE",
+        error instanceof Error ? error.message : "Reincarnation is not available",
+      );
+    }
+
+    if (attempt.outcome === "FAILED") {
+      this.#state = replacePlayerSessionState(
+        this.#state,
+        { ...player, revival: { ...player.revival, soul: attempt.state } },
+        this.#validationContext,
+      );
+      this.#state = { ...this.#state, random: random.exportState() };
+      this.#revision += 1;
+      return this.createResult([
+        {
+          type: "player.reincarnationResolved",
+          gameId: this.#state.gameId,
+          playerId,
+          outcome: "FAILED",
+          rolls: attempt.rolls,
+          spawnTileId: null,
+          protectionTurns: 0,
+        },
+      ]);
+    }
+
+    const completion = player.revival.isMidGameJoin
+      ? completeMidGameJoin(
+          attempt.state,
+          player.resources,
+          this.getReincarnationSpawnCandidates(),
+          random.getStream("reincarnation"),
+        )
+      : completeReincarnation(
+          attempt.state,
+          player.resources,
+          "health" as ResourceId,
+          this.getReincarnationSpawnCandidates(),
+          random.getStream("reincarnation"),
+        );
+    const spawnedTile = this.#state.world.map.getTileById(completion.spawn.spawnId as TileId);
+
+    if (spawnedTile === undefined) {
+      throw new Error(`Reincarnation spawn tile is unavailable: ${completion.spawn.spawnId}`);
+    }
+
+    const initialHand = player.revival.isMidGameJoin
+      ? acquireHandCardsFromSharedDeck(
+          this.#state.world.handCardDeck,
+          player.hand,
+          this.#validationContext.handCardCatalog,
+          random.getStream("deck"),
+          { type: "specialEffect", sourceId: "revival.mid-game-join" },
+          2,
+        )
+      : null;
+
+    if (initialHand !== null) {
+      this.#state = {
+        ...this.#state,
+        world: { ...this.#state.world, handCardDeck: initialHand.deckState },
+      };
+    }
+
+    this.#state = replacePlayerSessionState(
+      this.#state,
+      {
+        ...player,
+        resources: completion.resources,
+        hand: initialHand?.playerHandState ?? player.hand,
+        map: {
+          currentTileId: spawnedTile.tileId,
+          exploration: recordSuccessfulTileEntry(
+            player.map.exploration,
+            spawnedTile.tileId,
+            this.#state.world.map,
+          ).explorationState,
+        },
+        battle: { currentShield: 0, survival: createActiveCharacterSurvivalState(playerId) },
+        revival: { soul: null, protection: completion.protection, isMidGameJoin: false },
+      },
+      this.#validationContext,
+    );
+    this.#state = {
+      ...this.#state,
+      random: random.exportState(),
+    };
+    this.#remainingMovementPoints = player.revival.isMidGameJoin
+      ? 0
+      : this.#movementPointResolver(player);
+    this.#activePlayerHasPrimaryAction = !player.revival.isMidGameJoin;
+    this.#revision += 1;
+    return this.createResult([
+      {
+        type: "player.reincarnationResolved",
+        gameId: this.#state.gameId,
+        playerId,
+        outcome: "SUCCEEDED",
+        rolls: attempt.rolls,
+        spawnTileId: spawnedTile.tileId,
+        protectionTurns: completion.protection.remainingTurns,
+      },
+    ]);
+  }
+
+  /**
+   * 方法名：addMidGamePlayer
+   * 作用：将运行中房间的新成员以可立即申请轮回的灵魂状态加入行动顺序。
+   * @param input 中途加入者的稳定玩家标识与已确认角色选择。
+   * @returns 包含新成员的公开会话快照。
+   * @throws 游戏未运行、玩家重复或地图不存在安全出生格时抛出错误。
+   */
+  addMidGamePlayer(input: MidGamePlayerJoinInput): {
+    readonly events: readonly GameSessionEvent[];
+    readonly snapshot: GameSessionSnapshot;
+  } {
+    this.assertRunning();
+
+    if (this.#state.playerOrder.includes(input.playerId)) {
+      throw new ServerGameSessionError("PLAYER_NOT_IN_GAME", "Player already belongs to this game");
+    }
+
+    const fallbackSpawn = this.getReincarnationSpawnCandidates()[0]!;
+    const baseline = createDefaultPlayerSessionState({
+      playerId: input.playerId,
+      selection: input.characterSelection,
+      map: this.#state.world.map,
+      spawnTileId: fallbackSpawn.spawnId,
+    });
+    const player = {
+      ...baseline,
+      battle: {
+        currentShield: 0,
+        survival: { ...baseline.battle.survival, status: "DEAD" as const },
+      },
+      revival: {
+        soul: createSoulStateForMidGameJoin(input.playerId),
+        protection: null,
+        isMidGameJoin: true,
+      },
+    };
+    // 默认中途加入工厂当前固定使用 health 资源，服务端正式会话同样使用该资源标识。
+    this.#state = addPlayerSessionState(
+      this.#state,
+      player as unknown as PlayerSessionState<ResourceId>,
+      this.#validationContext,
+    );
+    this.#revision += 1;
+    return this.createResult([]);
   }
 
   /**
@@ -526,6 +774,28 @@ export class ServerGameSession<
    * @returns 当前游戏会话的安全公开快照。
    */
   getSnapshot(): GameSessionSnapshot {
+    return this.createSnapshot(null);
+  }
+
+  /**
+   * 方法名：getSnapshotForPlayer
+   * 作用：为指定玩家创建包含本人私有背包与手牌、但不包含他人私有数据的会话快照。
+   * @param viewerPlayerId 请求读取快照的已加入玩家标识。
+   * @returns 可安全发送给该玩家客户端的会话快照。
+   * @throws 查看者不属于当前游戏会话时抛出错误。
+   */
+  getSnapshotForPlayer(viewerPlayerId: PlayerId): GameSessionSnapshot {
+    this.assertPlayerExists(viewerPlayerId);
+    return this.createSnapshot(viewerPlayerId);
+  }
+
+  /** 根据可选查看者创建公开状态，并仅附加该玩家有权读取的私有数据。 */
+  private createSnapshot(viewerPlayerId: PlayerId | null): GameSessionSnapshot {
+    const viewer =
+      viewerPlayerId === null
+        ? null
+        : createViewerSnapshot(getPlayerSessionState(this.#state, viewerPlayerId));
+
     return Object.freeze({
       gameId: this.#state.gameId,
       status: this.#state.status,
@@ -541,6 +811,19 @@ export class ServerGameSession<
             identityId: player.character.identityId,
             raceId: player.character.raceId,
             currentTileId: player.map.currentTileId,
+            survivalStatus: player.battle?.survival.status ?? null,
+            currentHealth: player.resources?.resources["health" as ResourceId]?.current ?? null,
+            maximumHealth: player.resources?.resources["health" as ResourceId]?.maximum ?? null,
+            currentShield: player.battle?.currentShield ?? 0,
+            equipment: Object.freeze({
+              weapon: player.equipment?.slots.weapon?.definitionId ?? null,
+              armor: player.equipment?.slots.armor?.definitionId ?? null,
+              shoes: player.equipment?.slots.shoes?.definitionId ?? null,
+              accessory1: player.equipment?.slots.accessory1?.definitionId ?? null,
+              accessory2: player.equipment?.slots.accessory2?.definitionId ?? null,
+              special: player.equipment?.slots.special?.definitionId ?? null,
+            }),
+            backpack: createBackpackMaskSnapshot(player, this.#validationContext.itemDefinitions),
           }),
         ),
       ),
@@ -549,6 +832,7 @@ export class ServerGameSession<
           Object.freeze({ playerId, expiresAfterGlobalTurn }),
         ),
       ),
+      viewer,
     });
   }
 
@@ -615,9 +899,12 @@ export class ServerGameSession<
       return;
     }
 
-    this.#remainingMovementPoints = this.#movementPointResolver(
-      getPlayerSessionState(this.#state, playerId),
-    );
+    const player = getPlayerSessionState(this.#state, playerId);
+    const normalMovementPoints = this.#movementPointResolver(player);
+    this.#remainingMovementPoints =
+      player.battle === undefined
+        ? normalMovementPoints
+        : getCharacterMovementPointLimit(player.battle.survival, normalMovementPoints);
     this.#activePlayerHasPrimaryAction = true;
   }
 
@@ -791,6 +1078,182 @@ export class ServerGameSession<
       this.#validationContext,
     );
   }
+
+  /**
+   * 方法名：advanceActivePlayerSurvivalAtTurnEnd
+   * 作用：结算击倒角色的自身回合倒计时，并在倒计时结束时转换为正式死亡。
+   * @param playerId 当前结束回合的玩家标识。
+   * @returns 发生击倒倒计时或死亡变化时返回可公开广播的状态事件，否则返回 null。
+   */
+  private advanceActivePlayerSurvivalAtTurnEnd(playerId: PlayerId): GameSessionEvent | null {
+    const player = getPlayerSessionState(this.#state, playerId);
+
+    // 测试使用的最小会话壳不包含完整战斗状态，因此不参与生存生命周期结算。
+    if (player.battle === undefined) {
+      return null;
+    }
+
+    const result = advanceDownedStateAtTurnEnd(player.battle.survival);
+
+    if (result.outcome === "UNCHANGED") {
+      return null;
+    }
+
+    this.#state = replacePlayerSessionState(
+      this.#state,
+      {
+        ...player,
+        battle: { ...player.battle, survival: result.state },
+        revival:
+          result.outcome === "DIED"
+            ? { ...player.revival, soul: createSoulStateFromDeath(result.state), protection: null }
+            : player.revival,
+      },
+      this.#validationContext,
+    );
+
+    return {
+      type: "player.survivalChanged",
+      gameId: this.#state.gameId,
+      playerId,
+      status: result.state.status,
+      downedTurnsRemaining: result.state.downedTurnsRemaining,
+    };
+  }
+
+  /**
+   * 方法名：advanceActivePlayerRevivalAtTurnEnd
+   * 作用：推进灵魂等待和轮回保护；本回合刚刚死亡时只创建灵魂，不额外减少等待时间。
+   * @param playerId 当前结束自身回合的玩家标识。
+   * @param survivalChanged 本回合是否刚完成击倒或死亡状态转换。
+   * @returns 无返回值。
+   */
+  private advanceActivePlayerRevivalAtTurnEnd(playerId: PlayerId, survivalChanged: boolean): void {
+    const player = getPlayerSessionState(this.#state, playerId);
+
+    // 最小会话壳不包含轮回状态，因此不参与完整轮回生命周期结算。
+    if (player.revival === undefined) {
+      return;
+    }
+
+    const protection =
+      player.revival.protection === null
+        ? null
+        : advanceReincarnationProtectionAtTurnEnd(player.revival.protection);
+    const soul =
+      player.revival.soul === null || survivalChanged
+        ? player.revival.soul
+        : advanceSoulWaitAtOwnerTurnEnd(player.revival.soul).state;
+
+    if (soul === player.revival.soul && protection === player.revival.protection) {
+      return;
+    }
+
+    this.#state = replacePlayerSessionState(
+      this.#state,
+      { ...player, revival: { soul, protection, isMidGameJoin: player.revival.isMidGameJoin } },
+      this.#validationContext,
+    );
+  }
+
+  /** 从当前地图的安全文明区域筛选稳定排序后的轮回出生点候选。 */
+  private getReincarnationSpawnCandidates(): readonly {
+    readonly spawnId: TileId;
+    readonly settlementType: "TOWN";
+  }[] {
+    const candidates = this.#state.world.map.tiles
+      .filter((tile) => {
+        const region = (
+          Object.values(MAP_CONTENT_DEFINITION_CATALOG.regions) as readonly {
+            readonly definitionId: string;
+            readonly tags: readonly string[];
+          }[]
+        ).find((definition) => definition.definitionId === tile.regionDefinitionId);
+        return region?.tags.includes("safe-area") === true && tile.passability === "passable";
+      })
+      .sort((left, right) => left.tileId.localeCompare(right.tileId))
+      .map((tile) => ({ spawnId: tile.tileId, settlementType: "TOWN" as const }));
+
+    if (candidates.length === 0) {
+      throw new ServerGameSessionError(
+        "REINCARNATION_NOT_AVAILABLE",
+        "No safe reincarnation spawn is available",
+      );
+    }
+
+    return candidates;
+  }
+}
+
+/** 为拥有者生成完整背包与手牌私有视图，绝不用于房间公共广播。 */
+function createViewerSnapshot(player: PlayerSessionState) {
+  const temporaryPickup = player.inventory.temporaryPickup;
+
+  return Object.freeze({
+    playerId: player.playerId,
+    inventory: Object.freeze({
+      backpack: Object.freeze({
+        level: player.inventory.backpack.level,
+        entries: Object.freeze(
+          player.inventory.backpack.entries.map((entry) =>
+            Object.freeze({
+              instanceId: entry.item.instanceId,
+              definitionId: entry.item.definitionId,
+              quantity: entry.item.quantity,
+              position: Object.freeze({ ...entry.position }),
+            }),
+          ),
+        ),
+      }),
+      temporaryPickup:
+        temporaryPickup === null
+          ? null
+          : Object.freeze({
+              instanceId: temporaryPickup.item.instanceId,
+              definitionId: temporaryPickup.item.definitionId,
+              quantity: temporaryPickup.item.quantity,
+              sourceId: temporaryPickup.sourceId,
+              remainingOwnerTurns: temporaryPickup.remainingOwnerTurns,
+            }),
+    }),
+    handCardIds: Object.freeze([...player.hand.handCardIds]),
+  });
+}
+
+/** 将背包物品转换为不包含物品身份和数量的公开二维遮罩。 */
+function createBackpackMaskSnapshot(
+  player: PlayerSessionState,
+  itemDefinitions: ItemDefinitionCatalog,
+) {
+  if (player.inventory === undefined) {
+    return Object.freeze({ level: 1, occupiedCells: Object.freeze([]) });
+  }
+
+  const occupiedCells: { readonly x: number; readonly y: number }[] = [];
+
+  for (const entry of player.inventory.backpack.entries) {
+    const definition = itemDefinitions[entry.item.definitionId];
+
+    if (definition === undefined) {
+      continue;
+    }
+
+    for (let yOffset = 0; yOffset < definition.height; yOffset += 1) {
+      for (let xOffset = 0; xOffset < definition.width; xOffset += 1) {
+        occupiedCells.push(
+          Object.freeze({
+            x: entry.position.x + xOffset,
+            y: entry.position.y + yOffset,
+          }),
+        );
+      }
+    }
+  }
+
+  return Object.freeze({
+    level: player.inventory.backpack.level,
+    occupiedCells: Object.freeze(occupiedCells),
+  });
 }
 
 /**
