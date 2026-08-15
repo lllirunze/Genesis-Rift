@@ -1035,6 +1035,7 @@ export class ServerGameSession<
         : createViewerSnapshot(
             getPlayerSessionState(this.#state, viewerPlayerId),
             this.#validationContext,
+            this.#state.world.map,
           );
 
     return Object.freeze({
@@ -1469,6 +1470,7 @@ export class ServerGameSession<
 function createViewerSnapshot(
   player: PlayerSessionState,
   validationContext: GameSessionValidationContext,
+  map: GameSessionState["world"]["map"],
 ) {
   const temporaryPickup = player.inventory.temporaryPickup;
   const equipmentDefinitions = Object.fromEntries(
@@ -1544,6 +1546,36 @@ function createViewerSnapshot(
             }),
     }),
     handCardIds: Object.freeze([...player.hand.handCardIds]),
+    map: createPrivateMapSnapshot(player, map),
+  });
+}
+
+/** 将玩家已探索的地块投影为仅本人可读取的地图快照。 */
+function createPrivateMapSnapshot(
+  player: PlayerSessionState,
+  map: GameSessionState["world"]["map"],
+) {
+  const exploredTileIds = new Set(player.map.exploration.exploredTileIds);
+
+  return Object.freeze({
+    tiles: Object.freeze(
+      map.tiles
+        .filter((tile) => exploredTileIds.has(tile.tileId))
+        .sort((left, right) => left.tileId.localeCompare(right.tileId))
+        .map((tile) =>
+          Object.freeze({
+            tileId: tile.tileId,
+            coordinate: Object.freeze({ ...tile.coordinate }),
+            elevation: tile.elevation,
+            terrainDefinitionId: tile.terrainDefinitionId,
+            regionDefinitionId: tile.regionDefinitionId,
+            passability: tile.passability,
+            featureTypes: Object.freeze(tile.features.map((feature) => feature.type)),
+            featureReferenceIds: Object.freeze(tile.features.map((feature) => feature.referenceId)),
+            isCurrentPlayerTile: tile.tileId === player.map.currentTileId,
+          }),
+        ),
+    ),
   });
 }
 

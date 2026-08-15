@@ -181,6 +181,14 @@ describe("ServerGameSession", () => {
         },
       },
       handCardIds: expect.any(Array),
+      map: {
+        tiles: [
+          expect.objectContaining({
+            isCurrentPlayerTile: true,
+            terrainDefinitionId: expect.stringMatching(/^terrain_00000[1-4]$/),
+          }),
+        ],
+      },
     });
     expect(secondView.viewer?.playerId).toBe(PLAYER_TWO);
     expect(secondView.viewer?.character).toMatchObject({
@@ -193,6 +201,7 @@ describe("ServerGameSession", () => {
     expect(secondView.players[0]?.backpack.occupiedCells).not.toHaveLength(0);
     expect(JSON.stringify(firstView.players)).not.toContain("derivedAttributes");
     expect(JSON.stringify(firstView.players)).not.toContain("currentPrimaryAttributes");
+    expect(JSON.stringify(session.getSnapshot())).not.toContain("terrainDefinitionId");
   });
 
   it("updates backpack layout and equipped slots through authority session item operations", () => {

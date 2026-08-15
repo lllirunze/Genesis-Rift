@@ -6,6 +6,9 @@ import type {
   PlayerId,
 } from "@genesis-rift/shared";
 
+import { CharacterStatusPanel } from "./character-status-panel.tsx";
+import { HexMapBoard } from "./hex-map-board.tsx";
+
 /** 描述最小对局面板需要展示和操作的公开数据。 */
 export interface GameSessionPanelProps {
   readonly game: LanGameSessionSnapshot;
@@ -58,6 +61,19 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
           <strong>{game.turn.remainingMovementPoints}</strong>
         </div>
       </div>
+
+      <CharacterStatusPanel character={game.viewer?.character ?? null} />
+
+      <HexMapBoard
+        canMove={
+          props.isConnected &&
+          isActivePlayer &&
+          game.status === "running" &&
+          game.turn.remainingMovementPoints > 0
+        }
+        map={game.viewer?.map ?? null}
+        onMove={props.onMoveActivePlayer}
+      />
 
       <section className="game-session__players" aria-labelledby="game-session-players-heading">
         <h3 id="game-session-players-heading">玩家状态</h3>

@@ -40,6 +40,7 @@ import {
 import type { GameId, LanCharacterSelection, PlayerId, TileId } from "@genesis-rift/shared";
 
 import { generateMasterSeed } from "../random/generate-master-seed.ts";
+import { createDefaultMapTileConfiguration } from "./default-map-configuration.ts";
 import type { InitialGameSessionFactory } from "./start-game-service.ts";
 
 /** 根据正式静态资源创建并校验完整游戏会话时使用的定义集合。 */
@@ -118,19 +119,11 @@ export class DefaultInitialGameSessionFactory implements InitialGameSessionFacto
   }
 }
 
-/** 创建当前 V1 默认的全平原野外地图，后续地图配置加载器可替换此实现。 */
+/** 创建包含基础地形、高度、文明地点与野外区域的默认 V1 地图。 */
 function createDefaultMap(): HexMap {
   const tiles = generateBaseMapCoordinates().map((coordinate, index) =>
     createHexTile(
-      {
-        tileId: `tile:${index}` as TileId,
-        coordinate,
-        elevation: 0,
-        terrainDefinitionId: "terrain_000001",
-        // 默认地图预留三个文明安全区，作为轮回角色的随机重新入场位置。
-        regionDefinitionId: index < 3 ? "region_000002" : "region_000001",
-        passability: "passable",
-      },
+      createDefaultMapTileConfiguration(coordinate, `tile:${index}` as TileId),
       MAP_CONTENT_DEFINITION_CATALOG,
     ),
   );

@@ -6,11 +6,14 @@
 
 ## Core Files
 
+- `apps/web/src/features/game-session/hex-map-board.tsx`：按玩家私有地图快照渲染可缩放、可拖动的平顶六边形地图，并对已探索相邻格复用现有移动命令。
+- `apps/web/src/features/game-session/hex-map-config.ts`：地形/地点静态资源目录、切片数量与稳定变体选择；地点资源未导入时必须回退到地形。
 - `apps/web/src/app/app.tsx`：顶层页面组合与当前界面入口。
 - `apps/web/src/features/room/lan-room-client.ts`：Socket.IO 客户端协议封装。
 - `apps/web/src/features/room/use-lan-room-lobby.ts`：大厅连接、事件订阅和界面状态协调。
 - `apps/web/src/features/room/room-lobby.tsx`：大厅与角色选择 UI。
 - `apps/web/src/features/game-session/game-session-panel.tsx`：运行中会话摘要展示。
+- `apps/web/src/features/game-session/character-status-panel.tsx`：仅展示本人私有等级、属性、资源与状态。
 - `apps/web/src/state/connection-store.ts`：Zustand 连接状态。
 
 ## Core Data

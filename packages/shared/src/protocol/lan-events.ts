@@ -278,12 +278,31 @@ export interface LanGamePrivateCharacterSnapshot {
   }[];
 }
 
+/** 描述仅允许当前查看者读取的单个已知地图地块。 */
+export interface LanGamePrivateMapTileSnapshot {
+  readonly tileId: TileId;
+  readonly coordinate: { readonly x: number; readonly y: number; readonly z: number };
+  readonly elevation: number;
+  readonly terrainDefinitionId: string;
+  readonly regionDefinitionId: string;
+  readonly passability: "passable" | "blocked";
+  readonly featureTypes: readonly string[];
+  readonly featureReferenceIds: readonly string[];
+  readonly isCurrentPlayerTile: boolean;
+}
+
+/** 描述仅允许当前查看者读取的已探索地图内容。 */
+export interface LanGamePrivateMapSnapshot {
+  readonly tiles: readonly LanGamePrivateMapTileSnapshot[];
+}
+
 /** 描述仅允许当前查看者读取的手牌、背包等私有运行时信息。 */
 export interface LanGameViewerSnapshot {
   readonly playerId: PlayerId;
   readonly character: LanGamePrivateCharacterSnapshot;
   readonly inventory: LanGamePrivateInventorySnapshot;
   readonly handCardIds: readonly string[];
+  readonly map: LanGamePrivateMapSnapshot;
 }
 
 /** 描述可安全广播给整个房间的游戏权威状态摘要。 */

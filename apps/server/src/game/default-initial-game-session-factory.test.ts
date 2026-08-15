@@ -38,4 +38,36 @@ describe("DefaultInitialGameSessionFactory", () => {
     expect(result.state.players[1]?.character.raceId).toBe("race.yokai");
     expect(result.state.players[1]?.character.gender).toBe("female");
   });
+
+  it("creates deterministic mixed terrain and civilized location features without consuming map randomness", () => {
+    const result = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-default-map-content",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const terrainIds = new Set(
+      result.state.world.map.tiles.map((tile) => tile.terrainDefinitionId),
+    );
+    const locationTiles = result.state.world.map.tiles.filter((tile) => tile.features.length > 0);
+
+    expect(terrainIds).toEqual(
+      new Set(["terrain_000001", "terrain_000002", "terrain_000003", "terrain_000004"]),
+    );
+    expect(locationTiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          regionDefinitionId: "region_000002",
+          features: [expect.objectContaining({ referenceId: "location.town", type: "structure" })],
+        }),
+      ]),
+    );
+    expect(
+      Math.max(...result.state.world.map.tiles.map((tile) => tile.elevation)),
+    ).toBeLessThanOrEqual(2);
+  });
 });
