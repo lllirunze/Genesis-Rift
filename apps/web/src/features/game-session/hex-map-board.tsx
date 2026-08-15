@@ -6,12 +6,25 @@ import type {
 } from "@genesis-rift/shared";
 import type { LanHexDirection } from "@genesis-rift/shared";
 
-import { getHexMapLocationAssetPath, getHexMapTerrainAssetPath } from "./hex-map-config.ts";
+import {
+  getHexMapLocationAssetPath,
+  getHexMapLocationDisplayName,
+  getHexMapTerrainAssetPath,
+} from "./hex-map-config.ts";
+
+/** 描述可在地图上公开显示的玩家位置标记。 */
+export interface HexMapPlayerMarker {
+  readonly playerId: string;
+  readonly displayName: string;
+  readonly currentTileId: string;
+  readonly isLocalPlayer: boolean;
+}
 
 /** 描述平顶六边形地图面板所需的当前玩家私有地图数据。 */
 export interface HexMapBoardProps {
   readonly map: LanGamePrivateMapSnapshot | null;
   readonly canMove: boolean;
+  readonly playerMarkers: readonly HexMapPlayerMarker[];
   onMove(direction: LanHexDirection): void;
 }
 
@@ -64,6 +77,9 @@ export function HexMapBoard(props: HexMapBoardProps) {
     props.map.tiles.find((tile) => tile.isCurrentPlayerTile) ??
     props.map.tiles[0]!;
   const currentTile = props.map.tiles.find((tile) => tile.isCurrentPlayerTile)!;
+  const selectedLocationDisplayName = getHexMapLocationDisplayName(
+    selectedTile.featureReferenceIds,
+  );
 
   /** 开始拖动可滚动地图容器。 */
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
@@ -152,6 +168,10 @@ export function HexMapBoard(props: HexMapBoardProps) {
               tile.featureReferenceIds,
               tile.tileId,
             );
+            const locationDisplayName = getHexMapLocationDisplayName(tile.featureReferenceIds);
+            const visibleMarkers = props.playerMarkers.filter(
+              (marker) => marker.currentTileId === tile.tileId,
+            );
 
             return (
               <g
@@ -193,6 +213,16 @@ export function HexMapBoard(props: HexMapBoardProps) {
                     y={-HEX_HEIGHT / 2}
                   />
                 )}
+                {locationDisplayName === null ? null : (
+                  <text
+                    aria-hidden="true"
+                    className="hex-map-tile__location-label"
+                    textAnchor="middle"
+                    y={-HEX_HEIGHT / 2 + 18}
+                  >
+                    {locationDisplayName}
+                  </text>
+                )}
                 <polygon
                   className={
                     isSelected
@@ -201,9 +231,24 @@ export function HexMapBoard(props: HexMapBoardProps) {
                   }
                   points={HEX_POINTS}
                 />
-                {tile.isCurrentPlayerTile ? (
-                  <circle className="hex-map-tile__player" r="8" />
-                ) : null}
+                {visibleMarkers.map((marker, index) => (
+                  <g
+                    aria-label={`${marker.displayName} 位于此地块`}
+                    className={
+                      marker.isLocalPlayer
+                        ? "hex-map-tile__player-marker hex-map-tile__player-marker--local"
+                        : "hex-map-tile__player-marker"
+                    }
+                    key={marker.playerId}
+                    transform={getPlayerMarkerTransform(index, visibleMarkers.length)}
+                  >
+                    <title>{marker.displayName}</title>
+                    <circle r="10" />
+                    <text aria-hidden="true" textAnchor="middle" y="4">
+                      {getPlayerMarkerSymbol(marker.displayName)}
+                    </text>
+                  </g>
+                ))}
               </g>
             );
           })}
@@ -215,12 +260,27 @@ export function HexMapBoard(props: HexMapBoardProps) {
         <span>{selectedTile.terrainDefinitionId}</span>
         <span>高度 {selectedTile.elevation}</span>
         <span>{selectedTile.passability === "passable" ? "可通行" : "不可通行"}</span>
-        {selectedTile.featureReferenceIds.length === 0 ? null : (
-          <span>{selectedTile.featureReferenceIds.join("、")}</span>
-        )}
+        {selectedLocationDisplayName === null ? null : <span>{selectedLocationDisplayName}</span>}
       </div>
     </section>
   );
+}
+
+/** 根据同格玩家数量生成简洁且不重叠的标记位置。 */
+function getPlayerMarkerTransform(index: number, total: number): string {
+  if (total === 1) {
+    return "translate(0 4)";
+  }
+
+  const radius = total > 3 ? 17 : 13;
+  const angle = -Math.PI / 2 + (index * Math.PI * 2) / total;
+
+  return `translate(${Math.cos(angle) * radius} ${4 + Math.sin(angle) * radius})`;
+}
+
+/** 从显示名称提取一个简短标记字符，避免地图上的玩家名称过长。 */
+function getPlayerMarkerSymbol(displayName: string): string {
+  return displayName.trim().slice(0, 1).toUpperCase() || "?";
 }
 
 /** 根据两个地块的立方坐标差读取标准六方向，非相邻地块返回空值。 */

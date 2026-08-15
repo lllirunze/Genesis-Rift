@@ -186,7 +186,7 @@ describe("ServerGameSession", () => {
         tiles: [
           expect.objectContaining({
             isCurrentPlayerTile: true,
-            terrainDefinitionId: expect.stringMatching(/^terrain_00000[1-4]$/),
+            terrainDefinitionId: expect.stringMatching(/^terrain_00000[1-6]$/),
           }),
         ],
       },

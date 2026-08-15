@@ -76,6 +76,12 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
         }
         map={game.viewer?.map ?? null}
         onMove={props.onMoveActivePlayer}
+        playerMarkers={game.players.map((player) => ({
+          playerId: player.playerId,
+          displayName: getPlayerName(room, player.playerId),
+          currentTileId: player.currentTileId,
+          isLocalPlayer: player.playerId === localPlayerId,
+        }))}
       />
 
       <EventPanel

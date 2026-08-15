@@ -6,6 +6,8 @@ export const HEX_MAP_TERRAIN_ASSET_CONFIG: Readonly<
   terrain_000002: { directory: "forest", variantCount: 6 },
   terrain_000003: { directory: "mountain", variantCount: 6 },
   terrain_000004: { directory: "water", variantCount: 6 },
+  terrain_000005: { directory: "desert", variantCount: 6 },
+  terrain_000006: { directory: "snow", variantCount: 6 },
 };
 
 /** 未配置专属资源时使用的默认地形图块。 */
@@ -18,15 +20,19 @@ export const DEFAULT_HEX_MAP_TERRAIN_ASSET = {
 export const HEX_MAP_LOCATION_ASSET_CONFIG: Readonly<
   Record<
     string,
-    { readonly directory: string; readonly variantCount: number; readonly enabled: boolean }
+    {
+      readonly directory: string;
+      readonly variantCount: number;
+      readonly enabled: boolean;
+      readonly displayName: string;
+    }
   >
 > = {
-  // 对应地点完整地块资源尚未导入时保持关闭，以回退到基础地形并避免请求不存在的图片。
-  "location.town": { directory: "town", variantCount: 6, enabled: false },
-  "location.village": { directory: "village", variantCount: 6, enabled: false },
-  "location.temple": { directory: "temple", variantCount: 6, enabled: false },
-  "location.port": { directory: "port", variantCount: 6, enabled: false },
-  "location.ruin": { directory: "ruin", variantCount: 6, enabled: false },
+  "location.town": { directory: "town", variantCount: 6, enabled: true, displayName: "城镇" },
+  "location.village": { directory: "village", variantCount: 6, enabled: true, displayName: "村庄" },
+  "location.temple": { directory: "temple", variantCount: 6, enabled: true, displayName: "神殿" },
+  "location.port": { directory: "port", variantCount: 6, enabled: true, displayName: "港口" },
+  "location.ruin": { directory: "ruin", variantCount: 6, enabled: true, displayName: "遗迹" },
 };
 
 /** 根据地块标识稳定选择一个地形切片，避免同一对局中资源随机跳变。 */
@@ -56,6 +62,17 @@ export function getHexMapLocationAssetPath(
   const fileName = `${config.directory}-${String(variant).padStart(2, "0")}.avif`;
 
   return `/assets/images/board/locations/${config.directory}/${fileName}`;
+}
+
+/** 根据地点设施引用返回可展示名称；未配置地点时不显示标签。 */
+export function getHexMapLocationDisplayName(
+  featureReferenceIds: readonly string[],
+): string | null {
+  const referenceId = featureReferenceIds.find(
+    (candidate) => HEX_MAP_LOCATION_ASSET_CONFIG[candidate] !== undefined,
+  );
+
+  return referenceId === undefined ? null : HEX_MAP_LOCATION_ASSET_CONFIG[referenceId]!.displayName;
 }
 
 /** 使用确定性整数哈希为静态资源选择生成稳定索引。 */

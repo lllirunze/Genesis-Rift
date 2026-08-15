@@ -56,13 +56,24 @@ describe("DefaultInitialGameSessionFactory", () => {
     const locationTiles = result.state.world.map.tiles.filter((tile) => tile.features.length > 0);
 
     expect(terrainIds).toEqual(
-      new Set(["terrain_000001", "terrain_000002", "terrain_000003", "terrain_000004"]),
+      new Set([
+        "terrain_000001",
+        "terrain_000002",
+        "terrain_000003",
+        "terrain_000004",
+        "terrain_000005",
+        "terrain_000006",
+      ]),
     );
     expect(locationTiles).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           regionDefinitionId: "region_000002",
           features: [expect.objectContaining({ referenceId: "location.town", type: "structure" })],
+        }),
+        expect.objectContaining({
+          regionDefinitionId: "region_000002",
+          features: [expect.objectContaining({ referenceId: "location.port", type: "structure" })],
         }),
       ]),
     );

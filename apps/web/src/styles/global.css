@@ -689,10 +689,35 @@ h1 {
   stroke-width: 4;
 }
 
-.hex-map-tile__player {
-  fill: var(--cinnabar);
+.hex-map-tile__location-label {
+  fill: rgba(20, 43, 40, 0.92);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+.hex-map-tile__player-marker {
+  pointer-events: none;
+}
+
+.hex-map-tile__player-marker circle {
+  fill: var(--jade);
   stroke: var(--paper);
-  stroke-width: 4;
+  stroke-width: 3;
+}
+
+.hex-map-tile__player-marker--local circle {
+  fill: var(--cinnabar);
+}
+
+.hex-map-tile__player-marker text {
+  fill: var(--paper);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .hex-map-board__detail {

@@ -23,6 +23,11 @@ const DEFAULT_MAP_LOCATION_FEATURES: Readonly<Record<string, TileFeature>> = {
     type: "structure",
     referenceId: "location.ruin",
   },
+  "-8,8,0": {
+    featureId: "map-feature.port.north-west",
+    type: "structure",
+    referenceId: "location.port",
+  },
 };
 
 /** 描述默认地图生成单个地块时需要使用的静态内容。 */
@@ -64,7 +69,7 @@ export function createDefaultMapTileConfiguration(
 
 /** 根据稳定坐标分区选择默认基础地形，不读取或消耗游戏随机流。 */
 function getDefaultTerrainDefinitionId(coordinate: CubeCoordinate): string {
-  const terrainPattern = Math.abs(coordinate.x * 17 + coordinate.z * 31 + coordinate.y * 7) % 12;
+  const terrainPattern = Math.abs(coordinate.x * 17 + coordinate.z * 31 + coordinate.y * 8) % 16;
 
   if (terrainPattern === 0 || terrainPattern === 1) {
     return "terrain_000004";
@@ -76,6 +81,14 @@ function getDefaultTerrainDefinitionId(coordinate: CubeCoordinate): string {
 
   if (terrainPattern === 5 || terrainPattern === 6) {
     return "terrain_000003";
+  }
+
+  if (terrainPattern === 7 || terrainPattern === 8) {
+    return "terrain_000005";
+  }
+
+  if (terrainPattern === 9) {
+    return "terrain_000006";
   }
 
   return "terrain_000001";
