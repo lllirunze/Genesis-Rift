@@ -26,6 +26,10 @@ export interface BasicEventEffectAdapter {
 
 /** 描述已经接入角色状态与地图系统的完整事件效果适配接口。 */
 export interface GameplayEventEffectAdapter extends BasicEventEffectAdapter {
+  obtainItemFromPool(
+    effect: EventEffectDefinitionById<"item.obtainFromPool">,
+    context: EventEffectExecutionContext,
+  ): unknown;
   applyStatus(
     effect: EventEffectDefinitionById<"status.add">,
     context: EventEffectExecutionContext,
@@ -41,10 +45,7 @@ export interface GameplayEventEffectAdapter extends BasicEventEffectAdapter {
 }
 
 /** 当前尚未由事件核心直接执行、需要交给其他系统处理的效果标识。 */
-const DEFERRED_EVENT_EFFECT_IDS = [
-  "item.obtainFromPool",
-  "battle.start",
-] as const satisfies readonly EventEffectId[];
+const DEFERRED_EVENT_EFFECT_IDS = ["battle.start"] as const satisfies readonly EventEffectId[];
 
 /** 基础注册表尚未接入状态和移动时使用的额外延迟效果。 */
 const BASIC_DEFERRED_EVENT_EFFECT_IDS = [
@@ -87,7 +88,7 @@ export function createStandardEventEffectHandlerRegistry(
  * 方法名：createGameplayEventEffectHandlerRegistry
  * 作用：创建已经接入角色资源、元宝、确定物品、状态和移动能力的效果注册表。
  * @param adapter 当前对局使用的完整事件业务适配器。
- * @returns 仅将随机物品池、战斗和天气保留为延迟指令的处理器注册表。
+ * @returns 仅将尚未具备遭遇会话状态的战斗效果保留为延迟指令的处理器注册表。
  */
 export function createGameplayEventEffectHandlerRegistry(
   adapter: GameplayEventEffectAdapter,
@@ -104,6 +105,11 @@ export function createGameplayEventEffectHandlerRegistry(
   );
   registry.register(
     createAppliedHandler("item.obtain", (effect, context) => adapter.obtainItem(effect, context)),
+  );
+  registry.register(
+    createAppliedHandler("item.obtainFromPool", (effect, context) =>
+      adapter.obtainItemFromPool(effect, context),
+    ),
   );
   registry.register(
     createAppliedHandler("status.add", (effect, context) => adapter.applyStatus(effect, context)),

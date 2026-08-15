@@ -54,6 +54,11 @@ export interface EventGameplayEffectAdapterDependencies {
     context: EventEffectExecutionContext,
     quantity: number,
   ) => readonly string[];
+  readonly drawItemPool: (
+    context: EventEffectExecutionContext,
+    itemPoolId: string,
+    drawCount: number,
+  ) => readonly { readonly itemDefinitionId: string; readonly quantity: number }[];
   readonly createStatusInstanceId: (
     context: EventEffectExecutionContext,
     targetPlayerId: string,
@@ -194,6 +199,48 @@ export class EventGameplayEffectStateAdapter<
     });
 
     return output;
+  }
+
+  /**
+   * 方法名：obtainItemFromPool
+   * 作用：从调用方提供的确定性物品池抽取结果中逐项走统一背包接收流程。
+   * @param effect 随机物品池获取效果。
+   * @param context 当前事件效果执行上下文。
+   * @returns 每次抽取对应的背包接收结算结果。
+   */
+  obtainItemFromPool(
+    effect: EventEffectDefinitionById<"item.obtainFromPool">,
+    context: EventEffectExecutionContext,
+  ): unknown {
+    const draws = this.dependencies.drawItemPool(
+      context,
+      effect.parameters.itemPoolId,
+      effect.parameters.drawCount,
+    );
+    const outputs: unknown[] = [];
+
+    this.updateTargets(effect.targetType, context, (player) => {
+      let inventory = player.inventory;
+
+      for (const draw of draws) {
+        const result = receiveItem(
+          inventory,
+          {
+            definitionId: draw.itemDefinitionId,
+            quantity: draw.quantity,
+            sourceId: context.eventId,
+            newItemInstanceIds: this.dependencies.createItemInstanceIds(context, draw.quantity),
+          },
+          this.dependencies.itemDefinitions,
+        );
+        inventory = result.inventory;
+        outputs.push(result);
+      }
+
+      return { ...player, inventory };
+    });
+
+    return Object.freeze(outputs);
   }
 
   /**

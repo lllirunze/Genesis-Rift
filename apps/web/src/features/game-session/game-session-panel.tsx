@@ -1,4 +1,5 @@
 import type {
+  LanGamePrivateEventSnapshot,
   LanGameSessionSnapshot,
   LanHexDirection,
   LanRequestRejectedPayload,
@@ -18,6 +19,8 @@ export interface GameSessionPanelProps {
   readonly rejection: LanRequestRejectedPayload | null;
   onEndActivePlayerTurn(): void;
   onMoveActivePlayer(direction: LanHexDirection): void;
+  onDecideEventReveal(instanceId: string, action: "REVEAL" | "DECLINE"): void;
+  onSelectEventOption(instanceId: string, optionId: string): void;
 }
 
 /**
@@ -73,6 +76,13 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
         }
         map={game.viewer?.map ?? null}
         onMove={props.onMoveActivePlayer}
+      />
+
+      <EventPanel
+        activeEvent={game.viewer?.activeEvent ?? null}
+        canOperate={props.isConnected && isActivePlayer && game.status === "running"}
+        onDecideReveal={props.onDecideEventReveal}
+        onSelectOption={props.onSelectEventOption}
       />
 
       <section className="game-session__players" aria-labelledby="game-session-players-heading">
@@ -166,6 +176,79 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
           {props.rejection.code}: {props.rejection.message}
         </p>
       ) : null}
+    </section>
+  );
+}
+
+/** 显示仅属于当前玩家的事件卡背、揭露信息及可选择路线。 */
+function EventPanel(props: {
+  readonly activeEvent: LanGamePrivateEventSnapshot | null;
+  readonly canOperate: boolean;
+  readonly onDecideReveal: (instanceId: string, action: "REVEAL" | "DECLINE") => void;
+  readonly onSelectOption: (instanceId: string, optionId: string) => void;
+}) {
+  const event = props.activeEvent;
+
+  if (event === null) {
+    return null;
+  }
+
+  if (event.status === "PENDING_REVEAL") {
+    return (
+      <section className="game-session__event" aria-label="未知事件">
+        <p>Unknown Event</p>
+        <h3>发现一张未知事件卡</h3>
+        <p>这张事件尚未揭露。放弃后不会得知其内容，也不会产生任何效果。</p>
+        <div className="game-session__actions">
+          {event.allowedRevealActions.includes("REVEAL") ? (
+            <button
+              type="button"
+              disabled={!props.canOperate}
+              onClick={() => props.onDecideReveal(event.instanceId, "REVEAL")}
+            >
+              揭露
+            </button>
+          ) : null}
+          {event.allowedRevealActions.includes("DECLINE") ? (
+            <button
+              type="button"
+              disabled={!props.canOperate}
+              onClick={() => props.onDecideReveal(event.instanceId, "DECLINE")}
+            >
+              放弃
+            </button>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (event.content === null) {
+    return null;
+  }
+
+  return (
+    <section className="game-session__event" aria-label="已揭露事件">
+      <p>{event.content.category}</p>
+      <h3>{event.content.name}</h3>
+      <p>{event.content.description}</p>
+      {event.content.options.length > 0 ? (
+        <div className="game-session__event-options">
+          {event.content.options.map((option) => (
+            <button
+              type="button"
+              disabled={!props.canOperate || option.isAvailable !== true}
+              key={option.optionId}
+              onClick={() => props.onSelectOption(event.instanceId, option.optionId)}
+            >
+              <strong>{option.name}</strong>
+              <span>{option.description}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p>事件效果正在结算。</p>
+      )}
     </section>
   );
 }

@@ -20,6 +20,8 @@ export const SERVER_GAME_COMMAND_TYPES = [
   "equipment.equip",
   "equipment.unequip",
   "item.use",
+  "event.decideReveal",
+  "event.selectOption",
 ] as const;
 
 /** 描述首批可由客户端提交的服务端游戏命令。 */
@@ -117,6 +119,20 @@ export interface UseConsumableItemServerGameCommand extends ServerGameCommandBas
   readonly itemDefinitionId: string;
 }
 
+/** 描述玩家决定揭露或放弃当前事件的服务端内部命令。 */
+export interface DecideEventRevealServerGameCommand extends ServerGameCommandBase {
+  readonly type: "event.decideReveal";
+  readonly instanceId: string;
+  readonly action: "REVEAL" | "DECLINE";
+}
+
+/** 描述玩家选择已揭露事件路线的服务端内部命令。 */
+export interface SelectEventOptionServerGameCommand extends ServerGameCommandBase {
+  readonly type: "event.selectOption";
+  readonly instanceId: string;
+  readonly optionId: string;
+}
+
 /** 描述首批可由客户端提交的服务端游戏命令。 */
 export type ServerGameCommand =
   | EndTurnServerGameCommand
@@ -131,7 +147,9 @@ export type ServerGameCommand =
   | AbandonTemporaryPickupServerGameCommand
   | EquipItemServerGameCommand
   | UnequipItemServerGameCommand
-  | UseConsumableItemServerGameCommand;
+  | UseConsumableItemServerGameCommand
+  | DecideEventRevealServerGameCommand
+  | SelectEventOptionServerGameCommand;
 
 /** 描述一次命令执行完成后的权威结果。 */
 export interface GameCommandExecutionResult {
@@ -267,6 +285,24 @@ export class GameCommandService<
           command,
           command.commandId,
           this.#session.useConsumableItem(command.playerId, command.itemDefinitionId),
+        );
+      case "event.decideReveal":
+        return this.createExecutionResult(
+          command.commandId,
+          this.#session.decideActivePlayerEventReveal(
+            command.playerId,
+            command.instanceId,
+            command.action,
+          ),
+        );
+      case "event.selectOption":
+        return this.createExecutionResult(
+          command.commandId,
+          this.#session.selectActivePlayerEventOption(
+            command.playerId,
+            command.instanceId,
+            command.optionId,
+          ),
         );
     }
   }

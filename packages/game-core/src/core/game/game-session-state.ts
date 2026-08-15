@@ -28,6 +28,8 @@ import type {
   WeatherDisasterDefinitionCatalog,
 } from "../../systems/environment/index.ts";
 import type { ReincarnationProtectionState, SoulState } from "../../systems/revival/index.ts";
+import type { EventRuntimeState } from "../../systems/event/index.ts";
+import type { EncounterRuntimeState } from "../../systems/battle/index.ts";
 import type { GameStatus } from "./game-state.ts";
 import { GAME_SESSION_STATE_VERSION } from "./game-session-config.ts";
 import { validateGameSessionState } from "./validate-game-session-state.ts";
@@ -73,6 +75,10 @@ export interface WorldSessionState {
   readonly handCardDeck: HandCardDeckState;
   readonly environment: EnvironmentRuntimeState;
   readonly battleSettlementLedger: BattleSettlementLedger;
+  /** 事件运行时状态由新会话初始化；可选字段兼容早期存档迁移。 */
+  readonly eventRuntime?: EventRuntimeState;
+  /** 事件或地图生成的敌对遭遇实例；可选字段兼容早期存档迁移。 */
+  readonly encounters?: readonly EncounterRuntimeState[];
 }
 
 /** 表示一局游戏可被保存、校验和替换的完整权威状态。 */

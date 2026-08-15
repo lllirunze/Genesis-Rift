@@ -41,6 +41,8 @@ export function RoomLobby() {
         rejection={lobby.state.rejection}
         onEndActivePlayerTurn={lobby.endActivePlayerTurn}
         onMoveActivePlayer={lobby.moveActivePlayer}
+        onDecideEventReveal={lobby.decideEventReveal}
+        onSelectEventOption={lobby.selectEventOption}
       />
     );
   }

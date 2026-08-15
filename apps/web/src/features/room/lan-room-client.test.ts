@@ -58,6 +58,18 @@ describe("LanRoomClient", () => {
     client.startGame("request-start");
     client.endActivePlayerTurn("request-turn-end", "command-turn-end");
     client.moveActivePlayer("request-map-move", "command-map-move", "NORTH");
+    client.decideEventReveal(
+      "request-event-reveal",
+      "command-event-reveal",
+      "event-instance-001",
+      "REVEAL",
+    );
+    client.selectEventOption(
+      "request-event-option",
+      "command-event-option",
+      "event-instance-001",
+      "studyTablet",
+    );
 
     expect(socket.getEmitted("room:updateCharacterSelection")).toEqual([
       {
@@ -73,6 +85,20 @@ describe("LanRoomClient", () => {
         commandId: "command-map-move",
         type: "map.move",
         direction: "NORTH",
+      },
+      {
+        requestId: "request-event-reveal",
+        commandId: "command-event-reveal",
+        type: "event.decideReveal",
+        instanceId: "event-instance-001",
+        action: "REVEAL",
+      },
+      {
+        requestId: "request-event-option",
+        commandId: "command-event-option",
+        type: "event.selectOption",
+        instanceId: "event-instance-001",
+        optionId: "studyTablet",
       },
     ]);
   });

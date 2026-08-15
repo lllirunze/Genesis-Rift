@@ -158,6 +158,20 @@ export interface UseConsumableItemGameCommandRequest extends SubmitGameCommandRe
   readonly itemDefinitionId: string;
 }
 
+/** 描述触发玩家对当前可选揭露事件作出的揭露或放弃决定。 */
+export interface DecideEventRevealGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "event.decideReveal";
+  readonly instanceId: string;
+  readonly action: "REVEAL" | "DECLINE";
+}
+
+/** 描述触发玩家为已揭露事件选择一条可用结算路线的命令。 */
+export interface SelectEventOptionGameCommandRequest extends SubmitGameCommandRequestBase {
+  readonly type: "event.selectOption";
+  readonly instanceId: string;
+  readonly optionId: string;
+}
+
 /** 描述客户端可以提交的首批权威游戏命令。 */
 export type SubmitGameCommandRequest =
   | EndTurnGameCommandRequest
@@ -172,7 +186,9 @@ export type SubmitGameCommandRequest =
   | AbandonTemporaryPickupGameCommandRequest
   | EquipItemGameCommandRequest
   | UnequipItemGameCommandRequest
-  | UseConsumableItemGameCommandRequest;
+  | UseConsumableItemGameCommandRequest
+  | DecideEventRevealGameCommandRequest
+  | SelectEventOptionGameCommandRequest;
 
 /** 描述公开游戏快照中的全局回合位置。 */
 export interface LanGameTurnSnapshot {
@@ -296,6 +312,27 @@ export interface LanGamePrivateMapSnapshot {
   readonly tiles: readonly LanGamePrivateMapTileSnapshot[];
 }
 
+/** 描述当前查看者有权读取的事件卡背或揭露后内容。 */
+export interface LanGamePrivateEventSnapshot {
+  readonly instanceId: string;
+  readonly status: "PENDING_REVEAL" | "REVEALED";
+  readonly revealMode: "FORCED" | "OPTIONAL";
+  readonly allowedRevealActions: readonly ("REVEAL" | "DECLINE")[];
+  readonly content: {
+    readonly eventId: string;
+    readonly name: string;
+    readonly description: string;
+    readonly category: string;
+    readonly rarity: string;
+    readonly options: readonly {
+      readonly optionId: string;
+      readonly name: string;
+      readonly description: string;
+      readonly isAvailable: boolean | null;
+    }[];
+  } | null;
+}
+
 /** 描述仅允许当前查看者读取的手牌、背包等私有运行时信息。 */
 export interface LanGameViewerSnapshot {
   readonly playerId: PlayerId;
@@ -303,6 +340,7 @@ export interface LanGameViewerSnapshot {
   readonly inventory: LanGamePrivateInventorySnapshot;
   readonly handCardIds: readonly string[];
   readonly map: LanGamePrivateMapSnapshot;
+  readonly activeEvent: LanGamePrivateEventSnapshot | null;
 }
 
 /** 描述可安全广播给整个房间的游戏权威状态摘要。 */
@@ -381,6 +419,7 @@ export interface LanRequestRejectedPayload {
     | "ATTACK_NOT_AVAILABLE"
     | "REINCARNATION_NOT_AVAILABLE"
     | "ITEM_NOT_AVAILABLE"
+    | "EVENT_NOT_AVAILABLE"
     | "REQUEST_INVALID";
   readonly message: string;
 }

@@ -18,6 +18,10 @@ import {
   createCombatAttributeSnapshot,
   createCharacterAttributeSnapshot,
   createEquipmentAttributeModifiers,
+  createEventRuntimeState,
+  createEncounterRuntimeState,
+  createEventView,
+  createGameplayEventEffectHandlerRegistry,
   createStatusAttributeModifiers,
   createWeatherMovementRuleResolver,
   equipItemFromBackpack,
@@ -39,12 +43,18 @@ import {
   RandomManager,
   replacePlayerSessionState,
   resolveAttack,
+  selectItemPoolDraws,
   settleCharacterDamage,
   settleNormalMovement,
   splitBackpackItemStack,
   storeTemporaryPickupInBackpack,
   unequipItemToBackpack,
   useConsumableItem,
+  triggerEvent,
+  settleEventOption,
+  settleEventReveal,
+  settleEventResolution,
+  EventGameplayEffectStateAdapter,
   evaluateAttackEligibility,
   canCharacterPerformAttack,
   createSoulStateFromDeath,
@@ -53,13 +63,21 @@ import {
   type GameSessionValidationContext,
   type BackpackPosition,
   type EquipmentSlot,
+  type EventConditionEvaluationContext,
+  type EventDefinitionCatalog,
+  type EventRuntimeState,
   type HexDirection,
+  type HexTile,
   type PlayerSessionState,
   type TurnState,
 } from "@genesis-rift/game-core";
 import {
   CONSUMABLE_USAGE_CATALOG,
   DERIVED_ATTRIBUTE_FORMULA_CONFIGS,
+  EVENT_DEFINITION_CATALOG,
+  EVENT_POOL_DEFINITION_CATALOG,
+  ENCOUNTER_DEFINITION_CATALOG,
+  ITEM_POOL_DEFINITION_CATALOG,
   MAP_CONTENT_DEFINITION_CATALOG,
   WEATHER_CARD_MAPPING_CATALOG,
   WEATHER_EFFECT_DEFINITION_CATALOG,
@@ -87,7 +105,8 @@ export type ServerGameSessionErrorCode =
   | "MOVE_NOT_AVAILABLE"
   | "ATTACK_NOT_AVAILABLE"
   | "REINCARNATION_NOT_AVAILABLE"
-  | "ITEM_NOT_AVAILABLE";
+  | "ITEM_NOT_AVAILABLE"
+  | "EVENT_NOT_AVAILABLE";
 
 /** 描述服务端游戏会话抛出的可映射业务错误。 */
 export class ServerGameSessionError extends Error {
@@ -696,6 +715,7 @@ export class ServerGameSession<
       this.#validationContext,
     );
     this.#remainingMovementPoints = settlement.remainingMovementPoints;
+    this.triggerFirstExplorationEvent(playerId, step.targetTileId, step.isFirstExploration);
     this.#revision += 1;
 
     return this.createResult([
@@ -707,6 +727,85 @@ export class ServerGameSession<
         targetTileId: step.targetTileId,
       },
     ]);
+  }
+
+  /**
+   * 方法名：decideActivePlayerEventReveal
+   * 作用：处理当前行动玩家对自己可选择揭露事件作出的揭露或放弃决定。
+   * @param playerId 提交决定的当前行动玩家标识。
+   * @param instanceId 需要处理的事件实例标识。
+   * @param action 揭露或放弃事件的决定。
+   * @returns 更新后的私有事件快照与公开会话快照。
+   * @throws 事件不属于玩家、状态不正确或当前不能操作时抛出错误。
+   */
+  decideActivePlayerEventReveal(
+    playerId: PlayerId,
+    instanceId: string,
+    action: "REVEAL" | "DECLINE",
+  ): { readonly events: readonly GameSessionEvent[]; readonly snapshot: GameSessionSnapshot } {
+    this.assertActiveConnectedPlayer(playerId);
+    const runtime = this.requirePlayerEventInstance(playerId, instanceId, "PENDING_REVEAL");
+
+    try {
+      const result = settleEventReveal(runtime, EVENT_DEFINITION_CATALOG, {
+        instanceId,
+        actingPlayerId: playerId,
+        action,
+        decidedAtTurn: this.getEventTurn(),
+      });
+      this.updateEventRuntime(result.state);
+
+      if (result.instruction.type === "READY_TO_RESOLVE") {
+        this.resolveEventEffects(result.state, instanceId);
+      }
+    } catch (error) {
+      throw this.createEventUnavailableError(error);
+    }
+
+    this.#revision += 1;
+    return this.createResult([]);
+  }
+
+  /**
+   * 方法名：selectActivePlayerEventOption
+   * 作用：校验并结算当前行动玩家为已揭露事件选择的一条可用路线。
+   * @param playerId 提交选项的当前行动玩家标识。
+   * @param instanceId 已揭露事件实例标识。
+   * @param optionId 需要执行的事件选项标识。
+   * @returns 完成效果结算后的权威会话快照。
+   * @throws 事件不属于玩家、选项不可用或状态不正确时抛出错误。
+   */
+  selectActivePlayerEventOption(
+    playerId: PlayerId,
+    instanceId: string,
+    optionId: string,
+  ): { readonly events: readonly GameSessionEvent[]; readonly snapshot: GameSessionSnapshot } {
+    this.assertActiveConnectedPlayer(playerId);
+    const runtime = this.requirePlayerEventInstance(playerId, instanceId, "REVEALED");
+    const player = getPlayerSessionState(this.#state, playerId);
+    const tile = this.requirePlayerCurrentTile(player);
+
+    try {
+      const result = settleEventOption(runtime, EVENT_DEFINITION_CATALOG, {
+        instanceId,
+        actingPlayerId: playerId,
+        optionId,
+        selectedAtTurn: this.getEventTurn(),
+        conditionContext: createEventConditionContext(
+          player,
+          tile,
+          this.#state.world.environment,
+          runtime,
+          false,
+        ),
+      });
+      this.resolveEventEffects(result.state, instanceId);
+    } catch (error) {
+      throw this.createEventUnavailableError(error);
+    }
+
+    this.#revision += 1;
+    return this.createResult([]);
   }
 
   /**
@@ -1036,6 +1135,8 @@ export class ServerGameSession<
             getPlayerSessionState(this.#state, viewerPlayerId),
             this.#validationContext,
             this.#state.world.map,
+            this.#state.world.eventRuntime,
+            this.#state.world.environment,
           );
 
     return Object.freeze({
@@ -1464,6 +1565,282 @@ export class ServerGameSession<
 
     return candidates;
   }
+
+  /** 在首次进入野外或遗迹时从对应事件池抽取一张事件，并持久化独立事件随机流。 */
+  private triggerFirstExplorationEvent(
+    playerId: PlayerId,
+    targetTileId: TileId,
+    isFirstExploration: boolean,
+  ): void {
+    if (!isFirstExploration) {
+      return;
+    }
+
+    const targetTile = this.#state.world.map.getTileById(targetTileId);
+
+    if (targetTile === undefined) {
+      throw new Error(`Exploration event target tile does not exist: ${targetTileId}`);
+    }
+
+    const poolIds = getExplorationEventPoolIds(
+      targetTile.features.map((feature) => feature.featureId),
+      targetTile.regionDefinitionId,
+    );
+
+    if (poolIds.length === 0) {
+      return;
+    }
+
+    const runtime = this.#state.world.eventRuntime ?? createEventRuntimeState();
+    const random = RandomManager.restore(this.#state.random);
+    const triggeringPlayer = getPlayerSessionState(this.#state, playerId);
+    const result = triggerEvent(
+      runtime,
+      random.getStream("event"),
+      EVENT_DEFINITION_CATALOG,
+      EVENT_POOL_DEFINITION_CATALOG,
+      {
+        instanceId: `event-instance:${this.getEventTurn()}:${runtime.instances.length + 1}`,
+        poolIds,
+        triggeringPlayerId: playerId,
+        currentTurn: this.getEventTurn(),
+        conditionContext: createEventConditionContext(
+          triggeringPlayer,
+          targetTile,
+          this.#state.world.environment,
+          runtime,
+          true,
+        ),
+      },
+    );
+
+    this.updateEventRuntime(result.state, random.exportState());
+
+    if (result.instruction.type === "READY_TO_RESOLVE") {
+      this.resolveEventEffects(result.state, result.instruction.instance.instanceId);
+    }
+  }
+
+  /** 将事件运行时状态写回会话，并在需要时同步独立事件随机流的最新状态。 */
+  private updateEventRuntime(
+    eventRuntime: EventRuntimeState,
+    randomState: GameSessionState<ResourceId>["random"] = this.#state.random,
+  ): void {
+    this.#state = {
+      ...this.#state,
+      world: { ...this.#state.world, eventRuntime },
+      random: randomState,
+    };
+  }
+
+  /** 执行已选定事件路线，并将复用系统产出的玩家、地图与天气状态合并回权威会话。 */
+  private resolveEventEffects(runtime: EventRuntimeState, instanceId: string): void {
+    let generatedInstanceSequence = 0;
+    const random = RandomManager.restore(this.#state.random);
+    const adapter = new EventGameplayEffectStateAdapter<ResourceId>(
+      {
+        map: this.#state.world.map,
+        players: this.#state.players.map((player) => ({
+          playerId: player.playerId,
+          resources: player.resources,
+          inventory: player.inventory,
+          statuses: player.statuses,
+          currentTileId: player.map.currentTileId,
+          exploration: player.map.exploration,
+        })),
+        weather: this.#state.world.environment.weather,
+      },
+      {
+        itemDefinitions: this.#validationContext.itemDefinitions,
+        statusDefinitions: this.#validationContext.statusDefinitions,
+        createItemInstanceIds: (context, quantity) =>
+          Array.from(
+            { length: quantity },
+            () => `event-item:${context.instanceId}:${generatedInstanceSequence++}`,
+          ),
+        drawItemPool: (_, itemPoolId, drawCount) =>
+          selectItemPoolDraws(
+            random.getStream("event"),
+            ITEM_POOL_DEFINITION_CATALOG,
+            itemPoolId,
+            drawCount,
+          ),
+        createStatusInstanceId: (context, targetPlayerId) =>
+          `event-status:${context.instanceId}:${targetPlayerId}:${generatedInstanceSequence++}`,
+        getUpdateSequence: () => this.#revision + 1,
+        weatherDefinitions: this.#validationContext.weatherDefinitions,
+        createWeatherInstanceId: (context) =>
+          `event-weather:${context.instanceId}:${generatedInstanceSequence++}`,
+      },
+    );
+    const result = settleEventResolution(
+      runtime,
+      EVENT_DEFINITION_CATALOG,
+      createGameplayEventEffectHandlerRegistry(adapter),
+      {
+        instanceId,
+        currentTurn: this.getEventTurn(),
+        durationInstanceId: `event-duration:${instanceId}:${this.#revision + 1}`,
+        updateSequence: this.#revision + 1,
+      },
+    );
+    if (result.instruction.type !== "COMPLETED") {
+      throw new Error(`Event resolution did not complete: ${result.instruction.type}`);
+    }
+    const applied = adapter.getState();
+    const encounters = this.createEventEncounters(
+      result.instruction.instance.effectResults,
+      instanceId,
+      result.instruction.instance.triggeringPlayerId,
+    );
+
+    for (const state of applied.players) {
+      const current = getPlayerSessionState(this.#state, state.playerId as PlayerId);
+      this.#state = replacePlayerSessionState(
+        this.#state,
+        {
+          ...current,
+          resources: state.resources,
+          inventory: state.inventory,
+          statuses: state.statuses,
+          map: {
+            currentTileId: state.currentTileId,
+            exploration: state.exploration,
+          },
+        },
+        this.#validationContext,
+      );
+    }
+
+    this.#state = {
+      ...this.#state,
+      world: {
+        ...this.#state.world,
+        eventRuntime: result.state,
+        encounters,
+        environment: { ...this.#state.world.environment, weather: applied.weather },
+      },
+      random: random.exportState(),
+    };
+  }
+
+  /** 将事件结算产生的战斗延迟指令转换为可保存的敌对遭遇实例。 */
+  private createEventEncounters(
+    effectResults: readonly { readonly effectId: string; readonly output: unknown }[],
+    eventInstanceId: string,
+    triggeringPlayerId: string | null,
+  ) {
+    const encounters = [...(this.#state.world.encounters ?? [])];
+
+    for (const effect of effectResults) {
+      if (effect.effectId !== "battle.start" || !isBattleStartInstruction(effect.output)) {
+        continue;
+      }
+
+      const definition = (
+        ENCOUNTER_DEFINITION_CATALOG as Readonly<
+          Record<
+            string,
+            (typeof ENCOUNTER_DEFINITION_CATALOG)[keyof typeof ENCOUNTER_DEFINITION_CATALOG]
+          >
+        >
+      )[effect.output.parameters.encounterDefinitionId];
+
+      if (definition === undefined) {
+        throw new Error(
+          `Unknown encounter definition: ${effect.output.parameters.encounterDefinitionId}`,
+        );
+      }
+
+      if (triggeringPlayerId === null) {
+        throw new Error("Battle event requires a triggering player");
+      }
+
+      const triggeringPlayer = getPlayerSessionState(this.#state, triggeringPlayerId as PlayerId);
+      const instanceId = `encounter-instance:${eventInstanceId}:${encounters.length + 1}`;
+      encounters.push(
+        createEncounterRuntimeState(
+          instanceId,
+          definition,
+          triggeringPlayer.playerId,
+          triggeringPlayer.map.currentTileId,
+        ),
+      );
+    }
+
+    return Object.freeze(encounters);
+  }
+
+  /** 校验事件实例归属与预期状态，并返回当前会话事件运行时。 */
+  private requirePlayerEventInstance(
+    playerId: PlayerId,
+    instanceId: string,
+    expectedStatus: "PENDING_REVEAL" | "REVEALED",
+  ): EventRuntimeState {
+    const runtime = this.#state.world.eventRuntime;
+    const instance = runtime?.instances.find((candidate) => candidate.instanceId === instanceId);
+
+    if (
+      runtime === undefined ||
+      instance === undefined ||
+      instance.triggeringPlayerId !== playerId ||
+      instance.status !== expectedStatus
+    ) {
+      throw new ServerGameSessionError(
+        "EVENT_NOT_AVAILABLE",
+        "Event is not available to this player",
+      );
+    }
+
+    return runtime;
+  }
+
+  /** 读取玩家当前所在的有效地图地块，避免事件条件使用不完整上下文。 */
+  private requirePlayerCurrentTile(player: PlayerSessionState<ResourceId>): HexTile {
+    const tile = this.#state.world.map.getTileById(player.map.currentTileId);
+
+    if (tile === undefined) {
+      throw new ServerGameSessionError("EVENT_NOT_AVAILABLE", "Player event tile is unavailable");
+    }
+
+    return tile;
+  }
+
+  /** 将事件核心或效果适配器异常转换为稳定的服务端业务错误。 */
+  private createEventUnavailableError(error: unknown): ServerGameSessionError {
+    if (error instanceof ServerGameSessionError) {
+      return error;
+    }
+
+    return new ServerGameSessionError(
+      "EVENT_NOT_AVAILABLE",
+      error instanceof Error ? error.message : "Event operation is unavailable",
+    );
+  }
+
+  /** 将初始行动位的全局回合零值归一为事件系统使用的首个有效回合编号。 */
+  private getEventTurn(): number {
+    return Math.max(1, this.#turn.globalTurn);
+  }
+}
+
+/** 校验事件延迟结果是否为包含有效遭遇定义编号的战斗启动指令。 */
+function isBattleStartInstruction(
+  output: unknown,
+): output is { readonly parameters: { readonly encounterDefinitionId: string } } {
+  if (typeof output !== "object" || output === null || !("parameters" in output)) {
+    return false;
+  }
+
+  const parameters = output.parameters;
+
+  return (
+    typeof parameters === "object" &&
+    parameters !== null &&
+    "encounterDefinitionId" in parameters &&
+    typeof parameters.encounterDefinitionId === "string" &&
+    parameters.encounterDefinitionId.length > 0
+  );
 }
 
 /** 为拥有者生成完整角色、背包与手牌私有视图，绝不用于房间公共广播。 */
@@ -1471,6 +1848,8 @@ function createViewerSnapshot(
   player: PlayerSessionState,
   validationContext: GameSessionValidationContext,
   map: GameSessionState["world"]["map"],
+  eventRuntime: EventRuntimeState | undefined,
+  environment: GameSessionState["world"]["environment"],
 ) {
   const temporaryPickup = player.inventory.temporaryPickup;
   const equipmentDefinitions = Object.fromEntries(
@@ -1547,6 +1926,85 @@ function createViewerSnapshot(
     }),
     handCardIds: Object.freeze([...player.hand.handCardIds]),
     map: createPrivateMapSnapshot(player, map),
+    activeEvent: createPrivateActiveEventSnapshot(player, map, eventRuntime, environment),
+  });
+}
+
+/** 将触发玩家尚未完成的最新事件转换为不泄露效果配置的私有界面数据。 */
+function createPrivateActiveEventSnapshot(
+  player: PlayerSessionState,
+  map: GameSessionState["world"]["map"],
+  eventRuntime: EventRuntimeState | undefined,
+  environment: GameSessionState["world"]["environment"],
+) {
+  const instance = [...(eventRuntime?.instances ?? [])]
+    .reverse()
+    .find(
+      (candidate) =>
+        candidate.triggeringPlayerId === player.playerId &&
+        (candidate.status === "PENDING_REVEAL" || candidate.status === "REVEALED"),
+    );
+
+  if (instance === undefined) {
+    return null;
+  }
+
+  const definition = (EVENT_DEFINITION_CATALOG as EventDefinitionCatalog)[instance.eventId];
+
+  if (definition === undefined) {
+    throw new Error(`Missing event definition for active instance: ${instance.eventId}`);
+  }
+
+  const currentTile = map.getTileById(player.map.currentTileId);
+
+  if (currentTile === undefined) {
+    throw new Error(`Active event player tile does not exist: ${player.map.currentTileId}`);
+  }
+
+  const view = createEventView(
+    instance,
+    definition,
+    player.playerId,
+    createEventConditionContext(
+      player,
+      currentTile,
+      environment,
+      eventRuntime ?? createEventRuntimeState(),
+      false,
+    ),
+  );
+
+  if (view.status === "PENDING_REVEAL") {
+    return Object.freeze({
+      instanceId: view.instanceId,
+      status: view.status,
+      revealMode: view.revealMode,
+      allowedRevealActions: Object.freeze([...view.allowedActions]),
+      content: null,
+    });
+  }
+
+  if (view.status !== "REVEALED") {
+    return null;
+  }
+
+  return Object.freeze({
+    instanceId: view.instanceId,
+    status: view.status,
+    revealMode: definition.revealMode,
+    allowedRevealActions: Object.freeze([]),
+    content: Object.freeze({
+      eventId: view.content.eventId,
+      name: view.content.name,
+      description: view.content.description,
+      category: view.content.category,
+      rarity: view.content.rarity,
+      options: Object.freeze(
+        view.content.resolution.type === "CHOICE"
+          ? view.content.resolution.options.map((option) => Object.freeze({ ...option }))
+          : [],
+      ),
+    }),
   });
 }
 
@@ -1577,6 +2035,81 @@ function createPrivateMapSnapshot(
         ),
     ),
   });
+}
+
+/** 根据首次探索地块的设施与区域确定应参与抽取的事件池。 */
+function getExplorationEventPoolIds(
+  featureIds: readonly string[],
+  regionDefinitionId: string,
+): readonly string[] {
+  if (featureIds.includes("map-feature.ancient-ruins")) {
+    return ["event-pool.ancient-ruins.exploration"];
+  }
+
+  if (regionDefinitionId === "region_000001") {
+    return ["event-pool.wilderness.exploration"];
+  }
+
+  return [];
+}
+
+/** 从当前玩家、地块、环境和事件历史聚合事件条件所需的只读事实。 */
+function createEventConditionContext(
+  player: PlayerSessionState,
+  tile: HexTile,
+  environment: GameSessionState["world"]["environment"],
+  eventRuntime: EventRuntimeState,
+  isFirstVisit: boolean,
+): EventConditionEvaluationContext {
+  const itemQuantities = new Map<string, number>();
+
+  for (const entry of player.inventory.backpack.entries) {
+    itemQuantities.set(
+      entry.item.definitionId,
+      (itemQuantities.get(entry.item.definitionId) ?? 0) + entry.item.quantity,
+    );
+  }
+
+  const equippedDefinitionIds = new Set<string>();
+
+  for (const equipment of Object.values(player.equipment.slots)) {
+    if (equipment !== null) {
+      equippedDefinitionIds.add(equipment.definitionId);
+    }
+  }
+
+  return {
+    regionDefinitionId: tile.regionDefinitionId,
+    terrainDefinitionId: tile.terrainDefinitionId,
+    featureIds: new Set(tile.features.map((feature) => feature.featureId)),
+    weatherId: environment.weather.activeWeathers[0]?.weatherId ?? null,
+    periodId: getEnvironmentPublicView(environment).dayNight.periodId,
+    player: {
+      level: player.character.levelProgression.currentLevel,
+      identityId: player.character.identityId,
+      raceId: player.character.raceId,
+      // 信仰系统尚未写入角色运行时状态；使用空标识保证相关条件在接入前不会误命中。
+      faithId: "",
+      isInBattle: false,
+      itemQuantities,
+      equippedDefinitionIds,
+      resourceValues: new Map(
+        Object.entries(player.resources.resources).map(([resourceId, resource]) => [
+          resourceId,
+          resource.current,
+        ]),
+      ),
+    },
+    questStages: new Map(),
+    dungeonId: null,
+    worldStateIds: new Set(),
+    revealedEventIds: new Set(
+      eventRuntime.instances
+        .filter((instance) => "revealedAtTurn" in instance)
+        .map((instance) => instance.eventId),
+    ),
+    isFirstVisit,
+  };
 }
 
 /** 将背包物品转换为不包含物品身份和数量的公开二维遮罩。 */

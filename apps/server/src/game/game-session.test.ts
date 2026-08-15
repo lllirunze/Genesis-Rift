@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyStatusToCharacter,
   applyWeather,
+  createPlayerExplorationState,
   evaluateNormalMovementDirections,
   getCubeCoordinateDistance,
   HEX_DIRECTIONS,
@@ -204,6 +205,121 @@ describe("ServerGameSession", () => {
     expect(JSON.stringify(session.getSnapshot())).not.toContain("terrainDefinitionId");
   });
 
+  it("creates an optional private event after first exploring the ancient ruins", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-exploration-event",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const map = initial.state.world.map;
+    const neighbor = map.getTileAt({ x: 0, y: 1, z: -1 });
+
+    if (neighbor === undefined) {
+      throw new Error("Missing ancient ruins neighbor tile");
+    }
+
+    const player = initial.state.players[0]!;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [
+          {
+            ...player,
+            map: {
+              currentTileId: neighbor.tileId,
+              exploration: createPlayerExplorationState(PLAYER_ONE, neighbor.tileId, map),
+            },
+          },
+        ],
+      },
+      initial.validationContext,
+      () => 10,
+    );
+    session.start();
+    session.moveActivePlayer(PLAYER_ONE, "SOUTH");
+
+    expect(session.getSnapshotForPlayer(PLAYER_ONE).viewer?.activeEvent).toMatchObject({
+      status: "PENDING_REVEAL",
+      revealMode: "OPTIONAL",
+      allowedRevealActions: ["REVEAL", "DECLINE"],
+      content: null,
+    });
+    expect(JSON.stringify(session.getSnapshot())).not.toContain("Ancient Ruins");
+  });
+
+  it("reveals and resolves an optional exploration event through the active player commands", () => {
+    const initial = new DefaultInitialGameSessionFactory().create({
+      roomId: "room-exploration-event-resolution",
+      players: [
+        {
+          playerId: PLAYER_ONE,
+          displayName: "Player One",
+          characterSelection: { gender: "female", identityName: "mage", raceName: "human" },
+        },
+      ],
+    });
+    const map = initial.state.world.map;
+    const neighbor = map.getTileAt({ x: 0, y: 1, z: -1 });
+
+    if (neighbor === undefined) {
+      throw new Error("Missing ancient ruins neighbor tile");
+    }
+
+    const player = initial.state.players[0]!;
+    const session = new ServerGameSession(
+      {
+        ...initial.state,
+        players: [
+          {
+            ...player,
+            map: {
+              currentTileId: neighbor.tileId,
+              exploration: createPlayerExplorationState(PLAYER_ONE, neighbor.tileId, map),
+            },
+          },
+        ],
+      },
+      initial.validationContext,
+      () => 10,
+    );
+    session.start();
+    session.moveActivePlayer(PLAYER_ONE, "SOUTH");
+    const instanceId = session.getSnapshotForPlayer(PLAYER_ONE).viewer?.activeEvent?.instanceId;
+
+    if (instanceId === undefined) {
+      throw new Error("Expected optional ancient ruins event");
+    }
+
+    session.decideActivePlayerEventReveal(PLAYER_ONE, instanceId, "REVEAL");
+
+    expect(session.getSnapshotForPlayer(PLAYER_ONE).viewer?.activeEvent).toMatchObject({
+      status: "REVEALED",
+      content: {
+        eventId: "event_000003",
+        options: [
+          { optionId: "studyTablet", isAvailable: true },
+          { optionId: "collectRelics", isAvailable: true },
+        ],
+      },
+    });
+
+    session.selectActivePlayerEventOption(PLAYER_ONE, instanceId, "studyTablet");
+
+    expect(session.getSnapshotForPlayer(PLAYER_ONE).viewer?.activeEvent).toBeNull();
+    expect(session.getStateForServer().players[0]?.inventory.backpack.entries).toEqual([
+      expect.objectContaining({
+        item: expect.objectContaining({
+          definitionId: expect.stringMatching(/^item_00001[2-4]$/),
+        }),
+      }),
+    ]);
+  });
+
   it("updates backpack layout and equipped slots through authority session item operations", () => {
     const initial = new DefaultInitialGameSessionFactory().create({
       roomId: "room-item-operations",
@@ -308,7 +424,7 @@ describe("ServerGameSession", () => {
         },
       ],
     });
-    const session = new ServerGameSession(initial.state, initial.validationContext);
+    const session = new ServerGameSession(initial.state, initial.validationContext, () => 10);
     session.start();
     const initialPlayer = session.getStateForServer().players[0]!;
     const initialTile = session

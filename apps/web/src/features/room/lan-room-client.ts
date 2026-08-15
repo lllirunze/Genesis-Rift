@@ -183,6 +183,56 @@ export class LanRoomClient {
   }
 
   /**
+   * 方法名：decideEventReveal
+   * 作用：请求服务端揭露或放弃当前玩家触发的可选事件。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param commandId 可用于幂等校验的唯一游戏命令标识。
+   * @param instanceId 当前事件实例标识。
+   * @param action 玩家选择的揭露或放弃动作。
+   * @returns 无返回值。
+   */
+  decideEventReveal(
+    requestId: string,
+    commandId: string,
+    instanceId: string,
+    action: "REVEAL" | "DECLINE",
+  ): void {
+    this.assertConnected();
+    this.#socket.emit("game:command", {
+      requestId,
+      commandId,
+      type: "event.decideReveal",
+      instanceId,
+      action,
+    });
+  }
+
+  /**
+   * 方法名：selectEventOption
+   * 作用：请求服务端结算当前已揭露事件的指定可用选项。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param commandId 可用于幂等校验的唯一游戏命令标识。
+   * @param instanceId 当前事件实例标识。
+   * @param optionId 需要选择的事件选项标识。
+   * @returns 无返回值。
+   */
+  selectEventOption(
+    requestId: string,
+    commandId: string,
+    instanceId: string,
+    optionId: string,
+  ): void {
+    this.assertConnected();
+    this.#socket.emit("game:command", {
+      requestId,
+      commandId,
+      type: "event.selectOption",
+      instanceId,
+      optionId,
+    });
+  }
+
+  /**
    * 方法名：destroy
    * 作用：移除协议监听器并释放客户端订阅，避免 React 组件卸载后继续接收事件。
    * @returns 无返回值。

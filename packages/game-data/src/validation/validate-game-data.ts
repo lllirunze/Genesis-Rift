@@ -2,11 +2,13 @@ import {
   validateBlueprintDefinitionCatalog,
   validateCharacterResourceDefinitions,
   validateContractDefinitionCatalog,
+  validateEncounterDefinitionCatalog,
   validateEquipmentDefinitions,
   validateEventDefinitionCatalog,
   validateEventPoolDefinitionCatalog,
   validateHandCardDefinitions,
   validateItemDefinitionCatalog,
+  validateItemPoolDefinitionCatalog,
   validateMapContentDefinitionCatalog,
   validateMissionDefinitionCatalog,
   validateNpcDefinitionCatalog,
@@ -22,12 +24,14 @@ import {
 
 import { BLUEPRINT_DEFINITION_CATALOG } from "../blueprints/blueprint-definitions.ts";
 import { CONTRACT_DEFINITIONS } from "../contracts/contract-definitions.ts";
+import { ENCOUNTER_DEFINITION_CATALOG } from "../encounters/encounter-definitions.ts";
 import { EVENT_DEFINITION_CATALOG } from "../events/event-definitions.ts";
 import { EVENT_POOL_DEFINITION_CATALOG } from "../events/event-pool-definitions.ts";
 import { EQUIPMENT_DEFINITION_CATALOG } from "../equipment/equipment-definitions.ts";
 import { HAND_CARD_CATALOG } from "../hand-cards/hand-card-definitions.ts";
 import { IDENTITY_CONFIG_LIST } from "../identities/identity-configs.ts";
 import { ITEM_DEFINITION_CATALOG } from "../items/item-definitions.ts";
+import { ITEM_POOL_DEFINITION_CATALOG } from "../items/item-pool-definitions.ts";
 import { LEVEL_SYSTEM_CONFIG } from "../levels/level-config.ts";
 import { MAP_CONTENT_DEFINITION_CATALOG } from "../maps/map-content-definitions.ts";
 import { MISSION_DEFINITION_CATALOG } from "../missions/mission-definitions.ts";
@@ -60,6 +64,7 @@ export function validateGameData(): void {
   validateLevelSystemConfig(LEVEL_SYSTEM_CONFIG);
   validateCharacterResourceDefinitions(CHARACTER_RESOURCE_DEFINITIONS);
   validateItemDefinitionCatalog(ITEM_DEFINITION_CATALOG);
+  validateItemPoolDefinitionCatalog(ITEM_POOL_DEFINITION_CATALOG, ITEM_DEFINITION_CATALOG);
   validateEquipmentDefinitions(Object.values(EQUIPMENT_DEFINITION_CATALOG));
   validateHandCardDefinitions(Object.values(HAND_CARD_CATALOG));
   validateStatusDefinitions(Object.values(STATUS_DEFINITION_CATALOG));
@@ -77,4 +82,5 @@ export function validateGameData(): void {
   validateShopDefinitionCatalog(SHOP_DEFINITION_CATALOG, ITEM_DEFINITION_CATALOG);
   validateSkillDefinitionCatalog(SKILL_DEFINITION_CATALOG);
   validateContractDefinitionCatalog(CONTRACT_DEFINITIONS);
+  validateEncounterDefinitionCatalog(ENCOUNTER_DEFINITION_CATALOG);
 }

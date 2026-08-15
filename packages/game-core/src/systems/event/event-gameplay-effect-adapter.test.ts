@@ -169,6 +169,7 @@ describe("event gameplay effect adapter", () => {
             { length: quantity },
             (_, index) => `item-instance-${context.effectIndex}-${index}`,
           ),
+        drawItemPool: () => [{ itemDefinitionId: "item_000002", quantity: 1 }],
         createStatusInstanceId: (_, targetPlayerId) => `status-instance-${targetPlayerId}`,
         getUpdateSequence: () => 10,
         weatherDefinitions: WEATHER_DEFINITIONS,
@@ -237,7 +238,7 @@ describe("event gameplay effect adapter", () => {
     });
   });
 
-  it("keeps random item pools and battle as deferred external instructions", () => {
+  it("applies random item pools and keeps battle as a deferred external instruction", () => {
     const map = createTestMap();
     const origin = map.getTileAt({ x: 0, y: 0, z: 0 })!;
     const adapter = new EventGameplayEffectStateAdapter(
@@ -260,16 +261,20 @@ describe("event gameplay effect adapter", () => {
       {
         itemDefinitions: ITEM_DEFINITIONS,
         statusDefinitions: STATUS_DEFINITIONS,
-        createItemInstanceIds: () => [],
+        createItemInstanceIds: (_, quantity) =>
+          Array.from({ length: quantity }, (_, index) => `pool-item-instance-${index}`),
+        drawItemPool: () => [{ itemDefinitionId: "item_000002", quantity: 1 }],
         createStatusInstanceId: () => "status-instance",
         getUpdateSequence: () => 0,
         weatherDefinitions: WEATHER_DEFINITIONS,
         createWeatherInstanceId: () => "weather-instance",
       },
     );
-    const result = createGameplayEventEffectHandlerRegistry(adapter).execute(
-      createEffect("battle.start", "TRIGGER_PLAYER", {
-        encounterDefinitionId: "encounter.test",
+    const registry = createGameplayEventEffectHandlerRegistry(adapter);
+    const poolResult = registry.execute(
+      createEffect("item.obtainFromPool", "TRIGGER_PLAYER", {
+        itemPoolId: "item-pool.test",
+        drawCount: 1,
       }),
       {
         instanceId: "event-instance-1",
@@ -280,7 +285,22 @@ describe("event gameplay effect adapter", () => {
         resolvedAtTurn: 2,
       },
     );
+    const result = registry.execute(
+      createEffect("battle.start", "TRIGGER_PLAYER", {
+        encounterDefinitionId: "encounter.test",
+      }),
+      {
+        instanceId: "event-instance-1",
+        eventId: "event_000001",
+        triggeringPlayerId: PLAYER_ID,
+        selectedOptionId: null,
+        effectIndex: 1,
+        resolvedAtTurn: 2,
+      },
+    );
 
+    expect(poolResult).toMatchObject({ outcome: "APPLIED", effectId: "item.obtainFromPool" });
+    expect(adapter.getState().players[0]?.inventory.backpack.entries).toHaveLength(1);
     expect(result).toMatchObject({ outcome: "DEFERRED", effectId: "battle.start" });
   });
 });

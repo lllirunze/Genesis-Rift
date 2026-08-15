@@ -23,14 +23,15 @@
 
 ## Dependencies
 
-依赖 environment-random；可修改 map-world、character-growth、inventory-economy，或推进 quests-missions；由 session-runtime 接入会话时机。
+依赖 environment-random；可修改 map-world、character-growth、inventory-economy，或推进 quests-missions；由 session-runtime 在首次探索时接入，并通过私有事件命令完成揭露与选项结算。
 
 ## Important Rules
 
 - 已发生事实使用强制揭露；主动探索未知可使用可选择揭露。
 - 放弃选择揭露时，事件内容与结果都不得泄露。
 - 新事件优先通过配置和基础效果组合实现，避免单独业务分支。
+- `item.obtainFromPool` 使用独立事件随机流并通过统一背包接收流程发放；`battle.start` 在服务端创建敌对遭遇实例，后续攻击与 AI 必须基于该实例继续处理。
 
 ## Read Strategy
 
-改事件内容先读 definition/pool/data。改揭露流程读 orchestrator。改一种效果只读 adapter 的对应分支和被调用模块；不默认加载全部事件配置。
+改事件内容先读 definition/pool/data。改会话中的揭露或选项命令先读 `game-session.ts`、`game-command-service.ts` 和 shared 协议；改一种效果只读 adapter 的对应分支和被调用模块；不默认加载全部事件配置。

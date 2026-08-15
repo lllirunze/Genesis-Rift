@@ -23,6 +23,8 @@ export interface LanRoomLobby {
   startGame(): void;
   endActivePlayerTurn(): void;
   moveActivePlayer(direction: LanHexDirection): void;
+  decideEventReveal(instanceId: string, action: "REVEAL" | "DECLINE"): void;
+  selectEventOption(instanceId: string, optionId: string): void;
 }
 
 /**
@@ -90,6 +92,22 @@ export function useLanRoomLobby(serverUrl: string): LanRoomLobby {
     },
     moveActivePlayer(direction) {
       getClient(clientRef).moveActivePlayer(createRequestId(), createCommandId(), direction);
+    },
+    decideEventReveal(instanceId, action) {
+      getClient(clientRef).decideEventReveal(
+        createRequestId(),
+        createCommandId(),
+        instanceId,
+        action,
+      );
+    },
+    selectEventOption(instanceId, optionId) {
+      getClient(clientRef).selectEventOption(
+        createRequestId(),
+        createCommandId(),
+        instanceId,
+        optionId,
+      );
     },
   };
 }

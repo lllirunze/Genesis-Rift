@@ -16,7 +16,7 @@
 
 ## Core Data
 
-`GameSessionState` 聚合玩家 `character/resources/statuses/inventory/equipment/hand/map/battle/revival` 与世界 `map/handCardDeck/environment/random`。`GameSessionValidationContext` 集合所有必要静态定义。
+`GameSessionState` 聚合玩家 `character/resources/statuses/inventory/equipment/hand/map/battle/revival` 与世界 `map/handCardDeck/environment/eventRuntime/random`。`GameSessionValidationContext` 集合所有必要静态定义。
 
 ## Core Flow
 
@@ -31,6 +31,7 @@
 - 完整状态只可在服务端读取。
 - 公开 `players` 与本人 `viewer` 数据必须分离；背包、手牌、角色数值和已探索地图都不得广播。
 - 所有状态替换都必须经过验证上下文。
+- 事件内容仅通过触发者的 `viewer.activeEvent` 下发；其他玩家和公开快照不能获知未揭露事件。
 
 ## Read Strategy
 

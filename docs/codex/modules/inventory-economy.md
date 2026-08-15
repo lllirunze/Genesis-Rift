@@ -8,6 +8,7 @@
 
 - `packages/game-core/src/systems/inventory/player-inventory-state.ts`：背包与临时拾取区状态。
 - `systems/inventory/receive-item.ts`：物品进入背包/临时区的统一入口。
+- `systems/inventory/item-pool-definition.ts`、`select-item-pool-draws.ts`：带权重物品奖励池及确定性抽取规则。
 - `systems/equipment/equipment-inventory-interaction.ts`：背包与装备栏穿卸规则。
 - `systems/economy/purchase-item-with-coin.ts`、`settle-player-trade.ts`：原子购买与交易。
 - `systems/crafting/craft-item.ts`：图纸、材料、元宝与制造条件。

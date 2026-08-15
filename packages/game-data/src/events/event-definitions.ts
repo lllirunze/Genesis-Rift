@@ -10,6 +10,7 @@ import {
   WIND_BLESSING_STATUS_DEFINITION,
 } from "../statuses/status-definitions.ts";
 import { LINEN_CLOTH_ITEM_DEFINITION } from "../items/material-item-definitions.ts";
+import { WILDERNESS_BEAST_ENCOUNTER_DEFINITION } from "../encounters/encounter-definitions.ts";
 
 /** 强制揭露、包含物资搜索与休息选择的普通探索事件。 */
 export const ABANDONED_CAMP_EVENT_DEFINITION = {
@@ -110,7 +111,7 @@ export const WILD_BEAST_ATTACK_EVENT_DEFINITION = {
         effectId: "battle.start",
         targetType: "TRIGGER_PLAYER",
         parameters: {
-          encounterDefinitionId: "encounter.wilderness.beast",
+          encounterDefinitionId: WILDERNESS_BEAST_ENCOUNTER_DEFINITION.encounterDefinitionId,
         },
         failurePolicy: "STOP",
       },

@@ -12,7 +12,7 @@
 - `apps/web/src/features/room/lan-room-client.ts`：Socket.IO 客户端协议封装。
 - `apps/web/src/features/room/use-lan-room-lobby.ts`：大厅连接、事件订阅和界面状态协调。
 - `apps/web/src/features/room/room-lobby.tsx`：大厅与角色选择 UI。
-- `apps/web/src/features/game-session/game-session-panel.tsx`：运行中会话摘要展示。
+- `apps/web/src/features/game-session/game-session-panel.tsx`：运行中会话摘要，以及私有事件的揭露、放弃和选项入口。
 - `apps/web/src/features/game-session/character-status-panel.tsx`：仅展示本人私有等级、属性、资源与状态。
 - `apps/web/src/state/connection-store.ts`：Zustand 连接状态。
 
@@ -32,6 +32,7 @@ UI 操作 → `LanRoomClient` 发出协议请求 → 服务端确认/广播快�
 
 - 只能渲染当前客户端收到的权限数据；不得从公开信息推导私有信息。
 - 仅提交命令，不在浏览器端决定命令是否成功。
+- 事件卡内容和可用选项均使用服务端私有快照；前端不得预读取或推测隐藏效果。
 - 新 UI 字符串应逐步迁入资源体系，避免扩散硬编码文本。
 
 ## Read Strategy

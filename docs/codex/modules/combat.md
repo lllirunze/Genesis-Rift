@@ -11,6 +11,7 @@
 - `battle/evasion/resolve-evasion-check.ts`、`critical/resolve-critical-check.ts`：概率判定。
 - `battle/status/character-status-state.ts`：状态实例生命周期。
 - `battle/settlement/battle-settlement.ts`：战斗记录、后续通知与奖励接口。
+- `battle/encounter/encounter-runtime-state.ts`：事件创建的敌对遭遇实例与生命状态。
 - `systems/skill/use-active-skill.ts`：主动技能的资格、消耗与效果执行。
 
 ## Core Data

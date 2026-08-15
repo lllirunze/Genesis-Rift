@@ -266,6 +266,22 @@ function createServerGameCommand(request: SubmitGameCommandRequest, playerId: Pl
         type: request.type,
         itemDefinitionId: request.itemDefinitionId,
       } as const;
+    case "event.decideReveal":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        instanceId: request.instanceId,
+        action: request.action,
+      } as const;
+    case "event.selectOption":
+      return {
+        commandId: request.commandId,
+        playerId,
+        type: request.type,
+        instanceId: request.instanceId,
+        optionId: request.optionId,
+      } as const;
   }
 }
 

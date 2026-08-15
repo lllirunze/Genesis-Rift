@@ -19,7 +19,7 @@ const DEFAULT_MAP_LOCATION_FEATURES: Readonly<Record<string, TileFeature>> = {
     referenceId: "location.temple",
   },
   "0,0,0": {
-    featureId: "map-feature.ruin.center",
+    featureId: "map-feature.ancient-ruins",
     type: "structure",
     referenceId: "location.ruin",
   },
