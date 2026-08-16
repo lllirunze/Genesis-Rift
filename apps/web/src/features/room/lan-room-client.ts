@@ -1,12 +1,14 @@
 import {
   PROTOCOL_VERSION,
   type LanRequestRejectedPayload,
+  type LanBattleAttackResolvedEvent,
   type LanGameSessionSnapshot,
   type LanCharacterSelection,
   type LanRoomPlayerSnapshot,
   type LanRoomSnapshot,
   type RoomId,
   type LanHexDirection,
+  type PlayerId,
 } from "@genesis-rift/shared";
 
 import type { LanSocket } from "../../lib/socket-client.ts";
@@ -18,6 +20,7 @@ export interface LanRoomClientState {
   readonly room: LanRoomSnapshot | null;
   readonly game: LanGameSessionSnapshot | null;
   readonly rejection: LanRequestRejectedPayload | null;
+  readonly lastBattleAttack: LanBattleAttackResolvedEvent | null;
 }
 
 /** 描述大厅客户端状态变化的订阅函数。 */
@@ -32,6 +35,7 @@ export class LanRoomClient {
     room: null,
     game: null,
     rejection: null,
+    lastBattleAttack: null,
   };
 
   /**
@@ -52,6 +56,7 @@ export class LanRoomClient {
     socket.on("game:started", this.handleGameStarted);
     socket.on("game:snapshot", this.handleGameUpdated);
     socket.on("game:commandAccepted", this.handleGameUpdated);
+    socket.on("game:event", this.handleGameEvent);
     socket.on("game:rejected", this.handleRoomRejected);
   }
 
@@ -183,6 +188,25 @@ export class LanRoomClient {
   }
 
   /**
+   * 方法名：attackActivePlayer
+   * 作用：请求服务端结算当前行动玩家对指定玩家的一次普通攻击。
+   * @param requestId 可追踪本次网络请求的唯一标识。
+   * @param commandId 可用于幂等校验的唯一游戏命令标识。
+   * @param targetPlayerId 被攻击的目标玩家标识。
+   * @returns 无返回值。
+   * @throws Socket 尚未连接时抛出错误。
+   */
+  attackActivePlayer(requestId: string, commandId: string, targetPlayerId: PlayerId): void {
+    this.assertConnected();
+    this.#socket.emit("game:command", {
+      requestId,
+      commandId,
+      type: "battle.attack",
+      targetPlayerId,
+    });
+  }
+
+  /**
    * 方法名：decideEventReveal
    * 作用：请求服务端揭露或放弃当前玩家触发的可选事件。
    * @param requestId 可追踪本次网络请求的唯一标识。
@@ -248,6 +272,7 @@ export class LanRoomClient {
     this.#socket.off("game:started", this.handleGameStarted);
     this.#socket.off("game:snapshot", this.handleGameUpdated);
     this.#socket.off("game:commandAccepted", this.handleGameUpdated);
+    this.#socket.off("game:event", this.handleGameEvent);
     this.#socket.off("game:rejected", this.handleRoomRejected);
     this.#listeners.clear();
   }
@@ -280,7 +305,7 @@ export class LanRoomClient {
   private readonly handleGameStarted = (payload: {
     readonly game: LanGameSessionSnapshot;
   }): void => {
-    this.setState({ ...this.#state, game: payload.game, rejection: null });
+    this.setState({ ...this.#state, game: payload.game, rejection: null, lastBattleAttack: null });
   };
 
   /** 接收游戏运行期间的公开快照更新。 */
@@ -288,6 +313,17 @@ export class LanRoomClient {
     readonly game: LanGameSessionSnapshot;
   }): void => {
     this.setState({ ...this.#state, game: payload.game });
+  };
+
+  /** 接收可公开展示的攻击结算结果，供对局界面提供即时反馈。 */
+  private readonly handleGameEvent = (payload: {
+    readonly event: import("@genesis-rift/shared").LanGameEvent;
+  }): void => {
+    if (payload.event.type !== "battle.attackResolved") {
+      return;
+    }
+
+    this.setState({ ...this.#state, lastBattleAttack: payload.event });
   };
 
   /** 发布新的不可变状态给所有订阅者。 */

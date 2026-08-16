@@ -1,6 +1,8 @@
 import type {
   LanGamePrivateEventSnapshot,
+  LanGamePrivateMapTileSnapshot,
   LanGameSessionSnapshot,
+  LanBattleAttackResolvedEvent,
   LanHexDirection,
   LanRequestRejectedPayload,
   LanRoomSnapshot,
@@ -17,8 +19,10 @@ export interface GameSessionPanelProps {
   readonly localPlayerId: PlayerId;
   readonly isConnected: boolean;
   readonly rejection: LanRequestRejectedPayload | null;
+  readonly lastBattleAttack: LanBattleAttackResolvedEvent | null;
   onEndActivePlayerTurn(): void;
   onMoveActivePlayer(direction: LanHexDirection): void;
+  onAttackActivePlayer(targetPlayerId: PlayerId): void;
   onDecideEventReveal(instanceId: string, action: "REVEAL" | "DECLINE"): void;
   onSelectEventOption(instanceId: string, optionId: string): void;
 }
@@ -35,6 +39,8 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
   const disconnectedPlayers = new Map(
     game.disconnectedPlayers.map((player) => [player.playerId, player]),
   );
+  const attackablePlayerIds = getAttackablePlayerIds(game, localPlayerId);
+  const canAttack = props.isConnected && isActivePlayer && game.status === "running";
 
   return (
     <section className="game-session" aria-labelledby="game-session-heading">
@@ -89,6 +95,15 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
         canOperate={props.isConnected && isActivePlayer && game.status === "running"}
         onDecideReveal={props.onDecideEventReveal}
         onSelectOption={props.onSelectEventOption}
+      />
+
+      <BattlePanel
+        attackablePlayerIds={attackablePlayerIds}
+        canAttack={canAttack}
+        game={game}
+        lastBattleAttack={props.lastBattleAttack}
+        room={room}
+        onAttack={props.onAttackActivePlayer}
       />
 
       <section className="game-session__players" aria-labelledby="game-session-players-heading">
@@ -184,6 +199,113 @@ export function GameSessionPanel(props: GameSessionPanelProps) {
       ) : null}
     </section>
   );
+}
+
+/** 展示当前玩家可尝试攻击的相邻目标与服务端最近一次攻击结算结果。 */
+function BattlePanel(props: {
+  readonly game: LanGameSessionSnapshot;
+  readonly room: LanRoomSnapshot;
+  readonly attackablePlayerIds: ReadonlySet<PlayerId>;
+  readonly canAttack: boolean;
+  readonly lastBattleAttack: LanBattleAttackResolvedEvent | null;
+  onAttack(targetPlayerId: PlayerId): void;
+}) {
+  const targets = props.game.players.filter((player) =>
+    props.attackablePlayerIds.has(player.playerId),
+  );
+
+  return (
+    <section className="game-session__battle" aria-labelledby="game-session-battle-heading">
+      <div>
+        <p>Battle</p>
+        <h3 id="game-session-battle-heading">普通攻击</h3>
+      </div>
+      {targets.length === 0 ? (
+        <p>没有位于已探索相邻地块的可攻击玩家。</p>
+      ) : (
+        <ul>
+          {targets.map((target) => (
+            <li key={target.playerId}>
+              <span>
+                <strong>{getPlayerName(props.room, target.playerId)}</strong>
+                <small>
+                  生命 {target.currentHealth ?? "-"}/{target.maximumHealth ?? "-"} · 护盾{" "}
+                  {target.currentShield}
+                </small>
+              </span>
+              <button
+                disabled={!props.canAttack}
+                onClick={() => props.onAttack(target.playerId)}
+                type="button"
+              >
+                攻击
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {props.lastBattleAttack === null ? null : (
+        <p className="game-session__battle-result" role="status">
+          {getBattleResultMessage(props.lastBattleAttack, props.room)}
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** 只以当前玩家已知地图中的相邻地块筛选攻击候选；服务端仍负责最终判定。 */
+function getAttackablePlayerIds(
+  game: LanGameSessionSnapshot,
+  localPlayerId: PlayerId,
+): ReadonlySet<PlayerId> {
+  const map = game.viewer?.map;
+  const currentTile = map?.tiles.find((tile) => tile.isCurrentPlayerTile);
+
+  if (map === null || map === undefined || currentTile === undefined) {
+    return new Set();
+  }
+
+  const knownTiles = new Map(map.tiles.map((tile) => [tile.tileId, tile]));
+
+  return new Set(
+    game.players
+      .filter((player) => player.playerId !== localPlayerId && player.survivalStatus !== "DEAD")
+      .filter((player) => {
+        const targetTile = knownTiles.get(player.currentTileId);
+
+        return targetTile !== undefined && areTilesWithinNormalAttackRange(currentTile, targetTile);
+      })
+      .map((player) => player.playerId),
+  );
+}
+
+/** 根据立方坐标的最大轴差判断两个地块是否位于普通攻击距离内。 */
+function areTilesWithinNormalAttackRange(
+  origin: LanGamePrivateMapTileSnapshot,
+  target: LanGamePrivateMapTileSnapshot,
+): boolean {
+  return (
+    Math.max(
+      Math.abs(origin.coordinate.x - target.coordinate.x),
+      Math.abs(origin.coordinate.y - target.coordinate.y),
+      Math.abs(origin.coordinate.z - target.coordinate.z),
+    ) <= 1
+  );
+}
+
+/** 将服务端公开攻击事件转换为简洁中文结算提示。 */
+function getBattleResultMessage(
+  event: LanBattleAttackResolvedEvent,
+  room: LanRoomSnapshot,
+): string {
+  const attackerName = getPlayerName(room, event.attackerId);
+  const defenderName = getPlayerName(room, event.defenderId);
+
+  if (event.outcome === "EVADED") {
+    return `${attackerName} 攻击 ${defenderName}，但被闪避。`;
+  }
+
+  return `${attackerName} 对 ${defenderName} 造成 ${event.finalDamage} 点伤害；生命 ${event.defenderHealth}，护盾 ${event.defenderShield}。`;
 }
 
 /** 显示仅属于当前玩家的事件卡背、揭露信息及可选择路线。 */

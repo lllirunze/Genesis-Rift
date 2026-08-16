@@ -757,6 +757,76 @@ h1 {
   opacity: 0.45;
 }
 
+.game-session__battle {
+  display: grid;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+
+.game-session__battle > div p {
+  margin-bottom: 5px;
+  color: var(--cinnabar);
+  font-family: "Avenir Next Condensed", "PingFang SC", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.game-session__battle h3,
+.game-session__battle p {
+  margin: 0;
+}
+
+.game-session__battle > p,
+.game-session__battle small {
+  color: rgba(20, 43, 40, 0.7);
+  font-size: 0.82rem;
+}
+
+.game-session__battle ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.game-session__battle li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  background: rgba(30, 77, 70, 0.06);
+  border: 1px solid var(--line);
+}
+
+.game-session__battle li span {
+  display: grid;
+  gap: 3px;
+}
+
+.game-session__battle button {
+  padding: 7px 12px;
+  color: var(--paper);
+  cursor: pointer;
+  background: var(--cinnabar);
+  border: 0;
+}
+
+.game-session__battle button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.game-session__battle-result {
+  padding: 10px;
+  color: var(--jade) !important;
+  background: rgba(30, 77, 70, 0.08);
+  border-left: 3px solid var(--jade);
+}
+
 .section-heading {
   display: grid;
   grid-template-columns: 180px 1fr;

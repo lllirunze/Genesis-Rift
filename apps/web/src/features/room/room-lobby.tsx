@@ -39,8 +39,10 @@ export function RoomLobby() {
         localPlayerId={lobby.identity.playerId}
         isConnected={isConnected}
         rejection={lobby.state.rejection}
+        lastBattleAttack={lobby.state.lastBattleAttack}
         onEndActivePlayerTurn={lobby.endActivePlayerTurn}
         onMoveActivePlayer={lobby.moveActivePlayer}
+        onAttackActivePlayer={lobby.attackActivePlayer}
         onDecideEventReveal={lobby.decideEventReveal}
         onSelectEventOption={lobby.selectEventOption}
       />

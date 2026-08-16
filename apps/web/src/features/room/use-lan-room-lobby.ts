@@ -4,6 +4,7 @@ import type {
   LanHexDirection,
   LanCharacterSelection,
   LanRoomPlayerSnapshot,
+  PlayerId,
   RoomId,
 } from "@genesis-rift/shared";
 
@@ -23,6 +24,7 @@ export interface LanRoomLobby {
   startGame(): void;
   endActivePlayerTurn(): void;
   moveActivePlayer(direction: LanHexDirection): void;
+  attackActivePlayer(targetPlayerId: PlayerId): void;
   decideEventReveal(instanceId: string, action: "REVEAL" | "DECLINE"): void;
   selectEventOption(instanceId: string, optionId: string): void;
 }
@@ -40,6 +42,7 @@ export function useLanRoomLobby(serverUrl: string): LanRoomLobby {
     room: null,
     game: null,
     rejection: null,
+    lastBattleAttack: null,
   });
   const clientRef = useRef<LanRoomClient | null>(null);
   const setConnectionStatus = useConnectionStore((connection) => connection.setStatus);
@@ -92,6 +95,9 @@ export function useLanRoomLobby(serverUrl: string): LanRoomLobby {
     },
     moveActivePlayer(direction) {
       getClient(clientRef).moveActivePlayer(createRequestId(), createCommandId(), direction);
+    },
+    attackActivePlayer(targetPlayerId) {
+      getClient(clientRef).attackActivePlayer(createRequestId(), createCommandId(), targetPlayerId);
     },
     decideEventReveal(instanceId, action) {
       getClient(clientRef).decideEventReveal(

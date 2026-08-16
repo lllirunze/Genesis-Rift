@@ -45,6 +45,31 @@ describe("LanRoomClient", () => {
     expect(client.getState().rejection).toMatchObject({ code: "ROOM_ALREADY_EXISTS" });
   });
 
+  it("stores the latest publicly broadcast attack result for the game interface", () => {
+    const socket = new FakeLanSocket();
+    const client = new LanRoomClient(socket as unknown as LanSocket);
+
+    socket.trigger("game:event", {
+      event: {
+        type: "battle.attackResolved",
+        gameId: "game_000001",
+        attackId: "attack:game_000001:1",
+        attackerId: "player-host",
+        defenderId: "player-target",
+        outcome: "RESOLVED",
+        finalDamage: 12,
+        defenderHealth: 48,
+        defenderShield: 0,
+        defenderSurvivalStatus: "ACTIVE",
+      },
+    });
+
+    expect(client.getState().lastBattleAttack).toMatchObject({
+      attackId: "attack:game_000001:1",
+      finalDamage: 12,
+    });
+  });
+
   it("forwards character selection and host start requests after the socket connects", () => {
     const socket = new FakeLanSocket();
     const client = new LanRoomClient(socket as unknown as LanSocket);
@@ -58,6 +83,7 @@ describe("LanRoomClient", () => {
     client.startGame("request-start");
     client.endActivePlayerTurn("request-turn-end", "command-turn-end");
     client.moveActivePlayer("request-map-move", "command-map-move", "NORTH");
+    client.attackActivePlayer("request-attack", "command-attack", "player-target" as PlayerId);
     client.decideEventReveal(
       "request-event-reveal",
       "command-event-reveal",
@@ -85,6 +111,12 @@ describe("LanRoomClient", () => {
         commandId: "command-map-move",
         type: "map.move",
         direction: "NORTH",
+      },
+      {
+        requestId: "request-attack",
+        commandId: "command-attack",
+        type: "battle.attack",
+        targetPlayerId: "player-target",
       },
       {
         requestId: "request-event-reveal",
